@@ -3,11 +3,11 @@
 
 //#pragma message("!!! compiling MCPcan.h ")
 
-#include "OlcbCan.h"
+#include "../OlcbCommonCAN/OlcbCan.h"
 
 #define SUPPORT_MCP2515 1
 
-#include "MCP2515can.h"
+#include "MCP2515/MCP2515can.h"
 
 class Can : public OlcbCan {
   public:
