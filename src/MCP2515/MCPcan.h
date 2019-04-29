@@ -3,7 +3,7 @@
 
 //#pragma message("!!! compiling MCPcan.h ")
 
-#include "../OlcbCommonCAN/OlcbCan.h"
+#include "OlcbCan.h"
 
 #define SUPPORT_MCP2515 1
 
