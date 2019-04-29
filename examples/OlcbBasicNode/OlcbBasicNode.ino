@@ -321,7 +321,7 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
 }
 
 #include "OpenLCBMid.h"           // System house-keeping
-#include "extras.h"               // extras
+//#include "extras.h"               // extras
 
 // ==== Setup does initial configuration =============================
 void setup() {
