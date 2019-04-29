@@ -33,7 +33,7 @@
    defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__)
     #pragma message("ATMega selected")
     #define ATMEGA
-    #include "MCPcan.h"
+    #include "MCP2515/MCPcan.h"
 
 // Mega 16, 32
 #elif defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) 
