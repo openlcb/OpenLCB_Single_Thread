@@ -5,7 +5,7 @@
 
 #include "Arduino.h"
 
-#include "core_pins.h"
+//#include "core_pins.h"
 
 #include "FlexCANv1.h"
 #include "kinetis_flexcan.h"
