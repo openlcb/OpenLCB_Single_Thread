@@ -15,7 +15,7 @@ This is a refresh of the original Arduino code base developed by Dr. Bob Jacobse
 Using a specific platform requires downloading of the appropriate compiler support.  
 A platform is automagically selected in the processor.h file, allowing the same sketch to be used on multiple platforms.  Platform specific items are included in the processor.h file.  
 
-# At this point, the example sketch OlcbBasicNode compiles in the supported platforms.  
+### At this point, the example sketch OlcbBasicNode compiles in the supported platforms.  
 
 ## Changes: 
 1. Added support for multiple processors: Arduino, Teensy, Tiva. 
