@@ -1,0 +1,125 @@
+// OpenLCB Adaptation of FlexCAN library
+// copyright DPH 2017
+
+#include "Arduino.h"
+
+#include "OlcbCan.h"
+#include "bpcan.h"
+#include "NucCAN.h"
+
+//class CANClass;
+//CANClass canbus(0);
+
+//#include "Stm32Can.cxx"
+#include "stm32f1xx_hal_can.h"
+
+
+void init_can_gpio()
+{
+    // Turns on clock for the GPIO port of the canbus.
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIO_CAN1, ENABLE);
+    
+    // Configures CAN RX pin
+    GPIO_InitTypeDef gp;
+    GPIO_StructInit(&gp);
+    gp.GPIO_Pin = GPIO_Pin_CAN1_RX;
+    gp.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_Init(GPIO_CAN1, &gp);
+    
+    // Configures CAN TX pin
+    gp.GPIO_Pin = GPIO_Pin_CAN1_TX;
+    gp.GPIO_Mode = GPIO_Mode_AF_PP;
+    gp.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIO_CAN1, &gp);
+    
+    GPIO_PinRemapConfig(GPIO_Remapping_CAN1, ENABLE);
+    
+    // Turns on clock for the CAN controller
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);
+}
+
+
+
+
+
+
+can_message_t canbus;
+
+// ----------------------------------------------------------------------------
+/**
+ * \ingroup	can_interface
+ * \brief	Initialisierung des CAN Interfaces
+ *
+ * \param	bitrate	Gewuenschte Geschwindigkeit des CAN Interfaces
+ *
+ * \return	false falls das CAN Interface nicht initialisiert werden konnte,
+ *			true ansonsten.
+ */
+void Can::init() {
+    //Serial.print("\nIn bpcan::init");
+    can_init(125000);
+    //return true;
+    return;
+}
+
+uint8_t Can::avail() {
+    //return 0!=canbus.available();
+    return 1;
+}
+
+uint8_t Can::read() {
+    //Serial.print("\nIn bpcan::read()");
+    can_message_t m;
+    if(!canbus.available()) return 0;
+    if(canbus.receive(&m)) {
+        this->id = m.id;
+        //this->flags.extended = m.eff;  // don;t know what flags are in NucCAN
+        this->flags.rtr = 1;
+        //this->length = m.dlc;
+        this->length = 8;
+        for(int i=0;i<m.dlc;i++) this->data[i] = m.buf[i];
+        return 1;
+    } else return false;
+}
+
+uint8_t Can::txReady() {
+            //Serial.print("\n bpcan::txReady()");
+    //bool b = canbus.tx_idle();
+            //Serial.print("\n     canbus->tx_idle()=");
+            //Serial.print(b );
+    //return b;
+    return 1;
+}
+
+uint8_t Can::write(long timeout) {
+    CAN_message_t m;
+            //Serial.print("\n     bpcan::write()#A");
+    m.id = this->id;
+    m.dlc = this->length;
+    m.eff = 1;
+    m.rtr=0;
+    memcpy(m.buf,this->data,m.dlc);
+            //Serial.print(m.id, HEX);
+            //Serial.print("]("); Serial.print(m.length);
+            //Serial.print(") ");
+            //for(int i=0;i<m.length;i++)
+            //    { Serial.print(m.data[i],HEX); Serial.print(" "); }
+    if(timeout==0 && this->txReady()) {
+        if(bool r = can_send(&m)) {
+            active = true;
+            return  true;
+        } else return false;
+    }
+            //Serial.print("\n     bpcan::write()#C");
+    long to = millis() + timeout;
+    while(millis()<to) {
+        if(can_send(&m)) {
+            active = true;
+            return true;
+        }
+    }
+    return false;
+}
+uint8_t Can::write() { return this->write(0); }
+
