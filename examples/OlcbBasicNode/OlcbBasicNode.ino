@@ -129,7 +129,7 @@ uint8_t protocolIdentValue[6] = {   //0xD7,0x58,0x00,0,0,0};
     //#define GOLD 43   // GOLD is 19 TCH Consumer
 
 // Board choices
-    #include boardChoices.h
+    #include "boardChoices.h"
 
 
     #define ShortBlinkOn   0x00010001L
