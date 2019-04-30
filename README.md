@@ -49,32 +49,14 @@ parallels this program structure:
 ```
 
 ## Memory Models:
-The code can be written to be maximize space or speed, and the user can choose from three memory models: 
-1. Small: All operations are from EEPROM<br>
-    Minimizes RAM size, but is slower.  If many eventIDs are needed, it may be the only choice.  
-2. Medium: only eventIDs are copied to RAM into eventids[]<br>
-    Quite good compromize between size and speed.
-3. Large:  The whole of EEPROM is mirrored to RAM as mem[]<br>
-    Faster but larger.  This is best on larger processors.  
+The EEPROM (or equiv) is read and written into RAM structures.  
+
 #### In Flash:<br>
-**eventidOffset[]** stores the offset of each eventID into the EEPROM or RAM struct{}.<br>
-    It is initialized at compile-time.
+TBD
+    
 #### In RAM:
-**eventidIndex[]** contains a hash of each eventID, and an associated sequential index into eventidOffset[].<br>
-    It is sorted on the hash values.  
+TBD
 
-In the medium model *only*, **eventids[]** contains a copy of the node's eventIDs, and is indexed by eventidIndex[].
-
-This restated as a diagram:
- - In all models: 
-```
-        eventidIndex[]--(index)-->eventidOffset[]--(offset)-->mem[] or EEPROM[]
-        eventidIndex[]--(index)-->Events[].flags
-```
- - In the Medium model *only*, eventIndex also indexes the eventIDs array:
-```
-        eventidIndex[]--(index)-->eventids[]
-```
 
 ## More about OpenLCB/LCC - what is it?
 
