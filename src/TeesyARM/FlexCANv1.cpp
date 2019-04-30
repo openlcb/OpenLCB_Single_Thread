@@ -3,6 +3,8 @@
 // by teachop
 //
 
+#if   defined(__MK20DX256__)
+
 #include "Arduino.h"
 
 //#include "core_pins.h"
@@ -233,3 +235,4 @@ int FlexCANv1::write(const CAN_message_t &msg)
   return 1;
 }
 
+#endif //  defined(__MK20DX256__)

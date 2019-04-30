@@ -1,6 +1,8 @@
 // OpenLCB Adaptation of FlexCAN library
 // copyright DPH 2017
 
+#if defined(__AVR_AT90CAN128__)
+
 #include "Arduino.h"
 
 #include "OlcbCan.h"
@@ -80,3 +82,4 @@ uint8_t Can::write(long timeout)  {
 uint8_t Can::write() { return this->write(0); }
 void Can::setL(uint16_t l) { length = l; }
 
+#endif // AT90

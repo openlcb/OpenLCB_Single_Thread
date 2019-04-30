@@ -8,15 +8,13 @@
  * published by the Free Software Foundation.
  */
 
+//#pragma message("!!! In TivaCANv0.h ")
+#if defined TARGET_IS_BLIZZARD_RB1
+//#pragma message("!!! compiling TivaCANv0.h ")
+
 #ifndef _TivACANv0_H
 #define _TivACANv0_H
 
-//#pragma message("!!! compiling TivaCANv0.h ")
-
-
-//#if !defined(TARGET_IS_BLIZZARD_RB1)
-//#error  !!!! Only TivaCANv0 supported !!!!
-//#else
 //#pragma message("TivaCANv0.h")
 
 // Uncomment the line below to enable Debug Printing
@@ -111,5 +109,5 @@ public:
     void CANIntHandler();
 };
 
-
 #endif // TivaCANv0_H
+#endif // Blizzard

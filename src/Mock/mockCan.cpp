@@ -6,6 +6,7 @@
 //
 //
 
+#if defined MOCK
 
 #pragma message("Compiling mockCan.cpp")
 
@@ -42,3 +43,4 @@ uint8_t Can::write(){
     return write(0L);
 }
 
+#endif // MOCK

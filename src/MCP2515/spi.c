@@ -28,6 +28,10 @@
  */
 // ----------------------------------------------------------------------------
 
+
+#if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
+defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__)
+
 //#include "mcp2515_private.h"
 
 
@@ -117,4 +121,6 @@ uint8_t spi_putc(uint8_t data)
 	
 	#endif
 }
+
+#endif // AVR
 

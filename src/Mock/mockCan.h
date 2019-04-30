@@ -9,6 +9,8 @@
 #ifndef MOCKCAN_H
 #define MOCKCAN_H
 
+#if defined MOCK
+
 #pragma message("Compiling mockCan.h")
 
 #include "OlcbCan.h"
@@ -24,4 +26,5 @@ class Can : public OlcbCan {
 };
 
 
+#endif // MOCK
 #endif // MOCKCAN_H

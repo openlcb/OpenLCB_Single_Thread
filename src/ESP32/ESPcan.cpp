@@ -3,6 +3,8 @@
 // OpenLCB Adaptation of FlexCAN library
 // copyright DPH 2017
 
+#if defined ARDUINO_ARCH_ESP32
+
 //#pragma message("!!! compiling ESPcan.cpp ")
 
 
@@ -93,3 +95,5 @@ uint8_t Can::write(long timeout) {
     return false;
 }
 uint8_t Can::write() { return this->write(0); }
+
+#endif // ESP32

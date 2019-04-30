@@ -22,6 +22,8 @@
  * THE SOFTWARE.
  * ****************************************************************************/
 
+#if defined(__AVR_AT90CAN128__)
+
 #include "CanBus.h"
 #include "Arduino.h"
 
@@ -729,4 +731,6 @@ void CanBus::_leave_standby_mode(void) {
 	// wait until the CAN Controller has left standby mode
 	while ((CANGSTA & (1 << ENFG)) == 0);
 }
+
+#endif // AT90
 

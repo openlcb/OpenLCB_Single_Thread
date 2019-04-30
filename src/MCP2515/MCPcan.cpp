@@ -1,6 +1,9 @@
 // OpenLCB Adaptation of FlexCAN library
 // copyright DPH 2017
 
+#if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
+defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__)
+
 #include "Arduino.h"
 
 #include "OlcbCan.h"
@@ -89,4 +92,6 @@ uint8_t Can::write(long timeout)  {
 }
 uint8_t Can::write() { return this->write(0); }
 void Can::setL(uint16_t l) { length = l; }
+
+#endif // AVR
 

@@ -2,6 +2,9 @@
 // a simple Arduino Teensy3.1 CAN driver
 // by teachop
 //
+
+#if   defined(__MK20DX256__)
+
 #ifndef __FLEXCANV1_H__
 #define __FLEXCANV1_H__
 
@@ -43,3 +46,4 @@ public:
 };
 
 #endif // __FLEXCANV1_H__
+#endif //   defined(__MK20DX256__)

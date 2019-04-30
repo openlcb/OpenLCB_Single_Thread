@@ -8,7 +8,11 @@
  * published by the Free Software Foundation.
  */
 
+//#pragma message("!!! In tivaCANv0.cpp ")
+#ifdef ENERGIA_ARCH_TIVAC
+//#pragma message("!!! compiling tivaCANv0.cpp ")
 
+#include <Energia.h>
 #include "Arduino.h"
 #include "TivaCANv0.h"
 
@@ -348,3 +352,4 @@ int CANClass::read(CAN_message_t msg[], size_t count)
     return result;
 }
 
+#endif // blizzard

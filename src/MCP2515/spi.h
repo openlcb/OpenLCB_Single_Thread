@@ -29,6 +29,9 @@
  */
 // ----------------------------------------------------------------------------
 
+#if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
+defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__)
+
 #ifndef	SPI_H
 #define	SPI_H
 
@@ -88,3 +91,6 @@ extern __attribute__ ((gnu_inline)) inline uint8_t spi_wait(void) {
 #endif
 
 #endif	// SPI_H
+
+#endif // AVR
+

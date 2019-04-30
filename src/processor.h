@@ -51,7 +51,7 @@
 #elif defined(__AVR_AT90CAN32__) || defined(__AVR_AT90CAN64__) || defined(__AVR_AT90CAN128__)
     #pragma message("AT90CAN selected")
     #define AT90CAN
-    #include <AT90can.h>
+    #include <AT90/AT90can.h>
 
 // Teensies
 #elif defined(__AVR_ATmega32U4__)
@@ -70,40 +70,41 @@
 #elif defined(__MK20DX128__)
     #pragma message("!!! __MK20DX128__ selected ")
     #include <EEPROM.h>
-    #include "flexcan.h"
+    #include "TeesyARM/flexcan.h"
     #define reboot _reboot_Teensyduino_()
 #elif  defined(__MK20DX256__)
     #pragma message("!!! __MK20DX256__ selected ")
     #define Teensy
     #include <EEPROM.h>
-    #include "flexcan.h"
+    #include "TeesyARM/flexcan.h"
     #define RAMEND 0x3FFFF
     #define REBOOT _reboot_Teensyduino_()
 #elif defined(__MK64FX512__)
     #pragma message("!!! __MK64FX512__ selected ")
     #include <EEPROM.h>
-    #include "flexcan.h"
+    #include "TeesyARM/flexcan.h"
     #define reboot _reboot_Teensyduino_()
 #elif defined(__MK66FX1M0__)
     #pragma message("!!! __MK66FX1M0__ selected ")
     #include <EEPROM.h>
-    #include "flexcan.h"
+    #include "TeesyARM/flexcan.h"
     #define reboot _reboot_Teensyduino_()
 
 // Teensy 3.5 & 3.6
 
 // Tiva Lauchpads
 //#elif defined ENERGIA_EK-TM4C123GXL  // LM4f120 comes here, too
-#elif defined TARGET_IS_BLIZZARD_RB1  // LM4f120 comes here, too
-  // LM4f120 comes here, too
+//#elif defined(TARGET_IS_BLIZZARD_RB1)  // LM4f120 comes here, too
+#elif defined(ENERGIA_ARCH_TIVAC)
+    // LM4f120 comes here, too
     #pragma message("!!! ENERGIA_EK-TM4C123GXL selected ok")
     #define TIVA123
     #define RAMEND 0x7FFF
     #define E2END 0x7FF
     #define REBOOT HWREG(NVIC_APINT) = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ
     #define ESTRING(s) PSTR(s)
-    #include "tivaeeprom.h"
-    #include "tivacan.h"
+    #include "Tiva/tivaeeprom.h"
+    #include "Tiva/tivacan.h"
 #elif defined ENERGIA_EK-TM4C1294XL
     //#pragma message("!!! ENERGIA_EK-TM4C1294XL selected ")
     #define RAMEND 0x3FFFF
@@ -111,15 +112,15 @@
     #define REBOOT HWREG(NVIC_APINT) = NVIC_APINT_VECTKEY | NVIC_APINT_SYSRESETREQ
     //#define EEPROMEND 0x17FF
     #include <can.h>
-    #include "tivaeeprom.h"
-    #include "tivacan.h"
+    #include "Tiva/tivaeeprom.h"
+    #include "Tiva/tivacan.h"
     #define ESTRING(s) PSTR(s)
 
 // ESP32
 #elif defined ARDUINO_ARCH_ESP32
     #pragma message("ARDUINO_ARCH_ESP32 selected ")
     #define ESP32
-    #include "ESPcan.h"
+    #include "ESP32/ESPcan.h"
     #define RAMEND 0x7FFFF
     #define REBOOT esp_restart()
     //#include "ESPeeprom.h"

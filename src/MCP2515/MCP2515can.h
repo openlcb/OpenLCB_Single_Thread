@@ -1,5 +1,8 @@
 //#pragma message("!!! In MCP2515can.h ")
 
+#if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
+defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__)
+
 #ifndef CAN_H
 #define CAN_H
 
@@ -150,3 +153,5 @@
 #endif
 
 #endif // CAN_H
+
+#endif // AVR

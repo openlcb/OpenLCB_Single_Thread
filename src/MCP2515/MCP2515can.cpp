@@ -1,5 +1,9 @@
 // OpenLCB Adaptation of FlexCAN library
 // copyright DPH 2017
+
+#if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
+defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__)
+
 #include <Arduino.h>
 #include "MCP2515can.h"
 #include "spi.h"
@@ -638,3 +642,5 @@ extern void can_regdump(void);
 //#if defined (__cplusplus)
 //}
 //#endif
+
+#endif // AVR

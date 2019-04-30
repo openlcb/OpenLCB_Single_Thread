@@ -25,9 +25,7 @@
 #ifndef CAN_BUS_H
 #define CAN_BUS_H
 
-#if !defined(__AVR_AT90CAN128__)
-    #error  !!!! Only AT90CAN128 supported !!!!
-#else
+#if defined(__AVR_AT90CAN128__)
 
 // Uncomment the line below to enable Debug Printing
 // #define CAN_DEBUG_PRINT_ENABLE

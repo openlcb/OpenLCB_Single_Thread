@@ -1,7 +1,10 @@
+//#pragma message("!!! in tivacan.h ")
+#if defined TARGET_IS_BLIZZARD_RB1
+//#pragma message("!!! compiling tivacan.h ")
+
 #ifndef TIVACAN_H
 #define TIVACAN_H
 
-//#pragma message("!!! compiling tivacan.h ")
 
 #include "OlcbCan.h"
 #include "TivaCANv0.h"
@@ -20,6 +23,9 @@ class Can : public OlcbCan {
 };
 
 #endif // TIVACAN_H
+
+#endif // Blizzard
+
 
 
 
