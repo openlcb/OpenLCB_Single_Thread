@@ -48,15 +48,37 @@ parallels this program structure:
     } MemStruct;
 ```
 
+In addition, EIDtab is constructed with offsets to each eventid in EEPROM, and their type: Producer, consumer, or both.  
+```c++
+  // ===== eventid Table =====
+  //  Array of the offsets to every eventID in MemStruct/EEPROM/mem, and P/C flags
+  //    -- each eventid needs to be identified as a consumer, a producer or both.  
+  //    -- PEID = Producer-EID, CEID = Consumer, and PC = Producer/Consumer
+  //    -- note matching references to MemStruct.  
+       const EIDTab eidtab[NUM_EVENT] PROGMEM = {
+        PEID(inputs[0].activation), PEID(inputs[0].inactivation),  // 1st channel - input, ie producer
+        PEID(inputs[1].activation), PEID(inputs[1].inactivation),  // 2nd channel - input
+        CEID(outputs[0].setEvent),  CEID(outputs[0].resetEvent),   // 3rd channel - output, ie consumer
+        CEID(outputs[1].setEvent),  CEID(outputs[1].resetEvent),   // 4th channel - output
+      };
+```
+
 ## Memory Models:
-The EEPROM (or equiv) is read and written into RAM structures.  
+Eventids are read from eeprom into event[].  Their location in EEPROM is held in EIDtab[], see above.  
+
+The eventids are then sorted into eventIndex[], while event[] entries remain in memory order.  Matching a received eventid is by binary search on eventIndex[]/event[].  
+
+     eventIndex[]-+-->event[eid]
+                  +-->[EIDtab:offset,flags]-->EEPROM
+ 
 
 #### In Flash:<br>
-TBD
+EEPROM, or equivalent, is laid out in accordance with Memstruct, which matches the CDI xml, see above.  
     
 #### In RAM:
-TBD
-
+events[] holds a copy of the node's eventids initialized from EEPROM.  
+eventIndex[] holds indexes to event[] in ascending sorted order.  
+EIDtab[] holds the offsets to the eventids in EEPROM, this is built using Memstruct to calculate the eventid-offsets.  
 
 ## More about OpenLCB/LCC - what is it?
 
@@ -130,9 +152,8 @@ The programmer of the Application must:
  - Choose the **NodeID** - this must be from **a range controlled** by the manufacturer - **ie you**.  
  - Write the **CDI/xml** describing the node and its node-variables, including its eventIDs. 
  - Write a **MemStruct{}** that matches the xml description.  
- - Choose the Memory Model, one of: **SMALL. MEDIUM, or LARGE**.  A good first choice is **MEDIUM**.  
- - Write code to flag each eventID as a **Producer, Consumer, or Both**.  
- - Write **pceCallback()**, which processes received eventIDs, ie eventIDs to be consumed, and causing whatever action is required, eg a LED being lit or extinguished.  
+ - Write code to flag each eventID as a **Producer, Consumer, or Both** into EIDtab[].  
+ - Write **pceCallback()** to process received eventIDs passed to it, ie eventIDs which are to be consumed, and causing whatever action is required, eg a LED being lit or extinguished.  
  - Write **produceFromInputs()** which scans the node's inputs and, if appropriate, flags an evenItD to be sent.  
  - Write **userConfigWrite()** which is called whenever a UI Tool writes to the node's memory.  This code can then compare the memory address range of the change to the node's variables, and take whatever action is appropriate, e.g. update a servo position.
  - Write additional support and glue code for the Application.  
@@ -140,7 +161,7 @@ The programmer of the Application must:
 ## Example Applications
 The provided examples will give some ideas of how to accomplish sample projects.  They can form the basis of, or  be adapted to, a new Application, or just used for inspiration.  
  - **OlcbBasicNode**<br>
-    Implements a simple node which exercises most of the protocols.  It has **two inputs** and **two outputs**.  Each input has two Producer-eventIDs and each output has two Consumer-eventIDs, so 8 eventIDs in total.  This Application makes use of the ButtonLed library to control **two buttons** and **two LEDs**.  In addition, it implements the BG (Blue-Gold) protocol to allow the **teaching** of eventIDs between this node and others.  
+    Implements a simple node which exercises most of the protocols.  It has **two inputs** and **two outputs**.  Each input has two Producer-eventIDs and each output has two Consumer-eventIDs, so **8 eventIDs in total**.  This Application makes use of the ButtonLed library to control **two buttons** and **two LEDs**.  In addition, it implements the BG (Blue-Gold) protocol to allow the **teaching** of eventIDs between this node and others.  
     
 ## In prgress, but not uploaded
 - **OlcbServoPCA8695**<br>
