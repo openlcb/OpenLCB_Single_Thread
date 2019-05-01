@@ -15,6 +15,8 @@ This is a refresh of the original Arduino code base developed by Dr. Bob Jacobse
 Using a specific platform requires downloading of the appropriate compiler support.  
 A platform is automagically selected in the processor.h file, allowing the same sketch to be used on multiple platforms.  Platform specific items are included in the processor.h file.  
 
+NB: support for Nucleo boards is pending.  
+
 ### At this point, the example sketch OlcbBasicNode compiles in the supported platforms.  
 
 ## Changes: 
@@ -56,12 +58,17 @@ In addition, EIDtab is constructed with offsets to each eventid in EEPROM, and t
   //    -- PEID = Producer-EID, CEID = Consumer, and PC = Producer/Consumer
   //    -- note matching references to MemStruct.  
        const EIDTab eidtab[NUM_EVENT] PROGMEM = {
-        PEID(inputs[0].activation), PEID(inputs[0].inactivation),  // 1st channel - input, ie producer
-        PEID(inputs[1].activation), PEID(inputs[1].inactivation),  // 2nd channel - input
-        CEID(outputs[0].setEvent),  CEID(outputs[0].resetEvent),   // 3rd channel - output, ie consumer
-        CEID(outputs[1].setEvent),  CEID(outputs[1].resetEvent),   // 4th channel - output
+        PEID(channels[0].event0),   PEID(channels[0].event1),  // 1st channel - input, ie producer
+        PEID(channels[1].event0),   PEID(channels[1].event1),  // 2nd channel - input, ie producer
+        PEID(channels[2].event0),   PEID(channels[2].event1),  // 3rd channel - input, ie producer
+        PEID(channels[3].event0),   PEID(channels[3].event1),  // 4th channel - input, ie producer
+        CEID(channels[4].event0),   CEID(channels[4].event1),  // 5th channel - output, ie consumer
+        CEID(channels[5].event0),   CEID(channels[5].event1),  // 6th channel - output, ie consumer
+        CEID(channels[6].event0),   CEID(channels[6].event1),  // 7th channel - output, ie consumer
+        CEID(channels[7].event0),   CEID(channels[7].event1),  // 8th channel - output, ie consumer
       };
 ```
+In this case, the first four pairs of eventids are producers, and the remaining are consumers.  
 
 ## Memory Models:
 Eventids are read from eeprom into event[].  Their location in EEPROM is held in EIDtab[], see above.  
@@ -141,10 +148,8 @@ For example there are some selected lines of code from the OlcbBasicNode example
   const char SNII_const_data[] PROGMEM = "\001OpenLCB\000DPHOlcbBasicNode\0001.0\000" OlcbCommonVersion ; 
   uint8_t protocolIdentValue[6] = {0xD7,0x58,0x00,0,0,0};
   ButtonLed* buttons[] = { &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD };
-  PCE pce(&nodal, &txBuffer, pceCallback, restore, &link);
-  BG bg(&pce, buttons, patterns, NUM_EVENT, &blue, &gold, &txBuffer);
 ```
-Most of the **processing** is hidden as functions in the #include files.  
+Most of the **processing** is hidden as functions in the #include files, specifiaclly OpenLCBHeader.h and OpenLCBMid.h.  
 
 ## How Does the Application Interact with the Codebase?
 The programmer of the Application must: 
