@@ -20,13 +20,13 @@ NB: support for Nucleo boards is pending.
 ### At this point, the example sketch OlcbBasicNode compiles in the supported platforms.  
 
 ## Changes: 
-1. Added support for multiple processors: Arduino, Teensy, Tiva. 
+1. Added support for multiple processors: AVR/MCP2515, AT90CAN, Teensy, Tiva, and ESP32. 
    - Each set of files specific to a CAN-processor is kept in its own directory.   
    - The processor is automatically selected in the processor.h file. 
-2. A sorted Index[] is used to speed eventID processing, using a hash of the eventid.  
+2. A sorted eventIndex[] is used to speed eventID processing.  
 3. Simplified the definition of CDI/xml for the node by matching a struct{} to the xml structure, see the example below.   
 
-e.g.: This CDI/xml, which self-describes the node to the system:
+e.g.: This CDI/xml, which self-describes a node to the system, having 8 channels with a pair of eventids each:
 ```xml
     <cdi>
         ...
@@ -50,7 +50,7 @@ parallels this program structure:
     } MemStruct;
 ```
 
-In addition, EIDtab is constructed with offsets to each eventid in EEPROM, and their type: Producer, consumer, or both.  
+In addition, EIDtab[] is constructed with offsets to *every* eventid in EEPROM, and its type: producer, consumer, or both.  
 ```c++
   // ===== eventid Table =====
   //  Array of the offsets to every eventID in MemStruct/EEPROM/mem, and P/C flags
@@ -68,15 +68,15 @@ In addition, EIDtab is constructed with offsets to each eventid in EEPROM, and t
         CEID(channels[7].event0),   CEID(channels[7].event1),  // 8th channel - output, ie consumer
       };
 ```
-In this case, the first four pairs of eventids are producers, and the remaining are consumers.  
+In this case, the first four pairs of eventids are producers, and the remaining are consumers.  The type let's the internal processing schedule eventids produced by this node to be send, and to indetify received eventids as being consumed by this node and therefore passed to the application code.  
 
 ## Memory Models:
 Eventids are read from eeprom into event[].  Their location in EEPROM is held in EIDtab[], see above.  
 
-The eventids are then sorted into eventIndex[], while event[] entries remain in memory order.  Matching a received eventid is by binary search on eventIndex[]/event[].  
+The indexes into eventid[] are then sorted into eventIndex[] --- event[] and EIDtab entries remain in the original order.  Binary search is then used to match received eventids to their entries in event[].  
 
-     eventIndex[]-+-->event[eid]
-                  +-->[EIDtab:offset,flags]-->EEPROM
+     eventIndex[]--->EIDtab[offset,flags]-->EEPROM
+     eventIndex[]--->event[eventid]
  
 
 #### In Flash:<br>
