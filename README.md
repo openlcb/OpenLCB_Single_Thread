@@ -1,9 +1,9 @@
 # OpenLCB_Single_Thread
-OpenLCB stock based on ArduinoIDE
+## OpenLCB stack based on ArduinoIDE
 
-# **** USE with CAUTION - in dev mode ****
+## **** USE with CAUTION - in development mode ****
 
-This is a refresh of the original Arduino code base developed by Dr. Bob Jacobsen.  It has been modified to make it easier for the developer to match a project's CDI xml to its internal memory structure, by making the two parallel in structure.  In addition, eventid searching uses a sorted table and a binary search. 
+This is a refresh of the original Arduino code base, developed by Dr. Bob Jacobsen.  It has been modified to make it easier for the developer to match a project's CDI xml to its internal memory structure, by making the two have parallel structures.  In addition, eventid searching uses a sorted table index and a binary search. 
 
 # Platforms supported:
 * ATMega series, with MCP2515 CAN support; 
@@ -68,7 +68,7 @@ In addition, EIDtab[] is constructed with offsets to *every* eventid in EEPROM, 
         CEID(channels[7].event0),   CEID(channels[7].event1),  // 8th channel - output, ie consumer
       };
 ```
-In this case, the first four pairs of eventids are producers, and the remaining are consumers.  The type let's the internal processing schedule eventids produced by this node to be send, and to indetify received eventids as being consumed by this node and therefore passed to the application code.  
+In this case, the first four pairs of eventids are producers, and the remaining are consumers.  The type is used by internal processing to allow eventids produced by this node to be scheduled and send, and to indetify received eventids as being consumed by this node and therefore passed to the application code.  
 
 ## Memory Models:
 Eventids are read from eeprom into event[].  Their location in EEPROM is held in EIDtab[], see above.  
