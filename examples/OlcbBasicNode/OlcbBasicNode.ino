@@ -41,7 +41,7 @@ NodeID nodeid(NODEID);            // instansiate the nodeid
 extern "C" {                      // the following are defined as external
 
 // ===== CDI =====
-//   Configuration Description Information in xml, must match MemStruct below
+//   Configuration Description Information in xml, **must match MemStruct below**
 //   See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
 //   CDIheader and CDIFooter contain system-parts, and includes user changable node name and description fields. 
      const char configDefInfo[] PROGMEM = 
@@ -70,7 +70,7 @@ extern "C" {                      // the following are defined as external
 }
 
 // ===== MemStruct =====
-//   Memory structure of EEPROM, must match CDI above
+//   Memory structure of EEPROM, **must match CDI above**
 //     -- nodeVar has system-info, and includes the node name and description fields
     typedef struct { 
       NodeVar nodeVar;         // must remain
@@ -118,20 +118,17 @@ uint8_t protocolIdentValue[6] = {   //0xD7,0x58,0x00,0,0,0};
 
 #ifndef OLCB_NO_BLUE_GOLD
 // ===== Blue/Gold =====
-// input/output pin drivers
-// 14, 15, 16, 17 for LEDuino with standard shield
-// 16, 17, 18, 19 for IOduino to clear built-in blue and gold
-// Io 0-7 are outputs & LEDs, 8-15 are inputs
-// Define pins
-    //#define BLUE 14   // BLUE is 18 LEDuino; others defined by board (48 IO, 14 IOuino)
-    //#define GOLD 15   // GOLD is 19 LEDuino; others defined by board (49 IO, 15 IOuino)
-    //#define BLUE 42   // BLUE is 18 TCH Consumer
-    //#define GOLD 43   // GOLD is 19 TCH Consumer
+// Blue-gold refers to two standard buttons offering a rudimentary control ssystem for an node.
+//   Features: teaching/learning of eventids; node identification; node reset.
 
-// Board choices
+// Board choices, each has differing i/o choices
     #include "boardChoices.h"
 
+// This section uses the ButtonLed lib to muliplex an input and output onto a single pin.
+// It includes sampling every 32 ms, and blink patterns.
 
+// Patterns
+// Each pattern is 32 bits, each bit is used sequencely to blink the LED on and off, at 64 ms per bit.
     #define ShortBlinkOn   0x00010001L
     #define ShortBlinkOff  0xFFFEFFFEL
     
@@ -141,12 +138,15 @@ uint8_t protocolIdentValue[6] = {   //0xD7,0x58,0x00,0,0,0};
       ShortBlinkOff,ShortBlinkOn,
       ShortBlinkOff,ShortBlinkOn
     };
+
+// An array of buttons/leds.
     ButtonLed* buttons[] = {  
       &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD // One for each event; each channel is a pair
     };
-    
+
 
 // ===== Process Consumer-eventIDs =====
+// USER defined
     void pceCallback(unsigned int index) {
       // Invoked when an event is consumed; drive pins as needed
       // from index of all events.  
@@ -160,6 +160,8 @@ uint8_t protocolIdentValue[6] = {   //0xD7,0x58,0x00,0,0,0};
 
 bool states[] = {false, false, false, false}; // current input states; report when changed
 
+// ===== Process inputs and Producers eventids =====
+// USER defined
 void produceFromInputs() {
   // assumes eventids are paired per channel
   #define MAX_INPUT_SCAN 2
@@ -179,7 +181,7 @@ void produceFromInputs() {
     }
     if ((++scanIndex) >= NUM_CHANNEL) scanIndex = 0;
 }
-#endif // OLCB_NO_BLUE_GOLD
+#endif // OLCB_NO_BLUE_GOLD   // this app uses ButtonLed lib for its i/o.
 
 /* Config tool: 
  *  More: Reset/Reboot -- causes a reboot --> reads nid, and reads and sorts eids --> userInit();
@@ -191,6 +193,7 @@ void produceFromInputs() {
 
 // userInitAll() -- include any initialization after Factory reset "Mfg clear" or "User clear"
 //  -- clear or pre-define text variables.  
+// USER defined
 void userInitAll() {
   /*
     Serial.print("/nEEADDRs\n");
@@ -215,6 +218,7 @@ void userInitAll() {
 }
 
 // userSoftReset() - include any initialization after a soft reset, ie after configuration changes.
+// USER defined
 void userSoftReset() {
   #ifdef DEBUG  
     Serial.print("\n In userSoftReset()"); Serial.flush(); 
@@ -223,6 +227,7 @@ void userSoftReset() {
 }
 
 // userHardReset() - include any initialization after a hard reset, ie on boot-up.
+// USER defined
 void userHardReset() {
   #ifdef DEBUG  
     Serial.print("\n In userHardReset()"); Serial.flush(); 
@@ -237,6 +242,7 @@ void userHardReset() {
 // param length  - length of change
 // NB: if address=0 and length==0xffff, then user indicated UPDATE_COMPLETE
 // 
+// USER defined
 void userConfigWritten(unsigned int address, unsigned int length, unsigned int func) {
   #ifdef DEBUG 
     Serial.print("\nuserConfigWritten "); Serial.print(address,HEX);
@@ -246,8 +252,7 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
       Serial.print(" ");Serial.print(EEPROM.read(address));
     }
   #endif
-  //Serial.print(":"); Serial.print(length,HEX);
-  // example: if a servo's position changed, then update it immediately
+  // Another example: if a servo's position changed, then update it immediately
   // uint8_t posn;
   // for(unsigned i=0; i<NCHANNEL; i++) {
   //    unsigned int pposn = &pmem->channel[i].posn; 
@@ -257,7 +262,6 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
 }
 
 #include "OpenLCBMid.h"           // System house-keeping
-//#include "extras.h"               // extras
 
 // ==== Setup does initial configuration =============================
 void setup() {
@@ -284,7 +288,7 @@ void setup() {
 //  -- this performs system functions, such as CAN alias maintenence
 void loop() {
   
-  bool activity = Olcb_process();
+  bool activity = Olcb_process();     // System processing happens here, with callbacks for app action.
   #ifdef DEBUG
     static unsigned long T = millis()+5000;
     if(millis()>T) {
