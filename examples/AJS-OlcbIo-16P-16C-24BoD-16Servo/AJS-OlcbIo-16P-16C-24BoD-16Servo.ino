@@ -14,7 +14,6 @@
 #include <Adafruit_PWMServoDriver.h>
 
 #include "debug.h"
-#include "eeprom_utils.h"
 
 // Board definitions
 #define MANU "OpenLCB"           // The manufacturer of node
