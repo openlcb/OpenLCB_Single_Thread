@@ -68,5 +68,3 @@ extern "C" {
   }
 
 } // end of extern
-
-

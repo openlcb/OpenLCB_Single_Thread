@@ -38,10 +38,10 @@
 #include "OpenLCBHeader.h"
 //#include "AT90can.h"
 
-//#define DEBUG_BAUD_RATE 115200
+#define DEBUG_BAUD_RATE 115200
 
 #define SERVO_POS_DEG_THROWN  60
-#define SERVO_POS_DEG_CLOSED  115
+#define SERVO_POS_DEG_CLOSED  120
 
 NodeID nodeid(0x05,0x02,0x01,0x02,0x02,0x24);    // This node's default ID; must be valid 
   
@@ -178,12 +178,13 @@ const uint8_t bodPinNums[]    = {16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35,
 
 uint8_t BoDStates[]           = { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0};
 
-//ButtonLed blue(BLUE, LOW);
-//ButtonLed gold(GOLD, LOW);
+ButtonLed blue(BLUE, LOW);
+ButtonLed gold(GOLD, LOW);
 
 Adafruit_PWMServoDriver servoPWM = Adafruit_PWMServoDriver();
-#define SERVO_PWM_DEG_0    150 // this is the 'minimum' pulse length count (out of 4096)
-#define SERVO_PWM_DEG_180  600 // this is the 'maximum' pulse length count (out of 4096)
+#define SERVO_PWM_DEG_0    120 // this is the 'minimum' pulse length count (out of 4096)
+#define SERVO_PWM_DEG_180  590 // this is the 'maximum' pulse length count (out of 4096)
+uint8_t servonum = 0;
 
 // ===== Process Consumer-eventIDs =====
    void pceCallback(unsigned int index) {
@@ -320,9 +321,7 @@ void servoSet(uint8_t i, unsigned int p) {
         #ifdef DEBUG_BAUD_RATE
           Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\nAJS OlcbIo 16P 16C 24BoD 16Servo"));
         #endif  
-      
-        //nm.forceInitAll();   
-       
+
         // Setup Output Pins
         for(uint8_t i = 0; i < NUM_OUTPUTS; i++)
           pinMode(outputPinNums[i], OUTPUT);
@@ -334,8 +333,11 @@ void servoSet(uint8_t i, unsigned int p) {
         // Setup BoD Input Pins
         for(uint8_t i = 0; i < NUM_BOD_INPUTS; i++)
           pinMode(bodPinNums[i], INPUT_PULLUP);
+
+//        nm.store(&nodeid);
+        //nm.forceInitAll();   
                 
-        //#define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
+//        #define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
         Olcb_init(FORCE_ALL_INIT);
 
         printEeprom();
@@ -347,15 +349,17 @@ void servoSet(uint8_t i, unsigned int p) {
     void loop() {    
         bool activity = Olcb_process();
         if (activity) {
-            // blink blue to show that the frame was received
-            // blue.blink(0x1);
+          blue.blink(0x1); // blink blue to show that the frame was received
         }
-        if (olcbcanTx.active) { // set when a frame sent
-            // gold.blink(0x1);
-            olcbcanTx.active = false;
+        if (olcbcanTx.active) { 
+          gold.blink(0x1); // blink gold when a frame sent
+          olcbcanTx.active = false;
         }
+        
         // handle the status lights  
-        // blue.process();
-        // gold.process();
+        blue.process();
+        gold.process();
+
+        produceFromInputs();
     }
     
