@@ -7,6 +7,7 @@
 #include "Datagram.h"
 
 #include <stdio.h>
+#include "lib_debug_print_common.h"
 
 //#pragma message("!!! compiling Datagram.cpp")
 
@@ -137,7 +138,7 @@ bool Datagram::receivedFrame(OlcbCanInterface* rcv) {
                (rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_ALL)
             || (rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_FIRST) 
             ) {
-             //Serial.print("\n Datagram::receivedFrame DG start");
+             //LDEBUG("\n Datagram::receivedFrame DG start");
 
             if (receiving) {
                 // already receiving, this is an error, reply if last

@@ -3,12 +3,18 @@
 #define LIB_ENABLE_DEBUG_PRINT_INC
 
 // Uncomment the line below to enable Library Common Debug Printing
-//#define LIB_DEBUG_PRINT_ENABLE
+#define LIB_DEBUG_PRINT_ENABLE
 #ifdef LIB_DEBUG_PRINT_ENABLE
-  #define LDEBUG(x) Serial.print(x)
-  #define LDEBUGL(x) Serial.println(x);
-  #define LDEBUG2(x,y) Serial.print(x,y);
+
+#include <Stream.h>
+static Stream *DebugStream = NULL;
+	static void setDebugStream(Stream *newStream) { DebugStream = newStream; }
+
+  #define LDEBUG(x) if(DebugStream) DebugStream->print(x);
+  #define LDEBUGL(x) if(DebugStream) DebugStream->println(x);
+  #define LDEBUG2(x,y) if(DebugStream) DebugStream->print(x,y);
 #else
+	#define setDebugStream(x)
   #define LDEBUG(x)
   #define LDEBUGL(x)
   #define LDEBUG2(x,y)

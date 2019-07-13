@@ -42,8 +42,8 @@ void SNII_setup(uint8_t count, uint8_t offset, OlcbCanInterface* b, LinkControl*
       buffer = b;
       clink = li;
       state = STATE_DONE;
-                    //Serial.print("\nSNII_setup  buffer->net->id=");
-                    //Serial.print(buffer->net->id,HEX);
+                    //LDEBUG("\nSNII_setup  buffer->net->id=");
+                    //LDEBUG2(buffer->net->id,HEX);
   }
   
 const uint8_t SNII_nextByte() { 
@@ -76,8 +76,8 @@ const uint8_t SNII_nextByte() {
 void SNII_check() {
     if ( state != STATE_DONE ) {
         if (buffer->net->txReady()) {
-                    //Serial.print("\nSNII_check  buffer->net->id=");
-                    //Serial.print(buffer->net->id,HEX);
+                    //LDEBUG("\nSNII_check  buffer->net->id=");
+                    //LDEBUG2(buffer->net->id,HEX);
             buffer->setOpenLcbMTI(MTI_SNII_REPLY);
             buffer->setDestAlias(dest);
             uint8_t i;
@@ -88,8 +88,8 @@ void SNII_check() {
                     break;
                 }
             }
-                    //Serial.print("   buffer->net->id=");
-                    //Serial.print(buffer->net->id,HEX);
+                    //LDEBUG("   buffer->net->id=");
+                    //LDEBUG2(buffer->net->id,HEX);
             buffer->net->length = i;
             buffer->net->write(200); // checked previously
         }

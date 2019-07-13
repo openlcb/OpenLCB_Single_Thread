@@ -36,6 +36,7 @@
 #include "SNII.h"
 #include "BG.h"
 #include "ButtonLed.h"
+#include "lib_debug_print_common.h"
 
 class Can;
 Can olcbcanRx;
@@ -82,9 +83,9 @@ extern "C" {
         } else if (space == 0xFD) { //253
             // Configuration space is entire EEPROM
             uint8_t r = EEPROM.read(address);
-                        //Serial.print("\ngetRead "); Serial.print(space,HEX);
-                        //Serial.print(":"); Serial.print(address,HEX);
-                        //Serial.print("="); Serial.print(r,HEX);
+                        //LDEBUG("\ngetRead "); LDEBUG2(space,HEX);
+                        //LDEBUG(":"); LDEBUG2(address,HEX);
+                        //LDEBUG("="); LDEBUG2(r,HEX);
             return r;
         } else if (space == 0xFC) { // 252
             // used by ADCDI/SNII for constant data
@@ -99,10 +100,10 @@ extern "C" {
     }
     
     void getWrite(uint32_t address, int space, uint8_t val) {
-                        //Serial.print("\nolcbinc getWrite");
-                        //Serial.print(" space: "); Serial.print(space,HEX);
-                        //Serial.print(":"); Serial.print(address,HEX);
-                        //Serial.print("="); Serial.print(val,HEX);
+                        //LDEBUG("\nolcbinc getWrite");
+                        //LDEBUG(" space: "); LDEBUG2(space,HEX);
+                        //LDEBUG(":"); LDEBUG2(address,HEX);
+                        //LDEBUG("="); LDEBUG2(val,HEX);
         if (space == 0xFE) {
             // All memory
             *(((uint8_t*)&rxBuffer)+address) = val;
@@ -115,67 +116,67 @@ extern "C" {
     }
     
     void printeidtab() {
-        Serial.print("\neidtab:\n");
+        LDEBUG("\neidtab:\n");
         for(int i=0;i<NUM_EVENT;i++) {
-            Serial.print("[");
-            Serial.print(getOffset(i),HEX); Serial.print(", ");
-            Serial.print(getFlags(i),HEX); Serial.print("], ");
+            LDEBUG("[");
+            LDEBUG2(getOffset(i),HEX); LDEBUG(", ");
+            LDEBUG2(getFlags(i),HEX); LDEBUG("], ");
         }
     }
     // Extras
     void printEventIndexes() {
-        Serial.print(F("\nprintEventIndex\n"));
+        LDEBUG(F("\nprintEventIndex\n"));
         for(int i=0;i<NUM_EVENT;i++) {
-            Serial.print(eventIndex[i],HEX); Serial.print(F(", "));
+            LDEBUG2(eventIndex[i],HEX); LDEBUG(F(", "));
         }
     }
     void printEvents() {
-        Serial.print(F("\nprintEvents "));
-        Serial.print(F("\n#  flags  EventID"));
+        LDEBUG(F("\nprintEvents "));
+        LDEBUG(F("\n#  flags  EventID"));
         for(int i=0;i<NUM_EVENT;i++) {
-            Serial.print("\n"); Serial.print(i);
-            Serial.print(":"); Serial.print(getOffset(i),HEX);
-            Serial.print(F(" : ")); Serial.print(event[i].flags,HEX);
-            Serial.print(F(" : ")); event[i].eid.print();
+            LDEBUG("\n"); LDEBUG(i);
+            LDEBUG(":"); LDEBUG2(getOffset(i),HEX);
+            LDEBUG(F(" : ")); LDEBUG2(event[i].flags,HEX);
+            LDEBUG(F(" : ")); event[i].eid.print();
         }
     }
     
     void printEventids() {
-        Serial.print("\neventids:");
+        LDEBUG("\neventids:");
         for(int e=0;e<NUM_EVENT;e++) {
-            Serial.print("\n[");
+            LDEBUG("\n[");
             for(int i=0;i<8;i++) {
-                Serial.print(event[e].eid.val[i],HEX); Serial.print(", ");
+                LDEBUG2(event[e].eid.val[i],HEX); LDEBUG(", ");
             }
         }
     }
     void printSortedEvents() {
-        Serial.print("\nSorted events");
+        LDEBUG("\nSorted events");
         for(int i=0; i<NUM_EVENT; i++) {
-            Serial.print("\n");
-            Serial.print(i); Serial.print(": ");
+            LDEBUG("\n");
+            LDEBUG(i); LDEBUG(": ");
             int e = eventIndex[i];
-            Serial.print(e); Serial.print(": ");
+            LDEBUG(e); LDEBUG(": ");
             for(int j=0;j<8;j++) {
-                Serial.print(event[e].eid.val[j]);
-                Serial.print(".");
+                LDEBUG(event[e].eid.val[j]);
+                LDEBUG(".");
             }
         }
     }
     void printEeprom() {
-        Serial.print("\nEEPROM:");
-        Serial.print(F("\n    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 0123456789ABCDEF"));
+        LDEBUG("\nEEPROM:");
+        LDEBUG(F("\n    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 0123456789ABCDEF"));
         for(unsigned r=0; r<(sizeof(MemStruct)/16+1);r++) {
             int rb = r*16;
-            Serial.print("\n"); if(rb<16) Serial.print(0); Serial.print(rb,HEX); Serial.print(" ");
+            LDEBUG("\n"); if(rb<16) LDEBUG(0); LDEBUG2(rb,HEX); LDEBUG(" ");
             for(int i=rb;i<(rb+16);i++)  {
                 uint8_t v = EEPROM.read(i);
-                if(v<16) Serial.print(0); Serial.print(v,HEX); Serial.print(" ");
+                if(v<16) LDEBUG(0); LDEBUG2(v,HEX); LDEBUG(" ");
             }
             for(int i=rb;i<(rb+16);i++)  {
                 char c = EEPROM.read(i);
-                if( c<' ' || c==0x8F ) Serial.print('.');
-                else Serial.print(c);
+                if( c<' ' || c==0x8F ) LDEBUG('.')
+                else LDEBUG(c);
             }
         }
     }
@@ -183,7 +184,7 @@ extern "C" {
 
 #define CFG_CMD_UPDATE_COMPLETE 0xA8
 void configWritten(unsigned int address, unsigned int length, unsigned int func) {
-    Serial.print("\nconfigWritten "); Serial.print(address,HEX); dP(" func:"); dPH(func);
+    LDEBUG("\nconfigWritten "); LDEBUG2(address,HEX); dP(" func:"); dPH(func);
     for(unsigned i=0; i<NUM_EVENT; i++) {
         uint16_t off = getOffset(i);
         if(address>=off && address<(uint16_t)(off+8)) eepromDirty = true;
@@ -247,7 +248,7 @@ extern "C" {
     
     extern void writeEID(int index) {
         // All write to EEPROM, may have to restore to RAM.
-        Serial.print("\nwriteEID() "); Serial.print(index);
+        LDEBUG("\nwriteEID() "); LDEBUG(index);
         eepromDirty = true; // flag eeprom changed
         EEPROM.put(getOffset(index), event[index].eid);
     }
@@ -256,8 +257,8 @@ extern "C" {
 static int sortCompare(const void* a, const void* b){
     uint16_t ia = *(uint16_t*)a;
     uint16_t ib = *(uint16_t*)b;
-            //Serial.print("\nIn sortCompare!! ia=");Serial.print(ia);
-            //Serial.print(" ib=");Serial.print(ib);
+            //LDEBUG("\nIn sortCompare!! ia=");LDEBUG(ia);
+            //LDEBUG(" ib=");LDEBUG(ib);
     for(unsigned int i=0; i<8; i++) {
         if(event[ia].eid.val[i]>event[ib].eid.val[i]) return 1;
         if(event[ia].eid.val[i]<event[ib].eid.val[i]) return -1;
@@ -295,27 +296,27 @@ extern void initTables(){        // initialize tables
 
 // ===== System Interface
 void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
-            //Serial.print("\nIn olcb::init");
+            //LDEBUG("\nIn olcb::init");
     EEPROMbegin;       // defined in processor.h
     if(forceEEPROMInit)
         nm.forceInitAll();  // factory reset
     
     eepromDirty = false;
     nm.setup(&nodeid, event, NUM_EVENT, (uint16_t)sizeof(MemStruct));
-            //Serial.print("\nIn olcb::init1");
+            //LDEBUG("\nIn olcb::init1");
     
     initTables();
     printEventIndexes();
     printEvents();
-            //Serial.print("\nIn olcb::init2");
+            //LDEBUG("\nIn olcb::init2");
 
     PIP_setup(&txBuffer, &clink);
     SNII_setup((uint8_t)sizeof(SNII_const_data), SNII_var_offset, &txBuffer, &clink);
-            //Serial.print("\nIn olcb::init4");
+            //LDEBUG("\nIn olcb::init4");
     olcbcanTx.init();
-            //Serial.print("\nIn olcb::init5");
+            //LDEBUG("\nIn olcb::init5");
     clink.reset();
-            //Serial.print("\nIn olcb::init6");
+            //LDEBUG("\nIn olcb::init6");
 }
 
 // Soft reset, reinitiatize from EEPROM, but maintain present CAN Link.
@@ -330,13 +331,13 @@ void Olcb_softReset() {
 // Main processing loop
 //
 bool Olcb_process() {   // was loop()
-                //Serial.print(F("\nIn Olcb_process()"));
+                //LDEBUG(F("\nIn Olcb_process()"));
 
     bool rcvFramePresent = rxBuffer.net->read();
-                //Serial.print(F("\n Olcb_process() 1"));
+                //LDEBUG(F("\n Olcb_process() 1"));
 
     clink.check();
-                //Serial.print(F("\n Olcb_process() 2"));
+                //LDEBUG(F("\n Olcb_process() 2"));
 
     bool handled = false;  // start accumulating whether it was processed or skipped
     if (rcvFramePresent) {
@@ -345,7 +346,7 @@ bool Olcb_process() {   // was loop()
 
     if (clink.linkInitialized()) {
         if (rcvFramePresent && rxBuffer.isForHere(clink.getAlias()) ) {
-                    //Serial.print(F("\nOlcb_process got one"));
+                    //LDEBUG(F("\nOlcb_process got one"));
 #ifndef OLCB_NO_DATAGRAM
             //#pragma message("!!! DG active ")
             handled |= dg.receivedFrame(&rxBuffer);  // has to process frame level
@@ -361,27 +362,27 @@ bool Olcb_process() {   // was loop()
             }
         }
         pce.check();
-                    //Serial.print(F("\nLeft PCE::check()")); //while(0==0){}
+                    //LDEBUG(F("\nLeft PCE::check()")); //while(0==0){}
 #ifndef OLCB_NO_DATAGRAM
         dg.check();
-                    //Serial.print(F("\nLeft dg.check()")); //while(0==0){}
+                    //LDEBUG(F("\nLeft dg.check()")); //while(0==0){}
 #endif
 #ifndef OLCB_NO_STREAM
         str.check();
-                    //Serial.print(F("\nLeft str.check()")); //while(0==0){}
+                    //LDEBUG(F("\nLeft str.check()")); //while(0==0){}
 #endif
 #ifndef OLCB_NO_MEMCONFIG
         cfg.check();
-                    //Serial.print(F("\nLeft cfg.check()")); //while(0==0){}
+                    //LDEBUG(F("\nLeft cfg.check()")); //while(0==0){}
 #endif
 #ifndef OLCB_NO_BLUE_GOLD
         bg.check();
-                    //Serial.print(F("\nLeft bg.check()")); //while(0==0){}
+                    //LDEBUG(F("\nLeft bg.check()")); //while(0==0){}
 #endif
         PIP_check();
-                    //Serial.print(F("\nLeft PIP_check()")); //while(0==0){}
+                    //LDEBUG(F("\nLeft PIP_check()")); //while(0==0){}
         SNII_check();
-                    //Serial.print(F("\nLeft SNII_check()")); while(0==0){}
+                    //LDEBUG(F("\nLeft SNII_check()")); while(0==0){}
         //produceFromInputs();  ??
     }
                     //Serial.flush();
