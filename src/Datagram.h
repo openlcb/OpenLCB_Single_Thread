@@ -29,8 +29,6 @@
 #define DATAGRAM_REJECTED_RESEND_MASK            0x2000
 #define DATAGRAM_REJECTED_TRANSPORT_ERROR_MASK   0x4000
 
-//class OpenLcbCanBuffer;
-
 #include "OlcbCanInterface.h"
 
 class LinkControl;
@@ -66,7 +64,6 @@ class Datagram {
   Datagram(OlcbCanInterface* b, unsigned int (*callback)(uint8_t tbuf[DATAGRAM_LENGTH], unsigned int length, unsigned int from), LinkControl* link);
   
   private:
-  //OpenLcbCanBuffer* buffer;
   OlcbCanInterface* buffer;
   LinkControl* link;
   

@@ -1,7 +1,6 @@
 #include <string.h>
   
 #include "BG.h"
-//#include <EEPROM.h>
 #include "processor.h"
 #include "PCE.h"
 

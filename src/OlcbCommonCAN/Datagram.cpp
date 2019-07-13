@@ -1,7 +1,6 @@
 #include <string.h>
 
 #include "OpenLcbCan.h"   // constants
-//#include "OpenLcbCanBuffer.h"
 
 #include "OlcbCanInterface.h"
 #include "LinkControl.h"

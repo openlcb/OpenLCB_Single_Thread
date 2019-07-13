@@ -29,8 +29,6 @@
 // For high intensity LEDs, R1 should perhaps be 1k.  
 
 #include <Arduino.h>
-//#include <ctype.h>
-//#include <stdio.h>
 
 class ButtonLed {
   private:

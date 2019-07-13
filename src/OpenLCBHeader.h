@@ -23,6 +23,7 @@
 
 #include "OlcbCommonVersion.h"
 #include "NodeID.h"
+#include "processor.h"
 
 typedef struct NodeVar_ {
     uint32_t magic;         // used to check eeprom status

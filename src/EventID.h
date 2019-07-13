@@ -3,7 +3,6 @@
 
 #include "stdint.h"
 
-//#include <Arduino.h>
 class Event;
 class EventsIndex;
 
