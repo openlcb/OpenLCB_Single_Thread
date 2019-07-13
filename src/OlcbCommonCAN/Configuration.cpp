@@ -213,10 +213,11 @@ void Configuration::processCmd(uint8_t* data, int length) {
         case CFG_CMD_RESETS:
             // will handle, mark as done.
             request = false;
-            Serial.print("\n Request to reboot"); Serial.flush();
+            LDEBUG("\n Request to reboot");
             // force restart (may not reply?)
             if(restart) restart();
-            Serial.print("\n Request returned?!"); Serial.flush(); while(0==0){}
+            LDEBUG("\n Oops Restart Request returned?!"); 
+            while(0==0){}
             break;
         // TODO: Handle other cases:
         //case CFG_CMD_CFG_CMD_GET_CONFIG_REPLY :

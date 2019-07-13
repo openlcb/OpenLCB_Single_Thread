@@ -28,7 +28,7 @@ void NodeMemory::forceInitAll() {
     EEPROM.write(0,0xFF);
     EEPROM.write(1,0xFF);
     EEPROMcommit;
-    Serial.print("\n NodeMemory::forceInitAll() completed");
+    LDEBUG("\n NodeMemory::forceInitAll() completed");
 }
 
 void NodeMemory::forceInitEvents() {
@@ -84,7 +84,7 @@ void NodeMemory::setup(NodeID* nid, Event* _cE, uint8_t _nC, uint16_t eeprom_siz
         reset(nid, cE, nC);
         userInitAll();  // user init
         EEPROMcommit;   // defined in processor.h
-        Serial.print("\n EEPROMcommit completed");
+        LDEBUG("\n EEPROMcommit completed");
     }
     
     // read NodeID from non-volative memory

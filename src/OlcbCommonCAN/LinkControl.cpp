@@ -114,10 +114,10 @@ bool LinkControl::sendAMR() {
 
 bool LinkControl::sendFrame() {
     //LDEBUG("\nIn LinkControl::sendFrame");
-    //Serial.print("\n LinkControl::sendframe()#A");
+    //LDEBUG("\n LinkControl::sendframe()#A");
 
     if (!txBuffer->net->txReady()) return false; // couldn't send just now
-    //Serial.print("\n LinkControl::sendframe()#B");
+    //LDEBUG("\n LinkControl::sendframe()#B");
 
     txBuffer->net->write(200); // wait for queue, but earlier check says will succeed
   return true;
@@ -125,7 +125,7 @@ bool LinkControl::sendFrame() {
 
 void LinkControl::check() {
     //LDEBUG("\nIn LinkControl::check");
-    //Serial.print("\n LinkControl::check()#A");
+    //LDEBUG("\n LinkControl::check()#A");
 
   // find current state and act
   if (state == STATE_INITIALIZED) return;
@@ -135,10 +135,10 @@ void LinkControl::check() {
   case STATE_INITIAL+2:
   case STATE_INITIAL+3:
     // send next CIM message if possible
-          //Serial.print("\n LinkControl::check()#B");
+          //LDEBUG("\n LinkControl::check()#B");
     if (sendCIM(state-STATE_INITIAL))
       state++;
-          //Serial.print("\n LinkControl::check()#C");
+          //LDEBUG("\n LinkControl::check()#C");
     return;
   case STATE_INITIAL+4:
     // last CIM, sent, wait for delay

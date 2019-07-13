@@ -24,6 +24,7 @@
 #include "OlcbCan.h"
 #include "NodeID.h"
 #include "EventID.h"
+#include "lib_debug_print_common.h"
 
 // for definiton, see
 // http://openlcb.sf.net/trunk/documents/can/index.html
@@ -325,17 +326,17 @@ void OlcbCanInterface::setFrameTypeCAN(uint16_t alias, uint16_t var) {
 }
 
 void OlcbCanInterface::setSourceAlias(uint16_t a) {
-                    //Serial.print("\nOlcbCanInterface::setSourceAlias() alias=");
-                    //Serial.print(a,HEX);
+                    //LDEBUG("\nOlcbCanInterface::setSourceAlias() alias=");
+                    //LDEBUG2(a,HEX);
     net->id &= ~MASK_SRC_ALIAS;
     net->id |= a & MASK_SRC_ALIAS;
-                    //Serial.print(" id="); Serial.print(net->id,HEX);
+                    //LDEBUG(" id="); LDEBUG2(net->id,HEX);
 }
 uint16_t OlcbCanInterface::getSourceAlias() {
-                    //Serial.print("\nOlcbCanInterface::getSourceAlias() id=");
-                    //Serial.print(net->id,HEX);
-                    //Serial.print(" srcAlias=");
-                    //Serial.print(net->id & MASK_SRC_ALIAS,HEX);
+                    //LDEBUG("\nOlcbCanInterface::getSourceAlias() id=");
+                    //LDEBUG2(net->id,HEX);
+                    //LDEBUG(" srcAlias=");
+                    //LDEBUG2(net->id & MASK_SRC_ALIAS,HEX);
         return net->id & MASK_SRC_ALIAS;
 }
 
