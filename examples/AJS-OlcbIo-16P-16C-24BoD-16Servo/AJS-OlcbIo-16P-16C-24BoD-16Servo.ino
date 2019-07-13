@@ -13,8 +13,6 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
-#include "debug.h"
-
 // Board definitions
 #define MANU "OpenLCB"           // The manufacturer of node
 #define MODEL "OlcbBasicNode"    // The model of the board
@@ -34,11 +32,20 @@
 
 #define NUM_EVENT  ((NUM_OUTPUTS*2) + (NUM_INPUTS * 2) + (NUM_BOD_INPUTS * 2) + (NUM_SERVOS * 2))
 
-#include "processor.h"            // auto-selects the processor type, and CAN lib, EEPROM lib etc.  
 #include "OpenLCBHeader.h"
-//#include "AT90can.h"
 
-#define DEBUG_BAUD_RATE 115200
+#define ENABLE_DEBUG_PRINT
+#ifdef ENABLE_DEBUG_PRINT
+  #define DEBUG_BAUD_RATE 115200
+
+  #define DEBUG(x) Serial.print(x)
+  #define DEBUGL(x) Serial.println(x);
+  #define DEBUGHEX(x,y) Serial.print(x,y);
+#else
+  #define DEBUG(x)
+  #define DEBUGL(x)
+  #define DEBUGHEX(x,y)
+#endif
 
 #define SERVO_POS_DEG_THROWN  60
 #define SERVO_POS_DEG_CLOSED  120
