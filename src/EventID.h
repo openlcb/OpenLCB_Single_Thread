@@ -3,11 +3,6 @@
 
 #include "stdint.h"
 
-class Event;
-class EventsIndex;
-
-class EventID;
-
 class EventID {
   public: 
     uint8_t val[8];
@@ -18,12 +13,9 @@ class EventID {
     
     bool equals(EventID* n);
     
+    int compare(EventID *key);
+    
     void print();
-    
-    //void writeEID(int index);
-    
-    int findIndexInArray(uint16_t* events, int len, int start);
-    
 };
 
 

@@ -9,8 +9,6 @@
 #ifndef OpenLCBMid_h
 #define OpenLCBMid_h
 
-#define NV(x) EEADDR(nodeVar.x)
-
 #include "NodeID.h"
 #include "EventID.h"
 #include "Event.h"
@@ -57,22 +55,24 @@ extern "C" {
     // It has two fields:
     //   offset = offset to each eventID in the MemStruct in EEPROM
     //   flags = the initial flags indicating whether the eventID showed be announced at startup
+    
     uint16_t getOffset(unsigned index) {
         return pgm_read_word(&eidtab[index].offset);
     }
+
     uint16_t getFlags(unsigned index) {
         return pgm_read_word(&eidtab[index].flags);
     }
 
-    uint32_t spaceUpperAddr(uint8_t space) {  // return last valid address
-        switch (space) {
-            case 255: return sizeof(configDefInfo) - 1; // CDI (data starts at zero)
-            case 254: return RAMEND; // RAM from Arduino definition
-            case 253: return LAST_EEPROM; // Configuration
-        }
-        return (uint32_t)3;
-    }
-    
+//     uint32_t spaceUpperAddr(uint8_t space) {  // return last valid address
+//         switch (space) {
+//             case 255: return sizeof(configDefInfo) - 1; // CDI (data starts at zero)
+//             case 254: return RAMEND; // RAM from Arduino definition
+//             case 253: return LAST_EEPROM; // Configuration
+//         }
+//         return (uint32_t)3;
+//     }
+//     
     uint8_t getRead(uint32_t address, int space) {
         if (space == 0xFF) { // 255
             // Configuration definition information
@@ -114,15 +114,16 @@ extern "C" {
         }
         // all other spaces not written
     }
-    
-    void printeidtab() {
-        LDEBUG("\neidtab:\n");
-        for(int i=0;i<NUM_EVENT;i++) {
-            LDEBUG("[");
-            LDEBUG2(getOffset(i),HEX); LDEBUG(", ");
-            LDEBUG2(getFlags(i),HEX); LDEBUG("], ");
-        }
-    }
+//     
+//     void printeidtab() {
+//         LDEBUG("\neidtab:\n");
+//         for(int i=0;i<NUM_EVENT;i++) {
+//             LDEBUG("[");
+//             LDEBUG2(getOffset(i),HEX); LDEBUG(", ");
+//             LDEBUG2(getFlags(i),HEX); LDEBUG("], ");
+//         }
+//     }
+
     // Extras
     void printEventIndexes() {
         LDEBUG(F("\nprintEventIndex\n"));
@@ -140,29 +141,29 @@ extern "C" {
             LDEBUG(F(" : ")); event[i].eid.print();
         }
     }
-    
-    void printEventids() {
-        LDEBUG("\neventids:");
-        for(int e=0;e<NUM_EVENT;e++) {
-            LDEBUG("\n[");
-            for(int i=0;i<8;i++) {
-                LDEBUG2(event[e].eid.val[i],HEX); LDEBUG(", ");
-            }
-        }
-    }
-    void printSortedEvents() {
-        LDEBUG("\nSorted events");
-        for(int i=0; i<NUM_EVENT; i++) {
-            LDEBUG("\n");
-            LDEBUG(i); LDEBUG(": ");
-            int e = eventIndex[i];
-            LDEBUG(e); LDEBUG(": ");
-            for(int j=0;j<8;j++) {
-                LDEBUG(event[e].eid.val[j]);
-                LDEBUG(".");
-            }
-        }
-    }
+//     
+//     void printEventids() {
+//         LDEBUG("\neventids:");
+//         for(int e=0;e<NUM_EVENT;e++) {
+//             LDEBUG("\n[");
+//             for(int i=0;i<8;i++) {
+//                 LDEBUG2(event[e].eid.val[i],HEX); LDEBUG(", ");
+//             }
+//         }
+//     }
+//     void printSortedEvents() {
+//         LDEBUG("\nSorted events");
+//         for(int i=0; i<NUM_EVENT; i++) {
+//             LDEBUG("\n");
+//             LDEBUG(i); LDEBUG(": ");
+//             int e = eventIndex[i];
+//             LDEBUG(e); LDEBUG(": ");
+//             for(int j=0;j<8;j++) {
+//                 LDEBUG(event[e].eid.val[j]);
+//                 LDEBUG(".");
+//             }
+//         }
+//     }
     void printEeprom() {
         LDEBUG("\nEEPROM:");
         LDEBUG(F("\n    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 0123456789ABCDEF"));
@@ -254,19 +255,6 @@ extern "C" {
     }
 }
 
-static int sortCompare(const void* a, const void* b){
-    uint16_t ia = *(uint16_t*)a;
-    uint16_t ib = *(uint16_t*)b;
-            //LDEBUG("\nIn sortCompare!! ia=");LDEBUG(ia);
-            //LDEBUG(" ib=");LDEBUG(ib);
-    for(unsigned int i=0; i<8; i++) {
-        if(event[ia].eid.val[i]>event[ib].eid.val[i]) return 1;
-        if(event[ia].eid.val[i]<event[ib].eid.val[i]) return -1;
-    }
-    return 0; // they are equal
-}
-
-
 extern void initTables(){        // initialize tables
     dP("\n initTables");
     for(unsigned int e=0; e<NUM_EVENT; e++) {
@@ -274,24 +262,8 @@ extern void initTables(){        // initialize tables
         EEPROM.get(getOffset(e), event[e].eid);
         event[e].flags |= getFlags(e);
     }
-
-    /* testing
-    event[0].eid.val[7]=7;
-    event[1].eid.val[7]=4;
-    event[2].eid.val[7]=5;
-    event[3].eid.val[7]=4;
-    event[4].eid.val[7]=4;
-    event[5].eid.val[7]=4;
-    event[6].eid.val[7]=1;
-    event[7].eid.val[7]=0;
-
-    printEventIndexes();
-    printEvents();
-        qsort( eventIndex, NUM_EVENT, sizeof(eventIndex[0]), sortCompare);
-    printEventIndexes();
-    printEvents();
-    */
-
+    
+// AJS need to sort eventIndex, only works because EventIDs happen to already be in sorted order    
 }
 
 // ===== System Interface
@@ -320,12 +292,12 @@ void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
 }
 
 // Soft reset, reinitiatize from EEPROM, but maintain present CAN Link.
-void Olcb_softReset() {
-    dP(F("\nIn olcb_softReset"));
-    nm.setup(&nodeid, event, NUM_EVENT, (uint16_t)sizeof(MemStruct));
-    dP(F("\nIn olcb::softreset nm.setup()"));
-    initTables();
-}
+// void Olcb_softReset() {
+//     dP(F("\nIn olcb_softReset"));
+//     nm.setup(&nodeid, event, NUM_EVENT, (uint16_t)sizeof(MemStruct));
+//     dP(F("\nIn olcb::softreset nm.setup()"));
+//     initTables();
+// }
 
 
 // Main processing loop
@@ -385,7 +357,6 @@ bool Olcb_process() {   // was loop()
                     //LDEBUG(F("\nLeft SNII_check()")); while(0==0){}
         //produceFromInputs();  ??
     }
-                    //Serial.flush();
     return rcvFramePresent;
 }
 

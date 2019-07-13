@@ -9,24 +9,83 @@
 #include "OlcbCanInterface.h"
 #include "lib_debug_print_common.h"
 
-// Mark as waiting to have Identify sent
-#define IDENT_FLAG 0x01
-// Mark produced event for send
-#define PRODUCE_FLAG 0x02
-// Mark entry as really empty, ignore
-#define EMPTY_FLAG 0x04
-// Mark entry to written from next learn message
-#define LEARN_FLAG 0x08
-// Mark entry to send a learn message
-#define TEACH_FLAG 0x10
 
 extern "C" {
-    extern EventID getEID(unsigned i);
     extern void writeEID(int index);
 }
 
+// avr-libc bsearch source code 
+// void *
+// bsearch(register const void *key, const void *base0, size_t nmemb,
+//         register size_t size, register int (*compar)(const void *, const void *))
+// {
+// 	register const char *base = base0;
+// 	register size_t lim;
+// 	register int cmp;
+// 	register const void *p;
+// 
+// 	for (lim = nmemb; lim != 0; lim >>= 1) {
+// 		p = base + (lim >> 1) * size;
+// 		cmp = (*compar)(key, p);
+// 		if (cmp == 0)
+// 			return ((void *)p);
+// 		if (cmp > 0) {	/* key > p: move right */
+// 			base = (char *)p + size;
+// 			lim--;
+// 		}		/* else move left */
+// 	}
+// 	return (NULL);
+// }
+
+// implement findIndexOfEventID based on avr-libc bsearch() code above
+ 
+int16_t PCE::findIndexOfEventID(EventID *key, int16_t startIndex)
+{
+	register int16_t base = 0;
+	register int16_t lim;
+	register int16_t p;
+	register int cmp;
+	
+		// First time called startIndex == -1
+	if(startIndex == -1)
+	{
+		for (lim = nEvents; lim != 0; lim >>= 1)
+		{
+			p = base + (lim >> 1);
+			cmp = events[p].eid.compare(key);
+			if (cmp == 0)
+			{
+				// Ok we have a match but step down the list checking for duplicates to find the first match
+				while(p > 0)
+				{
+						// if not equal then we we have the first match
+					if(!events[p - 1].eid.equals(key));
+						return p;
+					p--;
+				}
+			}	
+			if (cmp > 0)
+			{
+				base = p + 1;
+				lim--;
+			}
+		}
+		return -1;
+	}
+	
+		// Already had a match so check the next entry in case there are duplicates 
+	else
+	{
+			// If a duplicate match then return startIndex
+		if(events[startIndex].eid.equals(key))
+			return startIndex;
+			
+			// Not a duplicate
+		return -1;
+	}
+}
+
 PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, void (*cb)(unsigned int i), LinkControl* li)
-//PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, void (*cb)(uint16_t i), LinkControl* li)
 {
       //events = evts;
     events = evts;
@@ -40,17 +99,16 @@ PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, void (*cb
       // ToDo: Is this needed if requiring newEvent?
       for (int i = 0; i < nEvents; i++) {
          if (events[i].flags & ( Event::CAN_PRODUCE_FLAG | Event::CAN_CONSUME_FLAG ))
-            events[i].flags = IDENT_FLAG;
+            events[i].flags |= Event::IDENT_FLAG;
       }
       sendEvent = 0;
   }
   
   void PCE::produce(int i) {
     // ignore if not producer
-    //if ((events[i].flags & Event::CAN_PRODUCE_FLAG) == 0) return;
     if ((events[i].flags & Event::CAN_PRODUCE_FLAG) == 0) return;
     // mark for production
-    events[i].flags |= PRODUCE_FLAG;
+    events[i].flags |= Event::PRODUCE_FLAG;
     sendEvent = sendEvent<i ? sendEvent : i;
   }
 
@@ -65,39 +123,38 @@ PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, void (*cb
      while (sendEvent < nEvents) {
          // OK to send, see if marked for some cause
          // ToDo: This only sends _either_ producer ID'd or consumer ID'd, not both
-         //EventID ev = events[sendEvent].getEID();
-         EventID ev = getEID(sendEvent);
+         EventID ev = events[sendEvent].eid;
          
                 //LDEBUG("\nPCE::check "); LDEBUG(ev.val[7]);
-                //LDEBUG(" I:"); LDEBUG(0!=(events[sendEvent].flags & IDENT_FLAG));
+                //LDEBUG(" I:"); LDEBUG(0!=(events[sendEvent].flags & Event::IDENT_FLAG));
                 //LDEBUG(" cP:"); LDEBUG(0!=(events[sendEvent].flags & Event::CAN_PRODUCE_FLAG));
                 //LDEBUG(" cC:"); LDEBUG(0!=(events[sendEvent].flags & Event::CAN_CONSUME_FLAG));
                 //LDEBUG(" P:"); LDEBUG(0!=(events[sendEvent].flags & PRODUCE_FLAG));
                 //LDEBUG(" E:"); LDEBUG(0!=(events[sendEvent].flags & EMPTY_FLAG));
-         if ( (events[sendEvent].flags & (IDENT_FLAG | Event::CAN_PRODUCE_FLAG)) == (IDENT_FLAG | Event::CAN_PRODUCE_FLAG)) {
+         if ( (events[sendEvent].flags & (Event::IDENT_FLAG | Event::CAN_PRODUCE_FLAG)) == (Event::IDENT_FLAG | Event::CAN_PRODUCE_FLAG)) {
                     //LDEBUG(F("\nPCE::check() produceIdent"));
-           events[sendEvent].flags &= ~IDENT_FLAG;    // reset flag
+           events[sendEvent].flags &= ~Event::IDENT_FLAG;    // reset flag
            buffer->setProducerIdentified(&ev);
            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
            buffer->net->write(200);  // wait until buffer queued, but OK due to earlier check
                     //LDEBUG(F("\nPCE::check() produceident2"));
            break; // only send one from this loop
-         } else if ( (events[sendEvent].flags & (IDENT_FLAG | Event::CAN_CONSUME_FLAG)) == (IDENT_FLAG | Event::CAN_CONSUME_FLAG)) {
+         } else if ( (events[sendEvent].flags & (Event::IDENT_FLAG | Event::CAN_CONSUME_FLAG)) == (Event::IDENT_FLAG | Event::CAN_CONSUME_FLAG)) {
                     //LDEBUG(F("\nPCE::check() consumeident"));
-           events[sendEvent].flags &= ~IDENT_FLAG;    // reset flag
+           events[sendEvent].flags &= ~Event::IDENT_FLAG;    // reset flag
            buffer->setConsumerIdentified(&ev);
            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
            buffer->net->write(200);  // wait until buffer queued, but OK due to earlier check
            break; // only send one from this loop
-         } else if (events[sendEvent].flags & PRODUCE_FLAG) {
-           events[sendEvent].flags &= ~PRODUCE_FLAG;    // reset flag
+         } else if (events[sendEvent].flags & Event::PRODUCE_FLAG) {
+           events[sendEvent].flags &= ~Event::PRODUCE_FLAG;    // reset flag
            buffer->setPCEventReport(&ev);
            handlePCEventReport(buffer);
              //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
            buffer->net->write(200);  // wait until buffer queued, but OK due to earlier check
            break; // only send one from this loop
-         } else if (events[sendEvent].flags & TEACH_FLAG) {
-           events[sendEvent].flags &= ~TEACH_FLAG;    // reset flag
+         } else if (events[sendEvent].flags & Event::TEACH_FLAG) {
+           events[sendEvent].flags &= ~Event::TEACH_FLAG;    // reset flag
            buffer->setLearnEvent(&ev);
            handleLearnEvent(buffer);
            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
@@ -114,7 +171,7 @@ PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, void (*cb
 
   void PCE::newEvent(int index, bool p, bool c) {
       //LDEBUG("\nnewEvent i=");
-    events[index].flags |= IDENT_FLAG;
+    events[index].flags |= Event::IDENT_FLAG;
     sendEvent = sendEvent < index ? sendEvent : index;
     if (p) events[index].flags |= Event::CAN_PRODUCE_FLAG;
     if (c) events[index].flags |= Event::CAN_CONSUME_FLAG;
@@ -123,14 +180,14 @@ PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, void (*cb
   
   void PCE::markToLearn(int index, bool mark) {
     if (mark)
-        events[index].flags |= LEARN_FLAG;
+        events[index].flags |= Event::LEARN_FLAG;
     else
-        events[index].flags &= ~LEARN_FLAG;
+        events[index].flags &= ~Event::LEARN_FLAG;
   }
 
 
 bool PCE::isMarkedToLearn(int index) {
-	return events[index].flags==LEARN_FLAG;
+	return events[index].flags==Event::LEARN_FLAG;
 }
 
 void PCE::sendTeach(EventID e) {   /// DPH added for Clock
@@ -141,7 +198,7 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
 
 
   void PCE::sendTeach(int index) {
-    events[index].flags |= TEACH_FLAG;
+    events[index].flags |= Event::TEACH_FLAG;
     sendEvent = sendEvent < index ? sendEvent : index;
   }
   
@@ -155,10 +212,11 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
         rcv->getEventID(&eventid);
         int index = -1; //
         // find consumers of event
-        while (-1 != (index = eventid.findIndexInArray(eventsIndex, nEvents, index))) {
+        while((index = findIndexOfEventID(&eventid, index)) != -1)
+        {
           // yes, we have to reply with ConsumerIdentified
           if (events[index].flags & Event::CAN_CONSUME_FLAG) {
-             events[index].flags |= IDENT_FLAG;
+             events[index].flags |= Event::IDENT_FLAG;
              sendEvent = sendEvent < index ? sendEvent : index;
           }
           index++;
@@ -170,10 +228,11 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
         rcv->getEventID(&eventid);
         int index = -1;
         // find producers of event
-        while (-1 != (index = eventid.findIndexInArray(eventsIndex, nEvents, index))) {
+        while((index = findIndexOfEventID(&eventid, index)) != -1)
+        {
           // yes, we have to reply with ProducerIdentified
           if (events[index].flags & Event::CAN_PRODUCE_FLAG) {
-             events[index].flags |= IDENT_FLAG;
+             events[index].flags |= Event::IDENT_FLAG;
              sendEvent = sendEvent < index ? sendEvent : index;
           }
           index++;
@@ -185,7 +244,7 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
         // if so, send _all_ ProducerIdentified, ConsumerIdentified
         // via the "check" periodic call
         for (int i = 0; i < nEvents; i++) {
-          events[i].flags |= IDENT_FLAG;
+          events[i].flags |= Event::IDENT_FLAG;
         }
         sendEvent = 0;  
     } else if (rcv->isPCEventReport()) {
@@ -206,7 +265,8 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
                 LDEBUG("\nIn handlePCEventReport: ");eventid.print();
       // find matching eventID
       int index = -1;
-      while ( -1 != (index = eventid.findIndexInArray(eventsIndex, nEvents, index))) {
+			while((index = findIndexOfEventID(&eventid, index)) != -1)
+			{
         uint16_t eindex = eventsIndex[index];
                 //LDEBUG("\nhandlePCRep ind: "); LDEBUG(ind);
                 //LDEBUG("\nhandlePCRep Index: "); LDEBUG(index);
@@ -234,18 +294,18 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
         EventID eid;
         rcv->getEventID(&eid);
                 //LDEBUG("\neid:"); eid.print();
-                //LDEBUG("\nLEARN_FLAG:"); LDEBUG2(LEARN_FLAG,HEX);
+                //LDEBUG("\nEvent::LEARN_FLAG:"); LDEBUG2(Event::LEARN_FLAG,HEX);
         for (int i=0; i<nEvents; i++) {
                 //LDEBUG("\ni:"); LDEBUG(i);
                 //LDEBUG("\nevents[i].flags:"); LDEBUG2(events[i].flags,HEX);
-            if ( (events[i].flags & LEARN_FLAG ) != 0 ) {
+            if ( (events[i].flags & Event::LEARN_FLAG ) != 0 ) {
                 //rcv->getEventID(events+i);
                 //LDEBUG("\ni:"); LDEBUG(i);
                 //LDEBUG("\neid.writeEID(i):");
                 //LDEBUG2(i,HEX);
                 writeEID(i);
-                events[i].flags |= IDENT_FLAG; // notify new eventID
-                events[i].flags &= ~LEARN_FLAG; // enough learning
+                events[i].flags |= Event::IDENT_FLAG; // notify new eventID
+                events[i].flags &= ~Event::LEARN_FLAG; // enough learning
                 sendEvent = sendEvent < i ? sendEvent : i;
                 //save = true;
             }

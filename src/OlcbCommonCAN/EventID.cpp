@@ -7,11 +7,8 @@
 //
 
 #include "EventID.h"
-#include "Event.h"
-#include "Index.h"
-#include <Arduino.h>
-#include "lib_debug_print_common.h"
 
+#include "lib_debug_print_common.h"
 
 EventID::EventID() {
     val[0] = 0;
@@ -35,11 +32,6 @@ EventID::EventID(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uin
     val[7] = b7;
 }
 
-extern "C" {
-    extern EventID getEID(unsigned int i);
-    extern uint16_t getOffset(uint16_t index);
-}
-
 bool EventID::equals(EventID* n) {
                         //LDEBUG("\nequals("); this->print();
                         //n->print(); LDEBUG(")");
@@ -49,62 +41,23 @@ bool EventID::equals(EventID* n) {
          &&(val[6]==n->val[6])&&(val[7]==n->val[7]);
 }
 
+int EventID::compare(EventID *key)
+{
+    for(int i=0; i<8; i++) {
+        if(key->val[i] > val[i])
+        		return 1;
+        		
+        if(key->val[i] < val[i]) 
+        		return -1;
+    }    
+		return 0;
+}
+
 void EventID::print() {
-    LDEBUG(" ");
-    LDEBUG2(val[0],HEX);
     LDEBUG(" ");
     LDEBUG2(val[0],HEX);
     for (int i=1;i<8;i++) {
         LDEBUG(",");
         LDEBUG2(val[i],HEX);
-        LDEBUG(",");
-        LDEBUG2(val[i],HEX);
     }
 }
-
-static int findCompare(const void* a, const void* b){
-    EventID* searchEID = (EventID*)a;
-    uint16_t ib = *(uint16_t*)b;
-    EventID eid = getEID(ib);
-                        //LDEBUG("\nIn findCompare!! ia=");
-                        //LDEBUG("\nia->"); searchEID->print();
-                        //LDEBUG("\nib->"); eid.print();
-    for(int i=0; i<8; i++) {
-        if(searchEID->val[i]>eid.val[i]) return 1;
-        if(searchEID->val[i]<eid.val[i]) return -1;
-    }
-    return 0; // they are equal
-}
-
-int EventID::findIndexInArray(uint16_t* eventIndex, int len, int start) {
-    // On initial call, pass start==-1
-    // on subsequent calls, pass last index
-    // start--index_into-->eventIndex[]--index_into-->events[]
-    EventID eid;
-    uint16_t* ei;
-                                //LDEBUG("\n EventID::findIndexInArray start=");LDEBUG(start);
-
-    if(start<-1 || (start)>=len) return -1; // if outside array bounds, quit
-
-    if(start==-1) {                          // if initial call, find a matching eventid
-                                //LDEBUG(F("\n EventID::findIndexInArray backup"));
-        ei =(uint16_t*)bsearch( (const void*)this, (const void*)eventIndex, len, sizeof(uint16_t), findCompare);
-        if(!ei) return -1;
-        while((ei-1)>=eventIndex ) {         // find the first matching eventid (there may be duplicates)
-            eid = getEID(*(ei-1));
-            if ( !this->equals(&eid) ) break;
-            ei--;
-        }
-                                //LDEBUG(F(" i="));LDEBUG(ei-&eventIndex[0]);
-    } else {
-        ei = &eventIndex[start];           // try this eventid
-                                //LDEBUG(F("\n EventID::findIndexInArray ei="));LDEBUG(ei-&eventIndex[0]);
-        eid = getEID(*ei);
-        if( !this->equals(&eid) ) return -1; // if doesn't match, quit
-    }
-                                //LDEBUG(F("\n EventID::findIndexInArray found i="));LDEBUG(ei-&eventIndex[0]);
-    return ei-&eventIndex[0];               // return index of found eventid
-}
-
-
-

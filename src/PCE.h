@@ -89,6 +89,7 @@ class PCE {
   bool isMarkedToLearn(int index);
 
 private:
+	int16_t findIndexOfEventID(EventID *key, int16_t startIndex);
   Event* events; // array
   Index* eventsIndex; // array
   int nEvents;

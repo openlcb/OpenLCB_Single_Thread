@@ -1,7 +1,6 @@
 #ifndef LinkControl_h
 #define LinkControl_h
 
-//class OpenLcbCanBuffer;
 class NodeID;
 #include <Arduino.h>
 #include <stdint.h>
