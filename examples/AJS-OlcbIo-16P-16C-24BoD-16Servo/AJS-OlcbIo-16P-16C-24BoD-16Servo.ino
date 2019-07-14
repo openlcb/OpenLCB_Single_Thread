@@ -1,10 +1,7 @@
 //==============================================================
-// Olcb 16P 16C 24BOD 16 Servo 
+// RailStars Upgraded 8-Outputs 8-Inputs 24-BoDs 16-Servos 
 // 
-//   setup() determines which are consumers and
-//   which are producers
-//
-//   Alex Shepherd and David Harris 2017
+// Copyright 2019 Alex Shepherd and David Harris
 //==============================================================
 #if !defined(ARDUINO_AVR_RS_IO)
   #error "Not an Io / AT90CAN"
@@ -14,10 +11,10 @@
 #include <Adafruit_PWMServoDriver.h>
 
 // Board definitions
-#define MANU "OpenLCB"           // The manufacturer of node
-#define MODEL "OlcbBasicNode"    // The model of the board
-#define HWVERSION "0.1"          // Hardware version
-#define SWVERSION "0.1"          // Software version
+#define MANU "RailStars"  // The manufacturer of node
+#define MODEL "Io"        // The model of the board
+#define HWVERSION "1.0"   // Hardware version
+#define SWVERSION "2.0"   // Software version
 
 // User defs
 #define NUM_OUTPUTS     8
@@ -47,11 +44,12 @@
   #define DEBUGHEX(x,y)
 #endif
 
+#define SERVO_PWM_DEG_0    120 // this is the 'minimum' pulse length count (out of 4096)
+#define SERVO_PWM_DEG_180  590 // this is the 'maximum' pulse length count (out of 4096)
+
 #define SERVO_POS_DEG_THROWN  60
 #define SERVO_POS_DEG_CLOSED  120
 
-NodeID nodeid(0x05,0x02,0x01,0x02,0x02,0x24);    // This node's default ID; must be valid 
-  
  // CDI (Configuration Description Information) in xml, must match MemStruct
  // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
     extern "C" { 
@@ -82,7 +80,24 @@ NodeID nodeid(0x05,0x02,0x01,0x02,0x02,0x24);    // This node's default ID; must
                       <eventid><name>Block Empty Event</name></eventid>
                       <eventid><name>Block Occupied Event</name></eventid>
                   </group>
-                 <group replication='16'>
+                  <group>
+                      <name>Turnout Servo PWM Calibration</name>
+                      <int size='2'>
+                          <min>0</min>
+                          <max>4095</max>
+                          <default>120</default>
+                          <name>Servo PWM Min</name>
+                          <description>PWM Value for Servo 0 Degree Position</description>
+                      </int>
+                      <int size='2'>
+                          <min>0</min>
+                          <max>4095</max>
+                          <default>590</default>
+                          <name>Servo PWM Max</name>
+                          <description>PWM Value for Servo 180 Degree Position</description>
+                      </int>
+                   </group>
+                   <group replication='16'>
                       <name>Turnout Servo Control</name>
                       <repname>Servo</repname>
                       <string size='16'><name>Description</name></string>
@@ -128,6 +143,8 @@ NodeID nodeid(0x05,0x02,0x01,0x02,0x02,0x24);    // This node's default ID; must
             EventID empty;        // eventID which is Produced on Block Empty
             EventID occupied;     // eventID which is Produced on Block Occupied 
           } bodInputs[NUM_BOD_INPUTS];
+          uint16_t ServoPwmMin;
+          uint16_t ServoPwmMax;
           struct {
             char desc[16];        // description of this Servo Turnout Driver
             EventID thrown;       // consumer eventID which sets turnout to Diverging 
@@ -137,6 +154,24 @@ NodeID nodeid(0x05,0x02,0x01,0x02,0x02,0x24);    // This node's default ID; must
           } servoOutputs[NUM_SERVOS];
       // ===== Enter User definitions above =====
     } MemStruct;                 // type definition
+
+#define E16BITVAL(x)  ESTRING((x>>8)|x<<8)
+
+void userInitAll()
+{
+  EEPROM.put(EEADDR(ServoPwmMin), E16BITVAL(SERVO_PWM_DEG_0));
+  EEPROM.put(EEADDR(ServoPwmMax), E16BITVAL(SERVO_PWM_DEG_180));
+
+  uint8_t posThrown = SERVO_POS_DEG_THROWN;
+  uint8_t posClosed = SERVO_POS_DEG_CLOSED;
+  
+  for(uint8_t i = 0; i < NUM_SERVOS; i++)
+  {
+    EEPROM.put(EEADDR(servoOutputs[i].thrownPos), posThrown);
+    EEPROM.put(EEADDR(servoOutputs[i].closedPos), posClosed);
+  }
+}
+
 
 extern "C" {
   // ===== eventid Table =====
@@ -157,7 +192,7 @@ extern "C" {
       
  // SNIP Short node description for use by the Simple Node Information Protocol 
  // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.3-SimpleNodeInformation-2016-02-06.pdf
-    extern const char SNII_const_data[] PROGMEM = "\001OpenLCB\000AJS-Io-16P-16C-24BoD-16Servo\0001.0\000" OlcbCommonVersion ; // last zero in double-quote
+    extern const char SNII_const_data[] PROGMEM = "\001RailStars\000Io 8-Out 8-In 24-BoD 16-Servo\0001.0\0002.0" ; // last zero in double-quote
 
 } // end extern "C"
 
@@ -185,13 +220,15 @@ const uint8_t bodPinNums[]    = {16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35,
 
 uint8_t BoDStates[]           = { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0};
 
+uint8_t servoStates[]           = { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0};
+
 ButtonLed blue(BLUE, LOW);
 ButtonLed gold(GOLD, LOW);
 
 Adafruit_PWMServoDriver servoPWM = Adafruit_PWMServoDriver();
-#define SERVO_PWM_DEG_0    120 // this is the 'minimum' pulse length count (out of 4096)
-#define SERVO_PWM_DEG_180  590 // this is the 'maximum' pulse length count (out of 4096)
-uint8_t servonum = 0;
+
+uint16_t servoPwmMin = SERVO_PWM_DEG_0;
+uint16_t servoPwmMax = SERVO_PWM_DEG_180;
 
 // ===== Process Consumer-eventIDs =====
    void pceCallback(unsigned int index) {
@@ -214,14 +251,22 @@ uint8_t servonum = 0;
       {
         uint8_t outputIndex = (index - FIRST_SERVO_EVENT_INDEX) / 2;
         uint8_t outputState = (index - FIRST_SERVO_EVENT_INDEX) % 2;
-    
-        uint8_t servoPosDegrees = outputState ? EEPROM.read(EEADDR(servoOutputs[outputIndex].closedPos)) : EEPROM.read(EEADDR(servoOutputs[outputIndex].thrownPos)); 
-        uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, SERVO_PWM_DEG_0, SERVO_PWM_DEG_180);
-    
-        DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" Pos: ")); DEBUG(servoPosDegrees); DEBUG(F(" PWM: ")); DEBUGL(servoPosPWM);
-        servoPWM.setPWM(outputIndex, 0, servoPosPWM);
+        servoStates[outputIndex] = outputState;
+        
+        servoSet(outputIndex, outputState);
       }
    }
+
+// Set servo i's position to p
+void servoSet(uint8_t outputIndex, uint8_t outputState)
+{
+  uint8_t servoPosDegrees = outputState ? EEPROM.read(EEADDR(servoOutputs[outputIndex].closedPos)) : EEPROM.read(EEADDR(servoOutputs[outputIndex].thrownPos)); 
+  uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
+  DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" Pos: ")); DEBUG(servoPosDegrees); DEBUG(F(" PWM: ")); DEBUGL(servoPosPWM);
+  servoPWM.setPWM(outputIndex, 0, servoPosPWM);
+}
+
+
 
 void produceFromInputs() {
   // called from loop(), this looks at changes in input pins and 
@@ -263,6 +308,7 @@ void produceFromInputs() {
 #ifdef ENABLE_DEBUG_PRINT
       if(bodPinNums[bodScanIndex] == 32) bodScanIndex+=2;
 #endif      
+
       uint8_t inputVal = digitalRead( bodPinNums[bodScanIndex]);
       //Serial.print(" NewValue: "); Serial.println(inputVal);
       if(BoDStates[bodScanIndex] != inputVal)
@@ -285,72 +331,82 @@ void produceFromInputs() {
   }
 }
 
-void userInitAll() {}
 void userSoftReset() {}
 void userHardReset() {}
 
 #include "OpenLCBMid.h"
 
-// Set servo i's position to p
-void servoSet(uint8_t i, unsigned int p) {
-  unsigned int servoPosPWM = map(p, 0, 180, SERVO_PWM_DEG_0, SERVO_PWM_DEG_180);
-  //DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" Pos: ")); DEBUG(servoPosDegrees); DEBUG(F(" PWM: ")); DEBUGL(servoPosPWM);
-  servoPWM.setPWM(i, 0, servoPosPWM);
-}
-
 // Callback from a Configuration write
 // Use this to detect changes in the ndde's configuration
 // This may be useful to take immediate action on a change.
 // 
-    void configWritten(unsigned int address, unsigned int length) {
-      // example: if a servo's position changed, then update it immediately
-      uint8_t posn;
-      for(unsigned i=0; i<NUM_SERVOS; i++) {
-          unsigned int pposn = pmem->servoOutputs[i].thrownPos; 
-          if( (address<=pposn) && (pposn<(address+length) ) ) {
-            posn = EEPROM.read(pposn);
-            servoSet(i,posn);
-            return;
-          }
-          pposn = pmem->servoOutputs[i].closedPos; 
-          if( (address<=pposn) && (pposn<(address+length) ) ) {
-            posn = EEPROM.read(pposn);
-            servoSet(i,posn); 
-            return;   
-          }
-       }
-    }
+#define BYTE_SWAP(x) x = (x >> 8) | (x << 8)
 
+void userConfigWritten(unsigned int address, unsigned int length, unsigned int func)
+{
+  DEBUG("\nuserConfigWritten: Addr: "); DEBUG(address); DEBUG("  Len: "); DEBUG(length); DEBUG("  Func: "); DEBUGL(func);
+  if(address == offsetof(MemStruct, ServoPwmMin) && (length >= sizeof(uint16_t)))
+  {
+    EEPROM.get(EEADDR(ServoPwmMin), servoPwmMin); BYTE_SWAP(servoPwmMin);
+    DEBUG("Changed: ServoPwmMin: "); DEBUGL(servoPwmMin); 
+  }
+  
+  else if(address == offsetof(MemStruct, ServoPwmMax) && (length >= sizeof(uint16_t)))
+  {
+    EEPROM.get(EEADDR(ServoPwmMax), servoPwmMax); BYTE_SWAP(servoPwmMax);
+    DEBUG("Changed: ServoPwmMax: "); DEBUGL(servoPwmMax);
+  }
+
+  else if(address >= offsetof(MemStruct, servoOutputs))
+  {
+    DEBUGL("Changed: Servo Data");
+
+    for(uint8_t i = 0; i < NUM_SERVOS; i++)
+      servoSet(i, servoStates[i]);
+  }
+}
+
+void setRailStartIoNodeId(uint8_t lastByteValue)
+{
+  NodeID newNodeID(0x05, 0x02, 0x01, 0x02, 0x02, lastByteValue);
+  nm.store(&newNodeID);
+}
 
 // ==== Setup does initial configuration ======================
-    void setup()
-    { 
-        #ifdef DEBUG_BAUD_RATE
-          Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\nAJS OlcbIo 16P 16C 24BoD 16Servo"));
-        #endif  
+void setup()
+{ 
+#ifdef DEBUG_BAUD_RATE
+  Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\nRailStars Io 8-Out 8-In 24-BoD 16-Servo"));
+  setDebugStream(&Serial);
+#endif  
 
-        // Setup Output Pins
-        for(uint8_t i = 0; i < NUM_OUTPUTS; i++)
-          pinMode(outputPinNums[i], OUTPUT);
-      
-        // Setup Input Pins
-        for(uint8_t i = 0; i < NUM_INPUTS; i++)
-          pinMode(inputPinNums[i], INPUT_PULLUP);
-      
-        // Setup BoD Input Pins
-        for(uint8_t i = 0; i < NUM_BOD_INPUTS; i++)
-          pinMode(bodPinNums[i], INPUT_PULLUP);
+  // Setup Output Pins
+  for(uint8_t i = 0; i < NUM_OUTPUTS; i++)
+    pinMode(outputPinNums[i], OUTPUT);
 
-//        nm.store(&nodeid);
-        //nm.forceInitAll();   
-                
-//        #define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
-        Olcb_init(FORCE_ALL_INIT);
+  // Setup Input Pins
+  for(uint8_t i = 0; i < NUM_INPUTS; i++)
+    pinMode(inputPinNums[i], INPUT_PULLUP);
 
-        printEeprom();
-        servoPWM.begin();
-        servoPWM.setPWMFreq(60);
-    }
+  // Setup BoD Input Pins
+  for(uint8_t i = 0; i < NUM_BOD_INPUTS; i++)
+    pinMode(bodPinNums[i], INPUT_PULLUP);
+
+  // To Reset the RailStars Io Node Number, Uncomment and edit the next line
+  setRailStartIoNodeId(0x24);
+
+// #define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
+  Olcb_init(FORCE_ALL_INIT);
+
+  servoPWM.begin();
+  servoPWM.setPWMFreq(60);
+
+  EEPROM.get(EEADDR(ServoPwmMin), servoPwmMin); BYTE_SWAP(servoPwmMin);
+  EEPROM.get(EEADDR(ServoPwmMax), servoPwmMax); BYTE_SWAP(servoPwmMax);
+
+  for(uint8_t i = 0; i < NUM_SERVOS; i++)
+    servoSet(i, 0);
+}
 
 // ==== Loop ==========================
     void loop() {    

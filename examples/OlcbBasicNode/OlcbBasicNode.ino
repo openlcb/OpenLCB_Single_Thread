@@ -15,7 +15,8 @@
 
 // Node ID --- this must come from a range controlled by the user.  
 // See: http://registry.openlcb.org/uniqueidranges
-#define NODEID 2,1,13,0,0,0x07   // DIY range example, not for global use.  
+// Uncomment the NODEID line below to force the NodeID to be written to the board 
+//#define NODEID 2,1,13,0,0,0x07   // DIY range example, not for global use.  
 
 // Board definitions
 #define MANU "OpenLCB"           // The manufacturer of node
@@ -35,8 +36,6 @@
   
 #include "processor.h"            // auto-selects the processor type, and CAN lib, EEPROM lib etc.  
 #include "OpenLCBHeader.h"        // System house-keeping.
-
-NodeID nodeid(NODEID);            // instansiate the nodeid
 
 extern "C" {                      // the following are defined as external
 
@@ -271,6 +270,11 @@ void setup() {
     delay(250);Serial.begin(115200);dP(F("\nOlcbBasicNode\n"));
     delay(1000);
   #endif
+
+#ifdef NODEID
+  NodeID newNodeID(NODEID);
+  nm.store(&newNodeID);
+#endif
 
   //#define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
   Olcb_init(FORCE_ALL_INIT);
