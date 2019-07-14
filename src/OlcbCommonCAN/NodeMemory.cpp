@@ -25,16 +25,16 @@ NodeMemory::NodeMemory(int start) {
 
 void NodeMemory::forceInitAll() {
     //LDEBUG("\nforceInitAll");
-    EEPROM.write(0,0xFF);
-    EEPROM.write(1,0xFF);
+    EEPROM.update(0,0xFF);
+    EEPROM.update(1,0xFF);
     EEPROMcommit;
     LDEBUG("\n NodeMemory::forceInitAll() completed");
 }
 
 void NodeMemory::forceInitEvents() {
     //LDEBUG("\nforceInitEvents");
-    EEPROM.write(2,0x33);
-    EEPROM.write(3,0xCC);
+    EEPROM.update(2,0x33);
+    EEPROM.update(3,0xCC);
     EEPROMcommit;
 }
 
@@ -78,7 +78,7 @@ void NodeMemory::setup(NodeID* nid, Event* _cE, uint8_t _nC, uint16_t eeprom_siz
         // fires a factory reset
         //clear EEPROM
         for(unsigned i=0; i<eeprom_size; i++)
-            EEPROM.write(i,0);
+            EEPROM.update(i,0);
         nextEID = 0;
         // handle the rest
         reset(nid, cE, nC);
@@ -113,20 +113,20 @@ void NodeMemory::store(NodeID* nid) {
     
     int addr = startAddress;
     // write tag
-    EEPROM.write(addr++, 0xEE);
-    EEPROM.write(addr++, 0x55);
-    EEPROM.write(addr++, 0x5E);
-    EEPROM.write(addr++, 0xE5);
+    EEPROM.update(addr++, 0xEE);
+    EEPROM.update(addr++, 0x55);
+    EEPROM.update(addr++, 0x5E);
+    EEPROM.update(addr++, 0xE5);
 
     // write count
-    EEPROM.write(addr++, (nextEID>>8)&0xFF);
-    EEPROM.write(addr++, (nextEID)&0xFF);
+    EEPROM.update(addr++, (nextEID>>8)&0xFF);
+    EEPROM.update(addr++, (nextEID)&0xFF);
     
     // write NodeID
     uint8_t* p;
     p = (uint8_t*)nid;
     for (uint8_t i=0; i<sizeof(NodeID); i++) 
-        EEPROM.write(addr++, *p++);
+        EEPROM.update(addr++, *p++);
     EEPROMcommit;
 }
 

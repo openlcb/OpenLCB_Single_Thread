@@ -145,7 +145,7 @@ void BG::sendIdent() {
  */
 void BG::factoryReset() {
     // write to keep teh node ID, but reload everything else
-    EEPROM.write(2,0x33);
-    EEPROM.write(3,0xCC);
+    EEPROM.update(2,0x33);
+    EEPROM.update(3,0xCC);
     REBOOT;  // defined in processor.h for each mpu
 }

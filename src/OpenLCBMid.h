@@ -109,7 +109,7 @@ extern "C" {
             *(((uint8_t*)&rxBuffer)+address) = val;
         } else if (space == 0xFD) {
             // Configuration space
-            EEPROM.write(address, val);
+            EEPROM.update(address, val);
             //eepromDirty = true;                 // ???
         }
         // all other spaces not written
@@ -281,20 +281,20 @@ extern void initTables(){        // initialize tables
 
 // ===== System Interface
 void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
-            //LDEBUG("\nIn olcb::init");
+            LDEBUG("\nIn olcb::init");
     EEPROMbegin;       // defined in processor.h
     if(forceEEPROMInit)
         nm.forceInitAll();  // factory reset
     
     eepromDirty = false;
     nm.setup(&nodeid, event, NUM_EVENT, (uint16_t)sizeof(MemStruct));
-            //LDEBUG("\nIn olcb::init1");
+            LDEBUG("\nIn olcb::init1");
     
     initTables();
-//     printEventIndexes();
+    printEventIndexes();
     printSortedEvents();
-//     printEvents();
-            //LDEBUG("\nIn olcb::init2");
+    printEvents();
+            LDEBUG("\nIn olcb::init2");
 
     PIP_setup(&txBuffer, &clink);
     SNII_setup((uint8_t)sizeof(SNII_const_data), SNII_var_offset, &txBuffer, &clink);
