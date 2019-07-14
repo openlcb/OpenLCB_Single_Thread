@@ -262,7 +262,7 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
                 //LDEBUG("\nIn handlePCEventReport");
       EventID eventid;
       rcv->getEventID(&eventid);
-                LDEBUG("\nIn handlePCEventReport: ");eventid.print();
+//                 LDEBUG("\nIn handlePCEventReport: ");eventid.print();
       // find matching eventID
       int index = -1;
 			while((index = findIndexOfEventID(&eventid, index)) != -1)

@@ -161,6 +161,7 @@ extern "C" {
             LDEBUG("  EventID:"); 		 event[e].eid.print();
             LDEBUG("  Flags: ");       LDEBUG2(event[e].flags,HEX);
         }
+        LDEBUGL();
     }
 
     void printEeprom() {
@@ -281,20 +282,20 @@ extern void initTables(){        // initialize tables
 
 // ===== System Interface
 void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
-            LDEBUG("\nIn olcb::init");
+//             LDEBUG("\nIn olcb::init");
     EEPROMbegin;       // defined in processor.h
     if(forceEEPROMInit)
         nm.forceInitAll();  // factory reset
     
     eepromDirty = false;
     nm.setup(&nodeid, event, NUM_EVENT, (uint16_t)sizeof(MemStruct));
-            LDEBUG("\nIn olcb::init1");
+//             LDEBUG("\nIn olcb::init1");
     
     initTables();
-    printEventIndexes();
-    printSortedEvents();
-    printEvents();
-            LDEBUG("\nIn olcb::init2");
+//     printEventIndexes();
+//     printSortedEvents();
+//     printEvents();
+//             LDEBUG("\nIn olcb::init2");
 
     PIP_setup(&txBuffer, &clink);
     SNII_setup((uint8_t)sizeof(SNII_const_data), SNII_var_offset, &txBuffer, &clink);

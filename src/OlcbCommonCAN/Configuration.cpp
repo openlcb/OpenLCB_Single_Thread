@@ -187,7 +187,7 @@ void Configuration::processCmd(uint8_t* data, int length) {
             LDEBUG("\n Request to reboot");
             // force restart (may not reply?)
             if(restart) REBOOT;
-            LDEBUG("\n Oops Restart Request returned?!"); 
+            LDEBUG("\n Oops REBOOT returned?!"); 
             while(0==0){}
             break;
         // TODO: Handle other cases:

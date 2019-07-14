@@ -24,7 +24,7 @@ CanBus* canbus;
 */
 
 void Can::init()  {
-            Serial.print("\nIn AT90Can::init()");
+//             Serial.print("\nIn AT90Can::init()");
     canbus->init();
 }
 uint8_t Can::avail()  {

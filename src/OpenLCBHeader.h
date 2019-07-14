@@ -163,5 +163,4 @@ extern PCE pce;
 Event event[NUM_EVENT];             // operating flags
 uint16_t eventIndex[NUM_EVENT];     // Sorted index to eventids
 
-
 #endif /* OpenLCBHeader_h */

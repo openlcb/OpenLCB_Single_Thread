@@ -132,11 +132,12 @@ void NodeMemory::store(NodeID* nid) {
 
 // wtite to EEPROM one new eventEID
 void NodeMemory::setToNewEventID(NodeID* nid, uint16_t offset) {
-    //LDEBUG("\nIn setToNewEventID1");
-    //LDEBUG(" offset="); LDEBUG2(offset,HEX);
+//     LDEBUG("\nIn setToNewEventID1");
+//     LDEBUG(" offset="); LDEBUG2(offset,HEX);
     EventID eid = *((EventID*)nid);
     eid.val[6] = (nextEID>>8)&0xFF;
     eid.val[7] = nextEID&0xFF;
+//     LDEBUG(" EventID: "); eid.print();
     EEPROM.put(offset, eid);
     EEPROMcommit;
 }
