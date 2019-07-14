@@ -151,19 +151,18 @@ extern "C" {
 //             }
 //         }
 //     }
-//     void printSortedEvents() {
-//         LDEBUG("\nSorted events");
-//         for(int i=0; i<NUM_EVENT; i++) {
-//             LDEBUG("\n");
-//             LDEBUG(i); LDEBUG(": ");
-//             int e = eventIndex[i];
-//             LDEBUG(e); LDEBUG(": ");
-//             for(int j=0;j<8;j++) {
-//                 LDEBUG(event[e].eid.val[j]);
-//                 LDEBUG(".");
-//             }
-//         }
-//     }
+
+    void printSortedEvents() {
+        LDEBUG("\nSorted events");
+        for(int i=0; i<NUM_EVENT; i++) {
+            int e = eventIndex[i];
+            LDEBUG("\nEvent Index: "); LDEBUG(i);
+            LDEBUG("  EventNum: ");    LDEBUG(e);
+            LDEBUG("  EventID:"); 		 event[e].eid.print();
+            LDEBUG("  Flags: ");       LDEBUG2(event[e].flags,HEX);
+        }
+    }
+
     void printEeprom() {
         LDEBUG("\nEEPROM:");
         LDEBUG(F("\n    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 0123456789ABCDEF"));
@@ -183,12 +182,12 @@ extern "C" {
     }
 } // end of extern
 
-#define CFG_CMD_UPDATE_COMPLETE 0xA8
 void configWritten(unsigned int address, unsigned int length, unsigned int func) {
-    LDEBUG("\nconfigWritten "); LDEBUG2(address,HEX); dP(" func:"); dPH(func);
+    LDEBUG("\nconfigWritten: Addr: "); LDEBUG2(address,HEX); LDEBUG(" func:"); LDEBUG2(func,HEX);
     for(unsigned i=0; i<NUM_EVENT; i++) {
         uint16_t off = getOffset(i);
-        if(address>=off && address<(uint16_t)(off+8)) eepromDirty = true;
+        if((address == off) && (length >= 8)) 
+        	eepromDirty = true;
     }
     if(func == CFG_CMD_UPDATE_COMPLETE) {
         dP("\ncomplete, eepromDirty="); dP(eepromDirty);
@@ -243,16 +242,29 @@ NodeMemory nm(0);
 
 extern "C" {
     
-    extern EventID getEID(unsigned i) {
-        return event[i].eid;
-    }
-    
     extern void writeEID(int index) {
         // All write to EEPROM, may have to restore to RAM.
         LDEBUG("\nwriteEID() "); LDEBUG(index);
         eepromDirty = true; // flag eeprom changed
         EEPROM.put(getOffset(index), event[index].eid);
     }
+}
+
+// Compare function to compare two Event Index entries by comparing the EventIDs they point to
+int cmpfunc (const void * a, const void * b)
+{
+	uint16_t indexA = *(uint16_t*)a;
+	uint16_t indexB = *(uint16_t*)b;
+	Event * pEventA = &event[indexA];
+	Event * pEventB = &event[indexB];
+	int cmp = pEventB->eid.compare(&pEventA->eid);
+	
+// 	LDEBUG("\nCompare A: "); pEventA->eid.print();
+// 	LDEBUG(" Compare B: ");  pEventB->eid.print();
+// 	LDEBUG(" Result: ");
+// 	LDEBUG(cmp);
+	
+	return cmp;
 }
 
 extern void initTables(){        // initialize tables
@@ -262,8 +274,9 @@ extern void initTables(){        // initialize tables
         EEPROM.get(getOffset(e), event[e].eid);
         event[e].flags |= getFlags(e);
     }
-    
-// AJS need to sort eventIndex, only works because EventIDs happen to already be in sorted order    
+//     LDEBUG("\nSort eventIndex");
+    qsort(eventIndex, NUM_EVENT, sizeof(uint16_t), cmpfunc);
+//     LDEBUG("\nSorted\n");
 }
 
 // ===== System Interface
@@ -278,8 +291,9 @@ void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
             //LDEBUG("\nIn olcb::init1");
     
     initTables();
-    printEventIndexes();
-    printEvents();
+//     printEventIndexes();
+    printSortedEvents();
+//     printEvents();
             //LDEBUG("\nIn olcb::init2");
 
     PIP_setup(&txBuffer, &clink);
@@ -292,12 +306,12 @@ void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
 }
 
 // Soft reset, reinitiatize from EEPROM, but maintain present CAN Link.
-// void Olcb_softReset() {
-//     dP(F("\nIn olcb_softReset"));
-//     nm.setup(&nodeid, event, NUM_EVENT, (uint16_t)sizeof(MemStruct));
-//     dP(F("\nIn olcb::softreset nm.setup()"));
-//     initTables();
-// }
+void Olcb_softReset() {
+    dP(F("\nIn olcb_softReset"));
+    nm.setup(&nodeid, event, NUM_EVENT, (uint16_t)sizeof(MemStruct));
+    dP(F("\nIn olcb::softreset nm.setup()"));
+    initTables();
+}
 
 
 // Main processing loop

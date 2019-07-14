@@ -26,8 +26,9 @@
     #include <EEPROM.h>
     #include <avr/wdt.h>
     #define REBOOT                   \
+    				wdt_disable();					 \
             wdt_enable(WDTO_15MS);   \
-            for(;;){}
+            while (1) {}
 #endif
 // Tinys
 #if defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)

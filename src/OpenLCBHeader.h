@@ -152,6 +152,12 @@ extern void userConfigWritten(unsigned int address, unsigned int length, unsigne
 extern void pceCallback(unsigned int index)  __attribute__((weak));
 extern void produceFromInputs() __attribute__((weak));
 
+Stream * DebugStream = NULL;
+
+static void setDebugStream(Stream *newStream) { DebugStream = newStream; }
+
+
+
 extern PCE pce;
 
 Event event[NUM_EVENT];             // operating flags

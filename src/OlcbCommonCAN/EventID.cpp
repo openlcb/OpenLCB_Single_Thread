@@ -53,11 +53,15 @@ int EventID::compare(EventID *key)
 		return 0;
 }
 
-void EventID::print() {
-    LDEBUG(" ");
-    LDEBUG2(val[0],HEX);
-    for (int i=1;i<8;i++) {
-        LDEBUG(",");
-        LDEBUG2(val[i],HEX);
-    }
+void EventID::print()
+{
+	LDEBUG(' ');
+	for (int i=0;i<8;i++)
+	{
+		if(i>0)
+			LDEBUG(".");
+		if(val[i] < 16)
+			LDEBUG('0');
+		LDEBUG2(val[i],HEX);
+	}
 }

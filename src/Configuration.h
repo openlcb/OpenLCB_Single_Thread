@@ -10,6 +10,35 @@
 
 #include "Datagram.h"
 
+#define CONFIGURATION_DATAGRAM_CODE 0x20
+
+// define the operation codes, full byte
+#define CFG_CMD_WRITE                       0x00
+#define CFG_CMD_READ                        0x40
+#define CFG_CMD_OPERATION                   0x80
+
+#define CFG_CMD_READ_REPLY                  0x50
+
+#define CFG_CMD_GET_CONFIG                  0x80
+#define CFG_CMD_GET_CONFIG_REPLY            0x82
+#define CFG_CMD_GET_ADD_SPACE_INFO          0x84
+#define CFG_CMD_GET_ADD_SPACE_NOT_PRESENT   0x86
+#define CFG_CMD_GET_ADD_SPACE_PRESENT       0x87
+
+#define CFG_CMD_LOCK                        0x88
+#define CFG_CMD_LOCK_REPLY                  0x8A
+#define CFG_CMD_GET_UNIQUEID                0x8C
+#define CFG_CMD_GET_UNIQUEID_REPLY          0x8D
+
+#define CFG_CMD_UNFREEZE                    0xA0
+#define CFG_CMD_FREEZE                      0xA1
+//#define CFG_CMD_INDICATE                    0xA4
+#define CFG_CMD_UPDATE_COMPLETE             0xA8
+#define CFG_CMD_RESETS                      0xA9
+#define CFG_CMD_REINIT_FACTORYRESET         0xAA
+
+#define CFG_SPACE_EEPROM    0xFD
+
 class OlcbStream;
 
 class Configuration {
