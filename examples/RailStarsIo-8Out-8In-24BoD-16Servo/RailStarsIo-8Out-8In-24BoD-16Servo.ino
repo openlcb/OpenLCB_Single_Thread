@@ -16,6 +16,9 @@
 #define HWVERSION "1.0"   // Hardware version
 #define SWVERSION "2.0"   // Software version
 
+// To Reset the RailStars Io Node Number, Uncomment and edit the next line
+//#define RESET_NODE_ADDRESS  0x24
+
 // User defs
 #define NUM_OUTPUTS     8
 #define NUM_INPUTS      8
@@ -392,8 +395,9 @@ void setup()
   for(uint8_t i = 0; i < NUM_BOD_INPUTS; i++)
     pinMode(bodPinNums[i], INPUT_PULLUP);
 
-  // To Reset the RailStars Io Node Number, Uncomment and edit the next line
-  setRailStartIoNodeId(0x24);
+#ifdef RESET_NODE_ADDRESS  
+  setRailStartIoNodeId(RESET_NODE_ADDRESS);
+#endif
 
 // #define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
   Olcb_init(FORCE_ALL_INIT);
