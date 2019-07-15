@@ -17,7 +17,7 @@
 #define SWVERSION "2.0"   // Software version
 
 // To Reset the RailStars Io Node Number, Uncomment and edit the next line
-//#define RESET_NODE_ADDRESS  0x24
+//#define RESET_NODE_ADDRESS  0x26
 
 // User defs
 #define NUM_OUTPUTS     8
@@ -33,6 +33,11 @@
 #define NUM_EVENT  ((NUM_OUTPUTS*2) + (NUM_INPUTS * 2) + (NUM_BOD_INPUTS * 2) + (NUM_SERVOS * 2))
 
 #include "OpenLCBHeader.h"
+
+
+#ifdef RESET_NODE_ADDRESS
+NodeID nodeid(0x05, 0x02, 0x01, 0x02, 0x02, RESET_NODE_ADDRESS);
+#endif
 
 #define ENABLE_DEBUG_PRINT
 #ifdef ENABLE_DEBUG_PRINT
@@ -50,8 +55,8 @@
 #define SERVO_PWM_DEG_0    120 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVO_PWM_DEG_180  590 // this is the 'maximum' pulse length count (out of 4096)
 
-#define SERVO_POS_DEG_THROWN  60
-#define SERVO_POS_DEG_CLOSED  120
+#define SERVO_POS_DEG_THROWN  75
+#define SERVO_POS_DEG_CLOSED  115
 
  // CDI (Configuration Description Information) in xml, must match MemStruct
  // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
@@ -397,9 +402,9 @@ void setup()
 
 #ifdef RESET_NODE_ADDRESS  
   setRailStartIoNodeId(RESET_NODE_ADDRESS);
+#define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
 #endif
 
-// #define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
   Olcb_init(FORCE_ALL_INIT);
 
   servoPWM.begin();

@@ -36,7 +36,9 @@
 #include "ButtonLed.h"
 #include "lib_debug_print_common.h"
 
+#ifndef RESET_NODE_ADDRESS
 NodeID nodeid;
+#endif
 
 class Can;
 Can olcbcanRx;
