@@ -17,7 +17,7 @@
 #define SWVERSION "2.0"   // Software version
 
 // To Reset the RailStars Io Node Number, Uncomment and edit the next line
-//#define RESET_NODE_ADDRESS  0x26
+//#define RESET_NODE_ADDRESS  0x24
 
 // User defs
 #define NUM_OUTPUTS     8
@@ -32,6 +32,7 @@
 
 #define NUM_EVENT  ((NUM_OUTPUTS*2) + (NUM_INPUTS * 2) + (NUM_BOD_INPUTS * 2) + (NUM_SERVOS * 2))
 
+#include "OpenLcbCore.h"
 #include "OpenLCBHeader.h"
 
 
@@ -279,7 +280,7 @@ void servoSet(uint8_t outputIndex, uint8_t outputState)
 void produceFromInputs() {
   // called from loop(), this looks at changes in input pins and 
   // and decides which events to fire
-  // with pce.produce(i);
+  // with OpenLcb.produce(i);
   // The first event of each pair is sent on button down,
   // and second on button up.
   // 
@@ -304,9 +305,9 @@ void produceFromInputs() {
         DEBUG("produceFromInputs: Input: "); DEBUG(inputsScanIndex); DEBUG(" NewValue: "); DEBUGL(inputVal);
 
         if(inputVal)
-          pce.produce(FIRST_INPUT_EVENT_INDEX + (inputsScanIndex * 2));
+          OpenLcb.produce(FIRST_INPUT_EVENT_INDEX + (inputsScanIndex * 2));
         else
-          pce.produce(FIRST_INPUT_EVENT_INDEX + (inputsScanIndex * 2) + 1);
+          OpenLcb.produce(FIRST_INPUT_EVENT_INDEX + (inputsScanIndex * 2) + 1);
       }
       inputsScanIndex++;
     }
@@ -325,9 +326,9 @@ void produceFromInputs() {
         DEBUG("produceFromInputs: BODInput: "); DEBUG(bodScanIndex); DEBUG(" NewValue: "); DEBUGL(inputVal);
 
         if(inputVal)
-          pce.produce(FIRST_BOD_EVENT_INDEX + (bodScanIndex * 2));
+          OpenLcb.produce(FIRST_BOD_EVENT_INDEX + (bodScanIndex * 2));
         else
-          pce.produce(FIRST_BOD_EVENT_INDEX + (bodScanIndex * 2) + 1);
+          OpenLcb.produce(FIRST_BOD_EVENT_INDEX + (bodScanIndex * 2) + 1);
       }
       bodScanIndex++;
     }
@@ -405,7 +406,7 @@ void setup()
 #define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
 #endif
 
-  Olcb_init(FORCE_ALL_INIT);
+// AJS Fix  Olcb_init(FORCE_ALL_INIT);
 
   servoPWM.begin();
   servoPWM.setPWMFreq(60);

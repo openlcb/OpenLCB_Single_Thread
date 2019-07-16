@@ -85,14 +85,13 @@ int16_t PCE::findIndexOfEventID(EventID *key, int16_t startIndex)
 	}
 }
 
-PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, void (*cb)(unsigned int i), LinkControl* li)
+PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, LinkControl* li)
 {
       //events = evts;
     events = evts;
     eventsIndex = eIndex;
     nEvents = nEvt;
     buffer = b;
-    callback = cb;
     link = li;
        
       // mark as needing transmit of IDs, otherwise not interesting
@@ -279,7 +278,7 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
                 //LDEBUG(F("Found Consumer: Index: ")); LDEBUG(index);
                 //LDEBUG("\nFound Consumer: Index: ");LDEBUG(index);
                 //LDEBUG(", EIndex: ");LDEBUG(eindex);
-          (*callback)((unsigned int)eindex);
+          processEvent(eindex);
         }
         index++;
         if(index>=nEvents) break;

@@ -29,8 +29,6 @@ class PCE {
         int nEvt,                   // number of events
         uint16_t* eIndex,           // sorted index into events/eventids
         OlcbCanInterface* b,        // buffer
-        void (*cb)(unsigned int i),  // callback for Consumers received
-        //void (*cb)(uint16_t i),  // callback for Consumers received
         LinkControl* li             // Link control
         );
     
@@ -87,6 +85,8 @@ class PCE {
   void sendTeach(int index);
   void sendTeach(EventID e);
   bool isMarkedToLearn(int index);
+  
+  virtual void processEvent(unsigned int eventIndex); 
 
 private:
 	int16_t findIndexOfEventID(EventID *key, int16_t startIndex);
@@ -96,8 +96,6 @@ private:
   LinkControl* link;
   OlcbCanInterface* buffer;
   NodeID* nid;
-  //void (*callback)(uint16_t i);   // void callback(int index) pointer
-  void (*callback)(unsigned int i);   // void callback(int index) pointer
   void handlePCEventReport(OlcbCanInterface* rcv);
   void handleLearnEvent(OlcbCanInterface* rcv);
   int sendEvent; // index of next identified event to send, or -1

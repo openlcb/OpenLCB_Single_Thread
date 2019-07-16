@@ -107,12 +107,10 @@ typedef struct {
     </cdi>"
 
 
-#define IDENT_FLAG 0x01
-
 #define EEADDR(x)  ((uint16_t)(int)(&(((MemStruct*)0)->x)))
-#define CEID(x)    {EEADDR(x), (uint16_t)Event::CAN_CONSUME_FLAG | IDENT_FLAG}
-#define PEID(x)    {EEADDR(x), (uint16_t)Event::CAN_PRODUCE_FLAG | IDENT_FLAG}
-#define PCEID(x)   {EEADDR(x), (uint16_t)Event::CAN_CONSUME_FLAG|Event::CAN_PRODUCE_FLAG | IDENT_FLAG}
+#define CEID(x)    {EEADDR(x), (uint16_t)Event::CAN_CONSUME_FLAG | Event::IDENT_FLAG}
+#define PEID(x)    {EEADDR(x), (uint16_t)Event::CAN_PRODUCE_FLAG | Event::IDENT_FLAG}
+#define PCEID(x)   {EEADDR(x), (uint16_t)Event::CAN_CONSUME_FLAG|Event::CAN_PRODUCE_FLAG | Event::IDENT_FLAG}
 
 // ===== PIP Support ===============================================
 #define pSimple       0x80
@@ -155,10 +153,6 @@ extern void produceFromInputs() __attribute__((weak));
 Stream * DebugStream = NULL;
 
 static void setDebugStream(Stream *newStream) { DebugStream = newStream; }
-
-
-
-extern PCE pce;
 
 Event event[NUM_EVENT];             // operating flags
 uint16_t eventIndex[NUM_EVENT];     // Sorted index to eventids

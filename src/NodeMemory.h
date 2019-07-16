@@ -41,7 +41,7 @@ class NodeMemory {
   /**
    * Define starting address in EEPROM
    */
-  NodeMemory(int startAddress);  // doesn't do anything
+  NodeMemory(int startAddress, uint16_t eepromBytesUsed);  // doesn't do anything
     
   /**
    * Make sure ready to go.  NodeID should have a default
@@ -55,7 +55,7 @@ class NodeMemory {
    * clear name strings. This count EEPROM address 0 (e.g. _not_ starting
    * at end of event strings; this is the full memory clear)   
    */
-  void setup(NodeID* nid, Event* cE, uint8_t nC, uint16_t eeprom_size);
+  void setup(NodeID* nid, Event* cE, uint8_t nC);
     
   /*
    * Move to a completely new set of values, e.g. a "default" reset
@@ -101,7 +101,10 @@ class NodeMemory {
   bool checkAllOK(); // check if memory tag says all OK
   
   int startAddress; // address of 1st byte in EEPROM
+  uint16_t bytesUsed; // size of EEPROM storage used in bytes
   uint16_t nextEID; // count of EventIDs provided to date
+  
+  void print();
 };
 
 

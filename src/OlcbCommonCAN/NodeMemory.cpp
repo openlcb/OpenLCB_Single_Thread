@@ -18,9 +18,10 @@ extern "C" {
 
 // ToDo: NodeID* not kept in object member to save RAM space, may be false economy
 
-NodeMemory::NodeMemory(int start) {
+NodeMemory::NodeMemory(int start, uint16_t eepromBytesUsed) {
     startAddress = start;
     nextEID = 0;
+    bytesUsed = eepromBytesUsed;
 }
 
 void NodeMemory::forceInitAll() {
@@ -43,7 +44,7 @@ extern void initTables();
 extern void userInitEventIDOffsets();
 extern void userInitAll();
 
-void NodeMemory::setup(NodeID* nid, Event* _cE, uint8_t _nC, uint16_t eeprom_size) {
+void NodeMemory::setup(NodeID* nid, Event* _cE, uint8_t _nC) {
     //LDEBUG("\nIn NodeMemory::setup");
     Event* cE  = _cE;
     uint16_t nC = _nC;
@@ -77,8 +78,8 @@ void NodeMemory::setup(NodeID* nid, Event* _cE, uint8_t _nC, uint16_t eeprom_siz
         //LDEBUG("\n!checkAllOK");
         // fires a factory reset
         //clear EEPROM
-        for(unsigned i=0; i<eeprom_size; i++)
-            EEPROM.update(i,0);
+        for(unsigned i = 0; i < bytesUsed; i++)
+            EEPROM.update(i, 0);
         nextEID = 0;
         // handle the rest
         reset(nid, cE, nC);
@@ -159,3 +160,38 @@ bool NodeMemory::checkNidOK() {
     if (EEPROM.read(startAddress+3) != 0xCC ) return false;
     return true;
 }
+
+void NodeMemory::print()
+{
+	LDEBUG("\nEEPROM:");
+	LDEBUG(F("\n    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 0123456789ABCDEF"));
+	for(unsigned r = 0; r < (bytesUsed / 16 + 1); r++)
+	{
+		int rb = r * 16;
+		LDEBUG("\n");
+		if(rb < 16)
+			LDEBUG(0);
+			
+		LDEBUG2(rb,HEX);
+		LDEBUG(" ");
+		
+		for(int i = rb; i < (rb + 16); i++)
+		{
+			uint8_t v = EEPROM.read(i);
+			if(v < 16)
+				LDEBUG(0);
+			LDEBUG2(v,HEX);
+			LDEBUG(" ");
+		}
+		
+		for(int i = rb; i < (rb + 16); i++)
+		{
+			char c = EEPROM.read(i);
+			if( c<' ' || c==0x8F )
+				LDEBUG('.')
+			else
+				LDEBUG(c);
+		}
+	}
+}
+

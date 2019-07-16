@@ -36,6 +36,8 @@
 #include "ButtonLed.h"
 #include "lib_debug_print_common.h"
 
+#include "OpenLcbCore.h"
+
 #ifndef RESET_NODE_ADDRESS
 NodeID nodeid;
 #endif
@@ -62,21 +64,21 @@ extern "C" {
     
     uint16_t getOffset(unsigned index) {
         return pgm_read_word(&eidtab[index].offset);
-    }
+        }
 
     uint16_t getFlags(unsigned index) {
         return pgm_read_word(&eidtab[index].flags);
     }
-
-//     uint32_t spaceUpperAddr(uint8_t space) {  // return last valid address
-//         switch (space) {
-//             case 255: return sizeof(configDefInfo) - 1; // CDI (data starts at zero)
-//             case 254: return RAMEND; // RAM from Arduino definition
-//             case 253: return LAST_EEPROM; // Configuration
-//         }
-//         return (uint32_t)3;
-//     }
-//     
+    
+    uint32_t spaceUpperAddr(uint8_t space) {  // return last valid address
+        switch (space) {
+            case 255: return sizeof(configDefInfo) - 1; // CDI (data starts at zero)
+            case 254: return RAMEND; // RAM from Arduino definition
+            case 253: return LAST_EEPROM; // Configuration
+        }
+        return (uint32_t)3;
+    }
+    
     uint8_t getRead(uint32_t address, int space) {
         if (space == 0xFF) { // 255
             // Configuration definition information
@@ -129,62 +131,6 @@ extern "C" {
 //     }
 
     // Extras
-    void printEventIndexes() {
-        LDEBUG(F("\nprintEventIndex\n"));
-        for(int i=0;i<NUM_EVENT;i++) {
-            LDEBUG2(eventIndex[i],HEX); LDEBUG(F(", "));
-        }
-    }
-    void printEvents() {
-        LDEBUG(F("\nprintEvents "));
-        LDEBUG(F("\n#  flags  EventID"));
-        for(int i=0;i<NUM_EVENT;i++) {
-            LDEBUG("\n"); LDEBUG(i);
-            LDEBUG(":"); LDEBUG2(getOffset(i),HEX);
-            LDEBUG(F(" : ")); LDEBUG2(event[i].flags,HEX);
-            LDEBUG(F(" : ")); event[i].eid.print();
-        }
-    }
-//     
-//     void printEventids() {
-//         LDEBUG("\neventids:");
-//         for(int e=0;e<NUM_EVENT;e++) {
-//             LDEBUG("\n[");
-//             for(int i=0;i<8;i++) {
-//                 LDEBUG2(event[e].eid.val[i],HEX); LDEBUG(", ");
-//             }
-//         }
-//     }
-
-    void printSortedEvents() {
-        LDEBUG("\nSorted events");
-        for(int i=0; i<NUM_EVENT; i++) {
-            int e = eventIndex[i];
-            LDEBUG("\nEvent Index: "); LDEBUG(i);
-            LDEBUG("  EventNum: ");    LDEBUG(e);
-            LDEBUG("  EventID:"); 		 event[e].eid.print();
-            LDEBUG("  Flags: ");       LDEBUG2(event[e].flags,HEX);
-        }
-        LDEBUGL();
-    }
-
-    void printEeprom() {
-        LDEBUG("\nEEPROM:");
-        LDEBUG(F("\n    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 0123456789ABCDEF"));
-        for(unsigned r=0; r<(sizeof(MemStruct)/16+1);r++) {
-            int rb = r*16;
-            LDEBUG("\n"); if(rb<16) LDEBUG(0); LDEBUG2(rb,HEX); LDEBUG(" ");
-            for(int i=rb;i<(rb+16);i++)  {
-                uint8_t v = EEPROM.read(i);
-                if(v<16) LDEBUG(0); LDEBUG2(v,HEX); LDEBUG(" ");
-            }
-            for(int i=rb;i<(rb+16);i++)  {
-                char c = EEPROM.read(i);
-                if( c<' ' || c==0x8F ) LDEBUG('.')
-                else LDEBUG(c);
-            }
-        }
-    }
 } // end of extern
 
 void configWritten(unsigned int address, unsigned int length, unsigned int func) {
@@ -235,15 +181,15 @@ LinkControl clink(&txBuffer, &nodeid);
     #define dg  0
 #endif
 
-    PCE pce(event, NUM_EVENT, eventIndex, &txBuffer, pceCallback, &clink);
+OpenLcbCore OpenLcb(event, NUM_EVENT, eventIndex, &txBuffer, &clink);
 
 #ifndef OLCB_NO_BLUE_GOLD
-    BG bg(&pce, buttons, patterns, NUM_EVENT, &blue, &gold, &txBuffer);
+    BG bg(&OpenLcb, buttons, patterns, NUM_EVENT, &blue, &gold, &txBuffer);
 #else
     #define bg 0
 #endif
 
-NodeMemory nm(0);
+NodeMemory nm(0, (uint16_t)sizeof(MemStruct));
 
 extern "C" {
     
@@ -255,35 +201,6 @@ extern "C" {
     }
 }
 
-// Compare function to compare two Event Index entries by comparing the EventIDs they point to
-int cmpfunc (const void * a, const void * b)
-{
-	uint16_t indexA = *(uint16_t*)a;
-	uint16_t indexB = *(uint16_t*)b;
-	Event * pEventA = &event[indexA];
-	Event * pEventB = &event[indexB];
-	int cmp = pEventB->eid.compare(&pEventA->eid);
-	
-// 	LDEBUG("\nCompare A: "); pEventA->eid.print();
-// 	LDEBUG(" Compare B: ");  pEventB->eid.print();
-// 	LDEBUG(" Result: ");
-// 	LDEBUG(cmp);
-	
-	return cmp;
-}
-
-extern void initTables(){        // initialize tables
-    dP("\n initTables");
-    for(unsigned int e=0; e<NUM_EVENT; e++) {
-        eventIndex[e] = e;
-        EEPROM.get(getOffset(e), event[e].eid);
-        event[e].flags |= getFlags(e);
-    }
-//     LDEBUG("\nSort eventIndex");
-    qsort(eventIndex, NUM_EVENT, sizeof(uint16_t), cmpfunc);
-//     LDEBUG("\nSorted\n");
-}
-
 // ===== System Interface
 void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
 //             LDEBUG("\nIn olcb::init");
@@ -292,10 +209,10 @@ void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
         nm.forceInitAll();  // factory reset
     
     eepromDirty = false;
-    nm.setup(&nodeid, event, NUM_EVENT, (uint16_t)sizeof(MemStruct));
+    nm.setup(&nodeid, event, NUM_EVENT);
 //             LDEBUG("\nIn olcb::init1");
     
-    initTables();
+    OpenLcb.initTables();
 //     printEventIndexes();
 //     printSortedEvents();
 //     printEvents();
@@ -313,9 +230,9 @@ void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
 // Soft reset, reinitiatize from EEPROM, but maintain present CAN Link.
 void Olcb_softReset() {
     dP(F("\nIn olcb_softReset"));
-    nm.setup(&nodeid, event, NUM_EVENT, (uint16_t)sizeof(MemStruct));
+    nm.setup(&nodeid, event, NUM_EVENT);
     dP(F("\nIn olcb::softreset nm.setup()"));
-    initTables();
+//AJS Fix    initTables();
 }
 
 
@@ -343,7 +260,7 @@ bool Olcb_process() {   // was loop()
             handled |= dg.receivedFrame(&rxBuffer);  // has to process frame level
 #endif
             if(rxBuffer.isFrameTypeOpenLcb()) {  // skip if not OpenLCB message (already for here)
-                handled |= pce.receivedFrame(&rxBuffer);
+                handled |= OpenLcb.receivedFrame(&rxBuffer);
 #ifndef OLCB_NO_STREAM
                 handled |= str.receivedFrame(&rxBuffer); // suppress stream for space
 #endif
@@ -352,7 +269,7 @@ bool Olcb_process() {   // was loop()
                 if (!handled && rxBuffer.isAddressedMessage()) clink.rejectMessage(&rxBuffer, 0x2000);
             }
         }
-        pce.check();
+        OpenLcb.check();
                     //LDEBUG(F("\nLeft PCE::check()")); //while(0==0){}
 #ifndef OLCB_NO_DATAGRAM
         dg.check();
