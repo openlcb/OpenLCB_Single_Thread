@@ -52,8 +52,8 @@ OlcbCanInterface     txBuffer(&olcbcanTx);  // CAN send buffer
 
 // The variable parts of the SNII protocol are stored in EEPROM, as secribed by MemStruct
 MemStruct *pmem = 0;
-#define SNII_var_data &pmem->nodeVar.nodeName           // location of SNII_var_data EEPROM, and address of nodeName
-#define SNII_var_offset sizeof(pmem->nodeVar.nodeName)  // location of nodeDesc
+#define SNII_var_data &pmem->nodeName           // location of SNII_var_data EEPROM, and address of nodeName
+#define SNII_var_offset sizeof(pmem->nodeName)  // location of nodeDesc
 
 extern "C" {
 
@@ -202,14 +202,14 @@ extern "C" {
 }
 
 // ===== System Interface
-void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
+void Olcb_init(uint8_t forceFactoryReset) {       // was setup()
 //             LDEBUG("\nIn olcb::init");
     EEPROMbegin;       // defined in processor.h
-    if(forceEEPROMInit)
-        nm.forceInitAll();  // factory reset
+    if(forceFactoryReset)
+        nm.forceFactoryReset();  // factory reset
     
     eepromDirty = false;
-    nm.setup(&nodeid, event, NUM_EVENT);
+    nm.init(event, NUM_EVENT);
 //             LDEBUG("\nIn olcb::init1");
     
     OpenLcb.initTables();
@@ -230,7 +230,7 @@ void Olcb_init(uint8_t forceEEPROMInit) {       // was setup()
 // Soft reset, reinitiatize from EEPROM, but maintain present CAN Link.
 void Olcb_softReset() {
     dP(F("\nIn olcb_softReset"));
-    nm.setup(&nodeid, event, NUM_EVENT);
+    nm.init(event, NUM_EVENT);
     dP(F("\nIn olcb::softreset nm.setup()"));
 //AJS Fix    initTables();
 }

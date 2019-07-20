@@ -26,11 +26,6 @@
 #include "processor.h"
 
 typedef struct NodeVar_ {
-    uint32_t magic;         // used to check eeprom status
-    uint16_t nextEID;       // the next available eventID for use from this node's set
-    NodeID   nid;        // the nodeID
-    char     nodeName[20];  // optional node-name, used by ACDI
-    char     nodeDesc[24];  // optional node-description, used by ACDI
 } NodeVar;
 
 bool eepromDirty;
@@ -98,9 +93,9 @@ typedef struct {
         <description>Controls reloading and clearing node memory. Board must be restarted for this to take effect.</description>\
         <int size='4'>\
             <map>\
-                <relation><property>3998572261</property><value>(No reset)</value></relation>\
-                <relation><property>3998561228</property><value>User clear: New default EventIDs, blank strings</value></relation>\
-                <relation><property>0</property><value>Mfg clear: Reset all, including Node ID</value></relation>\
+                <relation><property>3998572261</property><value>Normal Operation</value></relation>\
+                <relation><property>3998561228</property><value>Clear Strings, Reset Settings, Create New Unused EventIDs</value></relation>\
+                <relation><property>0</property><value>Reset to Factory Default Values</value></relation>\
             </map>\
         </int>\
     </segment>\

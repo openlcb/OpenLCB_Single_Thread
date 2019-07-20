@@ -9,157 +9,152 @@
 #include "lib_debug_print_common.h"
 
 extern "C" {
-    extern uint16_t getOffset(uint16_t index);
-    extern void writeEID(int index);
+  extern uint16_t getOffset(uint16_t index);
+  extern void writeEID(int index);
 }
 
-#define KEYSIZE 4
-#define NEXTEIDSIZE 2
-
-// ToDo: NodeID* not kept in object member to save RAM space, may be false economy
-
-NodeMemory::NodeMemory(int start, uint16_t eepromBytesUsed) {
-    startAddress = start;
-    nextEID = 0;
-    bytesUsed = eepromBytesUsed;
-}
-
-void NodeMemory::forceInitAll() {
-    //LDEBUG("\nforceInitAll");
-    EEPROM.update(0,0xFF);
-    EEPROM.update(1,0xFF);
-    EEPROMcommit;
-    LDEBUG("\n NodeMemory::forceInitAll() completed");
-}
-
-void NodeMemory::forceInitEvents() {
-    //LDEBUG("\nforceInitEvents");
-    EEPROM.update(2,0x33);
-    EEPROM.update(3,0xCC);
-    EEPROMcommit;
-}
-
-extern void printEvents();
-extern void initTables();
-extern void userInitEventIDOffsets();
 extern void userInitAll();
 
-void NodeMemory::setup(NodeID* nid, Event* _cE, uint8_t _nC) {
-    //LDEBUG("\nIn NodeMemory::setup");
-    Event* cE  = _cE;
-    uint16_t nC = _nC;
-
-    //LDEBUG("\nnC(nevents)=");LDEBUG(nC);
-    //for(int i=0;i<nC;i++) {
-    //    LDEBUG("\n");LDEBUG(i);
-    //    LDEBUG(":");LDEBUG2(eventidOffset[i],HEX);
-    //}
-
-    if (checkNidOK()) {    // the nodeID is ok, but need new set of eventIDs
-        // leave NodeID and count, reset rest
-        //LDEBUG("\ncheckNidOK'd");
-
-        // read NodeID from non-volative memory
-        uint8_t* p;
-        int addr = startAddress+KEYSIZE+NEXTEIDSIZE; // skip check word and count
-        p = (uint8_t*)nid;
-        for (unsigned int i=0; i<sizeof(NodeID); i++) 
-           *p++ = EEPROM.read(addr++);
-
-        // load count
-        uint8_t part1 = EEPROM.read(startAddress+KEYSIZE);
-        uint8_t part2 = EEPROM.read(startAddress+KEYSIZE+1);
-        nextEID = (part1<<8)+part2;
-
-        // handle the rest
-        reset(nid, cE, nC);  // !!!
-
-    } else if (!checkAllOK()) {  // All trash, so reinit everything.
-        //LDEBUG("\n!checkAllOK");
-        // fires a factory reset
-        //clear EEPROM
-        for(unsigned i = 0; i < bytesUsed; i++)
-            EEPROM.update(i, 0);
-        nextEID = 0;
-        // handle the rest
-        reset(nid, cE, nC);
-        userInitAll();  // user init
-        EEPROMcommit;   // defined in processor.h
-        LDEBUG("\n EEPROMcommit completed");
-    }
+NodeMemory::NodeMemory(int eepromBaseAddress, uint16_t userConfigSize)
+{
+    baseAddress = eepromBaseAddress;
+    bytesUsed = userConfigSize;
     
-    // read NodeID from non-volative memory
-    uint8_t* p;
-    int addr = startAddress+KEYSIZE+NEXTEIDSIZE; // skip check word and count
-    p = (uint8_t*)nid;
-    for (uint8_t i=0; i<sizeof(NodeID); i++) 
-        *p++ = EEPROM.read(addr++);
- 
-    //LDEBUG("\nOut NodeMemory::setup");
+    loadAndValidate();
 }
+
+
+uint8_t NodeMemory::loadAndValidate()
+{
+	EEPROM.get(baseAddress, header);
+	
+	nodeHeaderState = 0;
+	
+	if(header.nodeId.nodeIdMarker == NODE_ID_MARKER)
+		nodeHeaderState |= NODE_ID_MARKER_VALID;
+		
+	uint8_t checkSum = 0xFF;
+	uint8_t *pByte = &header.nodeId.nodeIdMarker;
+	for(uint8_t i = 0; i < 8; i++)
+		checkSum ^= *pByte++;
+	
+	if(checkSum == 0)
+		nodeHeaderState |= NODE_ID_CHECKSUM_VALID;
+
+	uint16_t	nodeResetControl;
+
+	EEPROM.get(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+
+	if(nodeResetControl == RESET_NORMAL_VAL)
+		nodeHeaderState |= RESET_NORMAL;
+		
+	else if(nodeResetControl == RESET_NEW_EVENTS_VAL) 
+		nodeHeaderState |= RESET_NEW_EVENTS;
+		
+	else 
+		nodeHeaderState |= RESET_FACTORY_DEFAULTS;
+		
+	return nodeHeaderState;
+}
+
+
+uint8_t NodeMemory::getNodeID(NodeID *nodeIdBuffer)
+{
+	*nodeIdBuffer = header.nodeId.nodeId;
+		
+	return nodeHeaderState;
+}
+
+
+void NodeMemory::changeNodeID(NodeID *newNodeId)
+{
+	header.nodeId.nodeIdMarker = NODE_ID_MARKER;
+	header.nodeId.nodeId = *newNodeId;
+	
+	uint8_t checkSum = 0xFF;
+	uint8_t *pByte = &header.nodeId.nodeIdMarker;
+	for(uint8_t i = 0; i < 7; i++)
+		checkSum ^= *pByte++;
+	
+	header.nodeId.nodeIdCheckSum = checkSum;
+	
+	EEPROM.put(baseAddress, header.nodeId);
+  EEPROMcommit;
+}
+
+
+void NodeMemory::forceFactoryReset()
+{
+    //LDEBUG("\nforceInitAll");
+  uint16_t	nodeResetControl = RESET_FACTORY_DEFAULTS_VAL;
+  EEPROM.put(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+  EEPROMcommit;
+  LDEBUG("\n NodeMemory::forceFactoryReset()");
+}
+
+void NodeMemory::forceNewEventIDs() {
+    //LDEBUG("\nforceInitEvents");
+  uint16_t	nodeResetControl = RESET_NEW_EVENTS_VAL;
+  EEPROM.put(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+  EEPROMcommit;
+  LDEBUG("\n NodeMemory::forceNewEventIDs()");
+}
+
+
+void NodeMemory::init(Event* events, uint8_t numEvents)
+{
+	if(nodeHeaderState & NODE_ID_OK)
+	{
+		if(nodeHeaderState & RESET_NORMAL)
+			return; // Nothing to do
+
+		else if(nodeHeaderState & RESET_NEW_EVENTS)
+		{
+			writeNewEventIDs(events, numEvents);
+
+			uint16_t	nodeResetControl = RESET_NORMAL_VAL;
+			EEPROM.put(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+			EEPROMcommit;
+		}
+
+		else if (nodeHeaderState & RESET_FACTORY_DEFAULTS)
+		{	//clear EEPROM
+			for(uint16_t i = baseAddress + sizeof(NODE_HEADER); i < (baseAddress + sizeof(NODE_HEADER) + bytesUsed); i++)
+					EEPROM.update(i, 0);
+			
+			header.nextEID = 0;
+			
+			// handle the rest
+			writeNewEventIDs(events, numEvents);
+			userInitAll();
+			
+			uint16_t	nodeResetControl = RESET_NORMAL_VAL;
+			EEPROM.put(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+			EEPROMcommit;
+		}
+	}
+}
+
 
 // write to EEPROM new set of eventIDs and then magic, nextEID and nodeID
-void NodeMemory::reset(NodeID* nid, Event* cE, uint8_t nC) {
-    //LDEBUG("\nNodeMemory::reset1");
-    for (uint16_t e=0; e<nC; e++) {
-        uint16_t off = getOffset(e);
-        setToNewEventID(nid, off);
-        nextEID++;
-    }
-    store(nid); // magic#, nextEID, nid
+void NodeMemory::writeNewEventIDs(Event* events, uint8_t numEvents)
+{
+	EventID newEventId;
+	
+	newEventId.setNodeIdPrefix(&header.nodeId.nodeId);
+
+	for(uint16_t e = 0; e < numEvents; e++)
+	{
+		uint16_t eepromAddress = baseAddress + sizeof(NODE_HEADER) + getOffset(e); 
+		
+		newEventId.setEventIdSuffix(header.nextEID++);
+		
+		EEPROM.put(eepromAddress, newEventId);
+	}
+	// Save the latest value of nextEID
+	EEPROM.put(baseAddress + sizeof(NODE_ID_STORE), header.nextEID);
 }
 
-// store to EEPROM magic, nextEID, and NodeID
-void NodeMemory::store(NodeID* nid) {
-    
-    int addr = startAddress;
-    // write tag
-    EEPROM.update(addr++, 0xEE);
-    EEPROM.update(addr++, 0x55);
-    EEPROM.update(addr++, 0x5E);
-    EEPROM.update(addr++, 0xE5);
-
-    // write count
-    EEPROM.update(addr++, (nextEID>>8)&0xFF);
-    EEPROM.update(addr++, (nextEID)&0xFF);
-    
-    // write NodeID
-    uint8_t* p;
-    p = (uint8_t*)nid;
-    for (uint8_t i=0; i<sizeof(NodeID); i++) 
-        EEPROM.update(addr++, *p++);
-    EEPROMcommit;
-}
-
-// wtite to EEPROM one new eventEID
-void NodeMemory::setToNewEventID(NodeID* nid, uint16_t offset) {
-//     LDEBUG("\nIn setToNewEventID1");
-//     LDEBUG(" offset="); LDEBUG2(offset,HEX);
-    EventID eid = *((EventID*)nid);
-    eid.val[6] = (nextEID>>8)&0xFF;
-    eid.val[7] = nextEID&0xFF;
-//     LDEBUG(" EventID: "); eid.print();
-    EEPROM.put(offset, eid);
-    EEPROMcommit;
-}
-
-// checkAllOK:  false if EEPROM is not initialize, requires a Factory reset.
-bool NodeMemory::checkAllOK() {
-    //LDEBUG("\ncheckAllOK");
-    if (EEPROM.read(startAddress  ) != 0xEE ) return false;
-    if (EEPROM.read(startAddress+1) != 0x55 ) return false;
-    if (EEPROM.read(startAddress+2) != 0x5E ) return false;
-    if (EEPROM.read(startAddress+3) != 0xE5 ) return false;
-    return true;
-}
-bool NodeMemory::checkNidOK() {
-    //LDEBUG("\ncheckNIDOK");
-    if (EEPROM.read(startAddress  ) != 0xEE ) return false;
-    if (EEPROM.read(startAddress+1) != 0x55 ) return false;
-    if (EEPROM.read(startAddress+2) != 0x33 ) return false;
-    if (EEPROM.read(startAddress+3) != 0xCC ) return false;
-    return true;
-}
 
 void NodeMemory::print()
 {

@@ -1,7 +1,7 @@
 #ifndef EventID_h
 #define EventID_h
 
-#include "stdint.h"
+#include "NodeID.h"
 
 class EventID {
   public: 
@@ -14,7 +14,11 @@ class EventID {
     bool equals(EventID* n);
     
     int compare(EventID *key);
+
+		void setNodeIdPrefix(NodeID *nodePrefix);
     
+		void setEventIdSuffix(uint16_t suffix);
+
     void print();
 };
 

@@ -31,6 +31,33 @@
 //#include "Event.h"
 #include "NodeID.h"
 
+#define RESET_NORMAL_VAL						0xEE55
+#define RESET_NEW_EVENTS_VAL				0x33CC
+#define RESET_FACTORY_DEFAULTS_VAL	0xFFFF
+
+#define RESET_NORMAL						0x01
+#define RESET_NEW_EVENTS				0x02
+#define RESET_FACTORY_DEFAULTS	0x03
+
+#define NODE_ID_MARKER_VALID		0x10
+#define NODE_ID_CHECKSUM_VALID	0x20
+#define NODE_ID_OK (NODE_ID_MARKER_VALID | NODE_ID_CHECKSUM_VALID)
+
+#define NODE_ID_MARKER					'N'
+
+typedef struct
+{
+	uint8_t 	nodeIdMarker;
+	NodeID 		nodeId;
+	uint8_t 	nodeIdCheckSum;
+} NODE_ID_STORE;
+
+typedef struct
+{
+	NODE_ID_STORE 	nodeId;
+	uint16_t				nextEID;
+} NODE_HEADER;
+
 class NodeID;
 class Event;
 class EventID;
@@ -41,7 +68,7 @@ class NodeMemory {
   /**
    * Define starting address in EEPROM
    */
-  NodeMemory(int startAddress, uint16_t eepromBytesUsed);  // doesn't do anything
+  NodeMemory(int eepromBaseAddress, uint16_t userConfigSize);  // doesn't do anything
     
   /**
    * Make sure ready to go.  NodeID should have a default
@@ -55,36 +82,21 @@ class NodeMemory {
    * clear name strings. This count EEPROM address 0 (e.g. _not_ starting
    * at end of event strings; this is the full memory clear)   
    */
-  void setup(NodeID* nid, Event* cE, uint8_t nC);
+  void init(Event* events, uint8_t numEvents);
     
-  /*
-   * Move to a completely new set of values, e.g. a "default" reset
-   * for OpenLCB. NodeID is not changed. EventIDs are loaded from
-   * a new range.  N=clearBytes of memory is cleared to e.g. 
-   * clear name strings counting from zero (e.g. _not_ starting
-   * at end of event strings; this is the full memory clear)
+  /** 
+   * For debug and test, this forces a reset to factory defaults at next restart
    */
-  void reset(NodeID* nid, Event* events, uint8_t numEvents);
+  void forceFactoryReset();
+    
+  /** 
+   * Reload a complete set of new events on next restart.
+   */
+  void forceNewEventIDs();
+    
+  uint8_t getNodeID(NodeID *nodeIdBuffer);
 
-  /** 
-   * For debug and test, this forces the next
-   * setup() to do a complete reload from initial
-   * event values
-   */
-  static void forceInitAll();
-    
-  /** 
-   * Reload a complete set of events via call to reset on next restart.
-   */
-  static void forceInitEvents();
-    
-  /*
-   * Put modified contents back into memory.
-   */
-  void store(NodeID* nid, Event* events, const uint16_t* eventidOffset, uint8_t nunEvents);
-  void store(NodeID* nid, Event* events, const uint16_t* eventidOffset, uint8_t nunEvents, uint8_t* data, int extraBytes);
-  void store(NodeID* nid, Event* cE, uint16_t* eventidOffset, uint8_t nC, NodeMemory eOff);
-  void store(NodeID* nid);
+  void changeNodeID(NodeID *newNodeId);
     
   /*
    * Get a new, forever unique EventID and put in 
@@ -97,14 +109,14 @@ class NodeMemory {
   void setToNewEventID(NodeID* nid, int n);  //dph
     
   private:
-  bool checkNidOK(); // check if memory tag says NID OK
-  bool checkAllOK(); // check if memory tag says all OK
-  
-  int startAddress; // address of 1st byte in EEPROM
-  uint16_t bytesUsed; // size of EEPROM storage used in bytes
-  uint16_t nextEID; // count of EventIDs provided to date
-  
-  void print();
+		void 				print();
+		uint8_t			loadAndValidate();	
+	  void 				writeNewEventIDs(Event* events, uint8_t numEvents);
+		
+		uint16_t		baseAddress; // address of 1st byte in EEPROM
+		uint16_t 		bytesUsed; // size of EEPROM storage used in bytes
+		uint8_t 		nodeHeaderState;
+		NODE_HEADER	header;
 };
 
 

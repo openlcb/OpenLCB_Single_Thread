@@ -134,9 +134,10 @@ NodeID nodeid(0x05, 0x02, 0x01, 0x02, 0x02, RESET_NODE_ADDRESS);
 
 // ===== MemStruct =====
 //   Memory structure of EEPROM, must match CDI above
-    typedef struct { 
-      NodeVar nodeVar;         // must remain
-      // ===== Enter User definitions below =====
+    typedef struct {
+          char nodeName[20];  // optional node-name, used by ACDI
+          char nodeDesc[24];  // optional node-description, used by ACDI
+       // ===== Enter User definitions below =====
           struct {
             char desc[16];        // description of this output
             EventID setLow;       // Consumed eventID which sets this output-pin
@@ -378,7 +379,7 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
 void setRailStartIoNodeId(uint8_t lastByteValue)
 {
   NodeID newNodeID(0x05, 0x02, 0x01, 0x02, 0x02, lastByteValue);
-  nm.store(&newNodeID);
+  nm.changeNodeID(&newNodeID);
 }
 
 // ==== Setup does initial configuration ======================

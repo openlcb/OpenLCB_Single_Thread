@@ -11,14 +11,7 @@
 #include "lib_debug_print_common.h"
 
 EventID::EventID() {
-    val[0] = 0;
-    val[1] = 0;
-    val[2] = 0;
-    val[3] = 0;
-    val[4] = 0;
-    val[5] = 0;
-    val[6] = 0;
-    val[7] = 0;
+    memset(val, 0, sizeof(val));
 }
 
 EventID::EventID(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5, uint8_t b6, uint8_t b7) {
@@ -30,6 +23,17 @@ EventID::EventID(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uin
     val[5] = b5;
     val[6] = b6;
     val[7] = b7;
+}
+
+void EventID::setNodeIdPrefix(NodeID *nodePrefix)
+{
+	memcpy(val, nodePrefix->val, sizeof(nodePrefix->val));
+}
+
+void EventID::setEventIdSuffix(uint16_t suffix)
+{
+	val[6] = (suffix >> 8) & 0xFF;
+	val[7] = suffix & 0xFF;
 }
 
 bool EventID::equals(EventID* n) {
