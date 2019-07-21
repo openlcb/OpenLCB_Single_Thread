@@ -17,16 +17,26 @@ extern void userInitAll();
 
 NodeMemory::NodeMemory(int eepromBaseAddress, uint16_t userConfigSize)
 {
-    baseAddress = eepromBaseAddress;
-    bytesUsed = userConfigSize;
-    
+    eepromBase = eepromBaseAddress;
+    userConfigBase   = eepromBaseAddress + sizeof(NODE_HEADER);
+    this->userConfigSize = userConfigSize;
+
     loadAndValidate();
 }
 
+uint8_t NodeMemory::read( int idx )
+{
+	return EEPROM.read(idx + userConfigBase);
+}
+
+void NodeMemory::write( int idx, uint8_t val )
+{
+	EEPROM.write(idx + userConfigBase, val);
+}
 
 uint8_t NodeMemory::loadAndValidate()
 {
-	EEPROM.get(baseAddress, header);
+	EEPROM.get(eepromBase, header);
 	
 	nodeHeaderState = 0;
 	
@@ -43,7 +53,7 @@ uint8_t NodeMemory::loadAndValidate()
 
 	uint16_t	nodeResetControl;
 
-	EEPROM.get(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+	EEPROM.get(userConfigBase, nodeResetControl);
 
 	if(nodeResetControl == RESET_NORMAL_VAL)
 		nodeHeaderState |= RESET_NORMAL;
@@ -78,48 +88,63 @@ void NodeMemory::changeNodeID(NodeID *newNodeId)
 	
 	header.nodeId.nodeIdCheckSum = checkSum;
 	
-	EEPROM.put(baseAddress, header.nodeId);
+	EEPROM.put(eepromBase, header.nodeId);
   EEPROMcommit;
 }
 
 
 void NodeMemory::forceFactoryReset()
 {
-    //LDEBUG("\nforceInitAll");
+  LDEBUG("\nNodeMemory::forceFactoryReset()");
+  nodeHeaderState |= RESET_FACTORY_DEFAULTS;
+  
   uint16_t	nodeResetControl = RESET_FACTORY_DEFAULTS_VAL;
-  EEPROM.put(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+  EEPROM.put(userConfigBase, nodeResetControl);
   EEPROMcommit;
-  LDEBUG("\n NodeMemory::forceFactoryReset()");
 }
 
 void NodeMemory::forceNewEventIDs() {
-    //LDEBUG("\nforceInitEvents");
+  LDEBUG("\nNodeMemory::forceNewEventIDs()");
+
+  nodeHeaderState |= RESET_NEW_EVENTS;
+
   uint16_t	nodeResetControl = RESET_NEW_EVENTS_VAL;
-  EEPROM.put(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+  EEPROM.put(userConfigBase, nodeResetControl);
   EEPROMcommit;
-  LDEBUG("\n NodeMemory::forceNewEventIDs()");
 }
 
 
 void NodeMemory::init(Event* events, uint8_t numEvents)
 {
+  LDEBUG("\nNodeMemory::forceNewEventIDs()  State: "); LDEBUG2(nodeHeaderState, HEX); LDEBUGL();
+
 	if(nodeHeaderState & NODE_ID_OK)
 	{
+	  LDEBUGL("NodeMemory: NodeID Ok");
 		if(nodeHeaderState & RESET_NORMAL)
-			return; // Nothing to do
+		{
+		  LDEBUGL("NodeMemory: Reset Normal, Exiting ");
 
+			return; // Nothing to do
+		}
+		
 		else if(nodeHeaderState & RESET_NEW_EVENTS)
 		{
+		  LDEBUGL("NodeMemory: Reset New Events");
+
 			writeNewEventIDs(events, numEvents);
+			userInitAll();
 
 			uint16_t	nodeResetControl = RESET_NORMAL_VAL;
-			EEPROM.put(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+			EEPROM.put(userConfigBase, nodeResetControl);
 			EEPROMcommit;
 		}
 
 		else if (nodeHeaderState & RESET_FACTORY_DEFAULTS)
 		{	//clear EEPROM
-			for(uint16_t i = baseAddress + sizeof(NODE_HEADER); i < (baseAddress + sizeof(NODE_HEADER) + bytesUsed); i++)
+		  LDEBUGL("NodeMemory: Reset Factory Defaults");
+
+			for(uint16_t i = userConfigBase; i < (userConfigBase + userConfigSize); i++)
 					EEPROM.update(i, 0);
 			
 			header.nextEID = 0;
@@ -129,7 +154,7 @@ void NodeMemory::init(Event* events, uint8_t numEvents)
 			userInitAll();
 			
 			uint16_t	nodeResetControl = RESET_NORMAL_VAL;
-			EEPROM.put(baseAddress + sizeof(NODE_HEADER), nodeResetControl);
+			EEPROM.put(userConfigBase, nodeResetControl);
 			EEPROMcommit;
 		}
 	}
@@ -139,28 +164,29 @@ void NodeMemory::init(Event* events, uint8_t numEvents)
 // write to EEPROM new set of eventIDs and then magic, nextEID and nodeID
 void NodeMemory::writeNewEventIDs(Event* events, uint8_t numEvents)
 {
+  LDEBUGL("\nNodeMemory::writeNewEventIDs()");
 	EventID newEventId;
 	
 	newEventId.setNodeIdPrefix(&header.nodeId.nodeId);
 
 	for(uint16_t e = 0; e < numEvents; e++)
 	{
-		uint16_t eepromAddress = baseAddress + sizeof(NODE_HEADER) + getOffset(e); 
+		uint16_t eepromAddress = userConfigBase + getOffset(e); 
 		
 		newEventId.setEventIdSuffix(header.nextEID++);
 		
 		EEPROM.put(eepromAddress, newEventId);
 	}
 	// Save the latest value of nextEID
-	EEPROM.put(baseAddress + sizeof(NODE_ID_STORE), header.nextEID);
+	EEPROM.put(userConfigBase, header.nextEID);
 }
 
 
 void NodeMemory::print()
 {
-	LDEBUG("\nEEPROM:");
+	LDEBUG("\nEEPROM: Base Offset: "); LDEBUG(eepromBase); LDEBUG(" User Base: "); LDEBUG(userConfigBase); LDEBUG(" User Size: "); LDEBUG(userConfigSize);
 	LDEBUG(F("\n    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 0123456789ABCDEF"));
-	for(unsigned r = 0; r < (bytesUsed / 16 + 1); r++)
+	for(unsigned r = 0; r < (userConfigSize / 16 + 1); r++)
 	{
 		int rb = r * 16;
 		LDEBUG("\n");
@@ -188,5 +214,6 @@ void NodeMemory::print()
 				LDEBUG(c);
 		}
 	}
+	LDEBUGL();
 }
 

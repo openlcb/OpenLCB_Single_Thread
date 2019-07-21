@@ -38,9 +38,7 @@
 
 #include "OpenLcbCore.h"
 
-#ifndef RESET_NODE_ADDRESS
-NodeID nodeid;
-#endif
+NodeID nodeId;
 
 class Can;
 Can olcbcanRx;
@@ -54,6 +52,8 @@ OlcbCanInterface     txBuffer(&olcbcanTx);  // CAN send buffer
 MemStruct *pmem = 0;
 #define SNII_var_data &pmem->nodeName           // location of SNII_var_data EEPROM, and address of nodeName
 #define SNII_var_offset sizeof(pmem->nodeName)  // location of nodeDesc
+
+NodeMemory nm(0, sizeof(MemStruct));
 
 extern "C" {
 
@@ -74,7 +74,7 @@ extern "C" {
         switch (space) {
             case 255: return sizeof(configDefInfo) - 1; // CDI (data starts at zero)
             case 254: return RAMEND; // RAM from Arduino definition
-            case 253: return LAST_EEPROM; // Configuration
+            case 253: return NODECONFIG.length(); // Configuration
         }
         return (uint32_t)3;
     }
@@ -88,7 +88,7 @@ extern "C" {
             return *(((uint8_t*)&rxBuffer)+address);
         } else if (space == 0xFD) { //253
             // Configuration space is entire EEPROM
-            uint8_t r = EEPROM.read(address);
+            uint8_t r = NODECONFIG.read(address);
                         //LDEBUG("\ngetRead "); LDEBUG2(space,HEX);
                         //LDEBUG(":"); LDEBUG2(address,HEX);
                         //LDEBUG("="); LDEBUG2(r,HEX);
@@ -98,7 +98,7 @@ extern "C" {
             return pgm_read_byte(SNII_const_data+address);
         } else if (space == 0xFB) { // 251
             // used by ADCDI/SNII for variable data
-            return EEPROM.read((int)SNII_var_data+address);
+            return NODECONFIG.read((int)SNII_var_data+address);
         } else {
             // unknown space
             return 0;
@@ -115,7 +115,7 @@ extern "C" {
             *(((uint8_t*)&rxBuffer)+address) = val;
         } else if (space == 0xFD) {
             // Configuration space
-            EEPROM.update(address, val);
+            NODECONFIG.update(address, val);
             //eepromDirty = true;                 // ???
         }
         // all other spaces not written
@@ -150,7 +150,7 @@ void configWritten(unsigned int address, unsigned int length, unsigned int func)
 }
 
 
-LinkControl clink(&txBuffer, &nodeid);
+LinkControl clink(&txBuffer, &nodeId);
 
 #ifndef OLCB_NO_STREAM
     unsigned int streamRcvCallback(uint8_t *rbuf, unsigned int length);
@@ -189,7 +189,6 @@ OpenLcbCore OpenLcb(event, NUM_EVENT, eventIndex, &txBuffer, &clink);
     #define bg 0
 #endif
 
-NodeMemory nm(0, (uint16_t)sizeof(MemStruct));
 
 extern "C" {
     
@@ -197,7 +196,7 @@ extern "C" {
         // All write to EEPROM, may have to restore to RAM.
         LDEBUG("\nwriteEID() "); LDEBUG(index);
         eepromDirty = true; // flag eeprom changed
-        EEPROM.put(getOffset(index), event[index].eid);
+        NODECONFIG.put(getOffset(index), event[index].eid);
     }
 }
 
@@ -209,14 +208,16 @@ void Olcb_init(uint8_t forceFactoryReset) {       // was setup()
         nm.forceFactoryReset();  // factory reset
     
     eepromDirty = false;
+    
+    	// Read the NodeID from EEPROM
+    nm.getNodeID(&nodeId);
+    
     nm.init(event, NUM_EVENT);
-//             LDEBUG("\nIn olcb::init1");
+
+		nm.print();
     
     OpenLcb.initTables();
-//     printEventIndexes();
-//     printSortedEvents();
-//     printEvents();
-//             LDEBUG("\nIn olcb::init2");
+		OpenLcb.printSortedEvents();
 
     PIP_setup(&txBuffer, &clink);
     SNII_setup((uint8_t)sizeof(SNII_const_data), SNII_var_offset, &txBuffer, &clink);

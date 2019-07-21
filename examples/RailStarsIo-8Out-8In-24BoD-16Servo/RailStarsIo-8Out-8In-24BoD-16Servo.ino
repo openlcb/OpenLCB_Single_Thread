@@ -19,6 +19,9 @@
 // To Reset the RailStars Io Node Number, Uncomment and edit the next line
 //#define RESET_NODE_ADDRESS  0x24
 
+// Uncomment to Force Reset to Factory Defaults
+//#define RESET_TO_FACTORY_DEFAULTS 1
+
 // User defs
 #define NUM_OUTPUTS     8
 #define NUM_INPUTS      8
@@ -133,8 +136,10 @@ NodeID nodeid(0x05, 0x02, 0x01, 0x02, 0x02, RESET_NODE_ADDRESS);
     } // end extern
 
 // ===== MemStruct =====
-//   Memory structure of EEPROM, must match CDI above
+//   Memory structure of NODECONFIG (EEPROM), must match CDI above
     typedef struct {
+          uint16_t  resetControl; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
+
           char nodeName[20];  // optional node-name, used by ACDI
           char nodeDesc[24];  // optional node-description, used by ACDI
        // ===== Enter User definitions below =====
@@ -164,24 +169,6 @@ NodeID nodeid(0x05, 0x02, 0x01, 0x02, 0x02, RESET_NODE_ADDRESS);
           } servoOutputs[NUM_SERVOS];
       // ===== Enter User definitions above =====
     } MemStruct;                 // type definition
-
-#define E16BITVAL(x)  ESTRING((x>>8)|x<<8)
-
-void userInitAll()
-{
-  EEPROM.put(EEADDR(ServoPwmMin), E16BITVAL(SERVO_PWM_DEG_0));
-  EEPROM.put(EEADDR(ServoPwmMax), E16BITVAL(SERVO_PWM_DEG_180));
-
-  uint8_t posThrown = SERVO_POS_DEG_THROWN;
-  uint8_t posClosed = SERVO_POS_DEG_CLOSED;
-  
-  for(uint8_t i = 0; i < NUM_SERVOS; i++)
-  {
-    EEPROM.put(EEADDR(servoOutputs[i].thrownPos), posThrown);
-    EEPROM.put(EEADDR(servoOutputs[i].closedPos), posClosed);
-  }
-}
-
 
 extern "C" {
   // ===== eventid Table =====
@@ -221,6 +208,8 @@ uint8_t protocolIdentValue[6] = {0xD7,0x58,0x00,0,0,0};
 
 #define OLCB_NO_BLUE_GOLD
 
+#include "OpenLCBMid.h"
+
 const uint8_t outputPinNums[] = { 0,  1,  2,  3,  4,  5,  6,  7};
 
 const uint8_t inputPinNums[]  = { 8,  9, 10, 11, 12, 13, 14, 15};
@@ -234,6 +223,23 @@ uint8_t servoStates[]           = { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  
 
 ButtonLed blue(BLUE, LOW);
 ButtonLed gold(GOLD, LOW);
+
+void userInitAll()
+{
+  NODECONFIG.update16(EEADDR(ServoPwmMin), SERVO_PWM_DEG_0);
+  NODECONFIG.update16(EEADDR(ServoPwmMax), SERVO_PWM_DEG_180);
+
+  uint8_t posThrown = SERVO_POS_DEG_THROWN;
+  uint8_t posClosed = SERVO_POS_DEG_CLOSED;
+  
+  for(uint8_t i = 0; i < NUM_SERVOS; i++)
+  {
+    NODECONFIG.update(EEADDR(servoOutputs[i].thrownPos), posThrown);
+    NODECONFIG.update(EEADDR(servoOutputs[i].closedPos), posClosed);
+  }
+}
+
+
 
 Adafruit_PWMServoDriver servoPWM = Adafruit_PWMServoDriver();
 
@@ -263,6 +269,8 @@ uint16_t servoPwmMax = SERVO_PWM_DEG_180;
         uint8_t outputState = (index - FIRST_SERVO_EVENT_INDEX) % 2;
         servoStates[outputIndex] = outputState;
         
+        DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" State: ")); DEBUGL(outputState);
+
         servoSet(outputIndex, outputState);
       }
    }
@@ -270,7 +278,7 @@ uint16_t servoPwmMax = SERVO_PWM_DEG_180;
 // Set servo i's position to p
 void servoSet(uint8_t outputIndex, uint8_t outputState)
 {
-  uint8_t servoPosDegrees = outputState ? EEPROM.read(EEADDR(servoOutputs[outputIndex].closedPos)) : EEPROM.read(EEADDR(servoOutputs[outputIndex].thrownPos)); 
+  uint8_t servoPosDegrees = outputState ? NODECONFIG.read(EEADDR(servoOutputs[outputIndex].closedPos)) : NODECONFIG.read(EEADDR(servoOutputs[outputIndex].thrownPos)); 
   uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
   DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" Pos: ")); DEBUG(servoPosDegrees); DEBUG(F(" PWM: ")); DEBUGL(servoPosPWM);
   servoPWM.setPWM(outputIndex, 0, servoPosPWM);
@@ -344,26 +352,23 @@ void produceFromInputs() {
 void userSoftReset() {}
 void userHardReset() {}
 
-#include "OpenLCBMid.h"
-
 // Callback from a Configuration write
 // Use this to detect changes in the ndde's configuration
 // This may be useful to take immediate action on a change.
 // 
-#define BYTE_SWAP(x) x = (x >> 8) | (x << 8)
 
 void userConfigWritten(unsigned int address, unsigned int length, unsigned int func)
 {
   DEBUG("\nuserConfigWritten: Addr: "); DEBUG(address); DEBUG("  Len: "); DEBUG(length); DEBUG("  Func: "); DEBUGL(func);
   if(address == offsetof(MemStruct, ServoPwmMin) && (length >= sizeof(uint16_t)))
   {
-    EEPROM.get(EEADDR(ServoPwmMin), servoPwmMin); BYTE_SWAP(servoPwmMin);
+    servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
     DEBUG("Changed: ServoPwmMin: "); DEBUGL(servoPwmMin); 
   }
   
   else if(address == offsetof(MemStruct, ServoPwmMax) && (length >= sizeof(uint16_t)))
   {
-    EEPROM.get(EEADDR(ServoPwmMax), servoPwmMax); BYTE_SWAP(servoPwmMax);
+    servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
     DEBUG("Changed: ServoPwmMax: "); DEBUGL(servoPwmMax);
   }
 
@@ -404,16 +409,20 @@ void setup()
 
 #ifdef RESET_NODE_ADDRESS  
   setRailStartIoNodeId(RESET_NODE_ADDRESS);
-#define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
 #endif
 
-// AJS Fix  Olcb_init(FORCE_ALL_INIT);
+#ifdef RESET_TO_FACTORY_DEFAULTS  
+  Olcb_init(1);
+#else
+  Olcb_init(0);
+#endif
+
 
   servoPWM.begin();
   servoPWM.setPWMFreq(60);
 
-  EEPROM.get(EEADDR(ServoPwmMin), servoPwmMin); BYTE_SWAP(servoPwmMin);
-  EEPROM.get(EEADDR(ServoPwmMax), servoPwmMax); BYTE_SWAP(servoPwmMax);
+  servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
+  servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
 
   for(uint8_t i = 0; i < NUM_SERVOS; i++)
     servoSet(i, 0);

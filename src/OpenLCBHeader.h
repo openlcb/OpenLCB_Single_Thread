@@ -79,7 +79,7 @@ typedef struct {
         <hardwareVersion>" HWVERSION "</hardwareVersion>\
         <softwareVersion>" SWVERSION "</softwareVersion>\
         </identification>\
-    <segment origin='12' space='253'> <!-- bypasses magic, nextEID, nodeID -->\
+    <segment origin='2' space='253'> <!-- bypasses magic, nextEID, nodeID -->\
         <group>\
             <name>Node ID</name>\
             <description>User-provided description of the node</description>\
@@ -89,13 +89,13 @@ typedef struct {
 #define CDIfooter "\
     </segment>\
     <segment origin='0' space='253'> <!-- stuff magic to trigger resets -->\
-        <name>Reset</name>\
-        <description>Controls reloading and clearing node memory. Board must be restarted for this to take effect.</description>\
-        <int size='4'>\
+        <name>Reset Control</name>\
+        <description>Controls Actions at Next Board Reset. Reloading User or Factory Defaults</description>\
+        <int size='2'>\
             <map>\
-                <relation><property>3998572261</property><value>Normal Operation</value></relation>\
-                <relation><property>3998561228</property><value>Clear Strings, Reset Settings, Create New Unused EventIDs</value></relation>\
-                <relation><property>0</property><value>Reset to Factory Default Values</value></relation>\
+                <relation><property>61013</property><value>Normal Operation</value></relation>\
+                <relation><property>13260</property><value>Clear Everything but Create New Unused EventIDs</value></relation>\
+                <relation><property>65535</property><value>Clear Everything back to Factory Defaults</value></relation>\
             </map>\
         </int>\
     </segment>\
@@ -131,9 +131,6 @@ typedef struct {
 #define pFirmwareUpgrade     0x20
 #define pFirwareUpdateActive 0x10
 
-#define FORCE_ALL_INIT 0
-
-extern void configWritten(unsigned int address, unsigned int length, unsigned int func);
 extern void Olcb_softReset() __attribute__((weak));
 extern void userUsrClear() __attribute__((weak));
 extern void userMfgClear() __attribute__((weak));

@@ -49,7 +49,7 @@ int16_t PCE::findIndexOfEventID(EventID *key, int16_t startIndex)
 		// First time called startIndex == -1
 	if(startIndex == -1)
 	{
-		for (lim = nEvents; lim != 0; lim >>= 1)
+		for (lim = numEvents; lim != 0; lim >>= 1)
 		{
 			p = base + (lim >> 1);
 			cmp = events[p].eid.compare(key);
@@ -90,13 +90,13 @@ PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, LinkContr
       //events = evts;
     events = evts;
     eventsIndex = eIndex;
-    nEvents = nEvt;
+    numEvents = nEvt;
     buffer = b;
     link = li;
        
       // mark as needing transmit of IDs, otherwise not interesting
       // ToDo: Is this needed if requiring newEvent?
-      for (int i = 0; i < nEvents; i++) {
+      for (int i = 0; i < numEvents; i++) {
          if (events[i].flags & ( Event::CAN_PRODUCE_FLAG | Event::CAN_CONSUME_FLAG ))
             events[i].flags |= Event::IDENT_FLAG;
       }
@@ -119,7 +119,7 @@ PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, LinkContr
                 //LDEBUG("\nEvent::CAN_CONSUME_FLAG");
                 //LDEBUG2(Event::CAN_CONSUME_FLAG,HEX);
       
-     while (sendEvent < nEvents) {
+     while (sendEvent < numEvents) {
          // OK to send, see if marked for some cause
          // ToDo: This only sends _either_ producer ID'd or consumer ID'd, not both
          EventID ev = events[sendEvent].eid;
@@ -219,7 +219,7 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
              sendEvent = sendEvent < index ? sendEvent : index;
           }
           index++;
-          if(index>=nEvents) break;
+          if(index>=numEvents) break;
         }
     } else if (rcv->isIdentifyProducers()) {
         // see if we produce the listed event
@@ -235,14 +235,14 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
              sendEvent = sendEvent < index ? sendEvent : index;
           }
           index++;
-          if(index>=nEvents) break;
+          if(index>=numEvents) break;
         }
         // ToDo: add identify flags so that events that are both produced and consumed
         // have only one form sent in response to a specific request.
     } else if (rcv->isIdentifyEvents()) {
         // if so, send _all_ ProducerIdentified, ConsumerIdentified
         // via the "check" periodic call
-        for (int i = 0; i < nEvents; i++) {
+        for (int i = 0; i < numEvents; i++) {
           events[i].flags |= Event::IDENT_FLAG;
         }
         sendEvent = 0;  
@@ -269,10 +269,10 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
         uint16_t eindex = eventsIndex[index];
                 //LDEBUG("\nhandlePCRep ind: "); LDEBUG(ind);
                 //LDEBUG("\nhandlePCRep Index: "); LDEBUG(index);
-                //LDEBUG("\nevents[index].flags: "); LDEBUG2(events[index].flags,HEX);
+                //LDEBUG("\numEvents[index].flags: "); LDEBUG2(events[index].flags,HEX);
                 //LDEBUG("\nhandlePCRep index: "); LDEBUG(index);
                 //LDEBUG("\nhandlePCRep eindex: "); LDEBUG(eindex);
-                //LDEBUG("\nevents[index].flags: "); LDEBUG2(events[index].flags,HEX);
+                //LDEBUG("\numEvents[index].flags: "); LDEBUG2(events[index].flags,HEX);
         if (events[eindex].flags & Event::CAN_CONSUME_FLAG)
         {
                 //LDEBUG(F("Found Consumer: Index: ")); LDEBUG(index);
@@ -281,7 +281,7 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
           processEvent(eindex);
         }
         index++;
-        if(index>=nEvents) break;
+        if(index>=numEvents) break;
       }
   }
 
@@ -294,9 +294,9 @@ void PCE::sendTeach(EventID e) {   /// DPH added for Clock
         rcv->getEventID(&eid);
                 //LDEBUG("\neid:"); eid.print();
                 //LDEBUG("\nEvent::LEARN_FLAG:"); LDEBUG2(Event::LEARN_FLAG,HEX);
-        for (int i=0; i<nEvents; i++) {
+        for (int i=0; i<numEvents; i++) {
                 //LDEBUG("\ni:"); LDEBUG(i);
-                //LDEBUG("\nevents[i].flags:"); LDEBUG2(events[i].flags,HEX);
+                //LDEBUG("\numEvents[i].flags:"); LDEBUG2(events[i].flags,HEX);
             if ( (events[i].flags & Event::LEARN_FLAG ) != 0 ) {
                 //rcv->getEventID(events+i);
                 //LDEBUG("\ni:"); LDEBUG(i);

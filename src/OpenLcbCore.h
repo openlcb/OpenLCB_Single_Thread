@@ -21,9 +21,6 @@ class OpenLcbCore : public PCE
 	private:
 		int static cmpfunc (const void * a, const void * b);
 
-		Event 		*events;					// List of Events
-		uint16_t 	*eventsIndex;     // Sorted index to EventIDs
-		uint16_t	numEvents;
 // 		MemStruct *pmem;
 };
 

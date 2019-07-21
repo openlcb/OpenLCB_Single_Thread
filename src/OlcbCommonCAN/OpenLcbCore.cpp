@@ -4,9 +4,14 @@
 #include "OpenLcbCore.h"
 #include "lib_debug_print_common.h"
 #include "Event.h"
+#include "NodeMemory.h"
 
-extern uint16_t getOffset(uint16_t index);
-extern uint16_t getFlags(unsigned index);
+extern "C" {
+	uint16_t getOffset(uint16_t index);
+	uint16_t getFlags(unsigned index);
+}
+
+extern void pceCallback(unsigned int index)  __attribute__((weak));
 
 OpenLcbCore::OpenLcbCore(Event* events, int numEvents, uint16_t* eIndex, OlcbCanInterface* b, LinkControl* li)
 	: PCE(events, numEvents, eIndex, b, li)
@@ -15,6 +20,9 @@ OpenLcbCore::OpenLcbCore(Event* events, int numEvents, uint16_t* eIndex, OlcbCan
 
 void OpenLcbCore::processEvent(unsigned int eventIndex)
 {
+	LDEBUG(F("\nOpenLcbCore::processEvent: Index")); LDEBUGL(eventIndex);
+	if(pceCallback)
+		pceCallback(eventIndex);
 }
 
 void OpenLcbCore::printEventIndexes()
@@ -22,7 +30,7 @@ void OpenLcbCore::printEventIndexes()
 	LDEBUG(F("\nprintEventIndex\n"));
 	for(int i = 0; i < numEvents; i++)
 	{
-			LDEBUG2(eventsIndex[i],HEX); LDEBUG(F(", "));
+		LDEBUG2(eventsIndex[i],HEX); LDEBUG(F(", "));
 	}
 }
 
@@ -32,11 +40,13 @@ void OpenLcbCore::printEvents()
 	LDEBUG(F("\n#  flags  EventID"));
 	for(int i = 0; i < numEvents; i++)
 	{
-			LDEBUG("\n"); LDEBUG(i);
-			LDEBUG(":"); LDEBUG2(getOffset(i),HEX);
-			LDEBUG(F(" : ")); LDEBUG2(events[i].flags,HEX);
-			LDEBUG(F(" : ")); events[i].eid.print();
+		LDEBUG("\n"); LDEBUG(i);
+		LDEBUG(":"); LDEBUG2(getOffset(i),HEX);
+		LDEBUG(F(" : ")); LDEBUG2(events[i].flags,HEX);
+		LDEBUG(F(" : ")); events[i].eid.print();
 	}
+
+	LDEBUGL();
 }
     
 void OpenLcbCore::printEventids()
@@ -44,10 +54,12 @@ void OpenLcbCore::printEventids()
 	LDEBUG("\neventids:");
 	for(int e = 0; e < numEvents; e++)
 	{
-			LDEBUG("\n[");
-			for(int i = 0; i < 8; i++)
-					LDEBUG2(events[e].eid.val[i],HEX); LDEBUG(", ");
+		LDEBUG("\n[");
+		for(int i = 0; i < 8; i++)
+			LDEBUG2(events[e].eid.val[i],HEX); LDEBUG(", ");
 	}
+
+	LDEBUGL();
 }
 
 void OpenLcbCore::printSortedEvents()
@@ -55,12 +67,13 @@ void OpenLcbCore::printSortedEvents()
 	LDEBUG("\nSorted events");
 	for(int i = 0; i < numEvents; i++)
 	{
-			int e = eventsIndex[i];
-			LDEBUG("\nEvent Index: "); LDEBUG(i);
-			LDEBUG("  EventNum: ");    LDEBUG(e);
-			LDEBUG("  EventID:"); 		 events[e].eid.print();
-			LDEBUG("  Flags: ");       LDEBUG2(events[e].flags,HEX);
+		int e = eventsIndex[i];
+		LDEBUG("\nEvent Index: "); LDEBUG(i);
+		LDEBUG("  EventNum: ");    LDEBUG(e);
+		LDEBUG("  EventID:"); 		 events[e].eid.print();
+		LDEBUG("  Flags: ");       LDEBUG2(events[e].flags,HEX);
 	}
+
 	LDEBUGL();
 }
 
@@ -86,7 +99,7 @@ void OpenLcbCore::initTables()
 	for(unsigned int e = 0; e < numEvents; e++)
 	{
 		eventsIndex[e] = e;
-		EEPROM.get(getOffset(e), events[e].eid);
+		NODECONFIG.get(getOffset(e), events[e].eid);
 		events[e].flags |= getFlags(e);
 	}
 //     LDEBUG("\nSort eventIndex");

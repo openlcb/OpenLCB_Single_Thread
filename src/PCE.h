@@ -88,11 +88,13 @@ class PCE {
   
   virtual void processEvent(unsigned int eventIndex); 
 
-private:
+protected:
 	int16_t findIndexOfEventID(EventID *key, int16_t startIndex);
   Event* events; // array
   Index* eventsIndex; // array
-  int nEvents;
+  int numEvents;
+
+private:
   LinkControl* link;
   OlcbCanInterface* buffer;
   NodeID* nid;
