@@ -8,17 +8,10 @@
 
 #include "lib_debug_print_common.h"
 
-extern "C" {
-  extern uint16_t getOffset(uint16_t index);
-  extern void writeEID(int index);
-}
-
-extern void userInitAll();
-
 NodeMemory::NodeMemory(int eepromBaseAddress, uint16_t userConfigSize)
 {
     eepromBase = eepromBaseAddress;
-    userConfigBase   = eepromBaseAddress + sizeof(NODE_HEADER);
+    userConfigBase   = eepromBaseAddress + sizeof(NODE_ID_STORE);
     this->userConfigSize = userConfigSize;
 
     loadAndValidate();
@@ -34,151 +27,60 @@ void NodeMemory::write( int idx, uint8_t val )
 	EEPROM.write(idx + userConfigBase, val);
 }
 
+uint16_t NodeMemory::length(void)
+{
+	return userConfigSize;
+}
+
+void NodeMemory::eraseAll(void)
+{
+	for(uint16_t i = userConfigBase; i < (userConfigBase + userConfigSize); i++)
+		EEPROM.update(i, 0);
+}
+
+
 uint8_t NodeMemory::loadAndValidate()
 {
-	EEPROM.get(eepromBase, header);
+	EEPROM.get(eepromBase, nodeIdCache);
 	
-	nodeHeaderState = 0;
+	nodeIdState = 0;
 	
-	if(header.nodeId.nodeIdMarker == NODE_ID_MARKER)
-		nodeHeaderState |= NODE_ID_MARKER_VALID;
+	if(nodeIdCache.Marker == NODE_ID_MARKER)
+		nodeIdState |= NODE_ID_MARKER_VALID;
 		
 	uint8_t checkSum = 0xFF;
-	uint8_t *pByte = &header.nodeId.nodeIdMarker;
+	uint8_t *pByte = &nodeIdCache.Marker;
 	for(uint8_t i = 0; i < 8; i++)
 		checkSum ^= *pByte++;
 	
 	if(checkSum == 0)
-		nodeHeaderState |= NODE_ID_CHECKSUM_VALID;
+		nodeIdState |= NODE_ID_CHECKSUM_VALID;
 
-	uint16_t	nodeResetControl;
-
-	EEPROM.get(userConfigBase, nodeResetControl);
-
-	if(nodeResetControl == RESET_NORMAL_VAL)
-		nodeHeaderState |= RESET_NORMAL;
-		
-	else if(nodeResetControl == RESET_NEW_EVENTS_VAL) 
-		nodeHeaderState |= RESET_NEW_EVENTS;
-		
-	else 
-		nodeHeaderState |= RESET_FACTORY_DEFAULTS;
-		
-	return nodeHeaderState;
+	return nodeIdState;
 }
 
 
 uint8_t NodeMemory::getNodeID(NodeID *nodeIdBuffer)
 {
-	*nodeIdBuffer = header.nodeId.nodeId;
+	*nodeIdBuffer = nodeIdCache.Id;
 		
-	return nodeHeaderState;
+	return nodeIdState;
 }
 
 
 void NodeMemory::changeNodeID(NodeID *newNodeId)
 {
-	header.nodeId.nodeIdMarker = NODE_ID_MARKER;
-	header.nodeId.nodeId = *newNodeId;
+	nodeIdCache.Marker = NODE_ID_MARKER;
+	nodeIdCache.Id = *newNodeId;
 	
 	uint8_t checkSum = 0xFF;
-	uint8_t *pByte = &header.nodeId.nodeIdMarker;
+	uint8_t *pByte = &nodeIdCache.Marker;
 	for(uint8_t i = 0; i < 7; i++)
 		checkSum ^= *pByte++;
 	
-	header.nodeId.nodeIdCheckSum = checkSum;
+	nodeIdCache.CheckSum = checkSum;
 	
-	EEPROM.put(eepromBase, header.nodeId);
-  EEPROMcommit;
-}
-
-
-void NodeMemory::forceFactoryReset()
-{
-  LDEBUG("\nNodeMemory::forceFactoryReset()");
-  nodeHeaderState |= RESET_FACTORY_DEFAULTS;
-  
-  uint16_t	nodeResetControl = RESET_FACTORY_DEFAULTS_VAL;
-  EEPROM.put(userConfigBase, nodeResetControl);
-  EEPROMcommit;
-}
-
-void NodeMemory::forceNewEventIDs() {
-  LDEBUG("\nNodeMemory::forceNewEventIDs()");
-
-  nodeHeaderState |= RESET_NEW_EVENTS;
-
-  uint16_t	nodeResetControl = RESET_NEW_EVENTS_VAL;
-  EEPROM.put(userConfigBase, nodeResetControl);
-  EEPROMcommit;
-}
-
-
-void NodeMemory::init(Event* events, uint8_t numEvents)
-{
-  LDEBUG("\nNodeMemory::forceNewEventIDs()  State: "); LDEBUG2(nodeHeaderState, HEX); LDEBUGL();
-
-	if(nodeHeaderState & NODE_ID_OK)
-	{
-	  LDEBUGL("NodeMemory: NodeID Ok");
-		if(nodeHeaderState & RESET_NORMAL)
-		{
-		  LDEBUGL("NodeMemory: Reset Normal, Exiting ");
-
-			return; // Nothing to do
-		}
-		
-		else if(nodeHeaderState & RESET_NEW_EVENTS)
-		{
-		  LDEBUGL("NodeMemory: Reset New Events");
-
-			writeNewEventIDs(events, numEvents);
-			userInitAll();
-
-			uint16_t	nodeResetControl = RESET_NORMAL_VAL;
-			EEPROM.put(userConfigBase, nodeResetControl);
-			EEPROMcommit;
-		}
-
-		else if (nodeHeaderState & RESET_FACTORY_DEFAULTS)
-		{	//clear EEPROM
-		  LDEBUGL("NodeMemory: Reset Factory Defaults");
-
-			for(uint16_t i = userConfigBase; i < (userConfigBase + userConfigSize); i++)
-					EEPROM.update(i, 0);
-			
-			header.nextEID = 0;
-			
-			// handle the rest
-			writeNewEventIDs(events, numEvents);
-			userInitAll();
-			
-			uint16_t	nodeResetControl = RESET_NORMAL_VAL;
-			EEPROM.put(userConfigBase, nodeResetControl);
-			EEPROMcommit;
-		}
-	}
-}
-
-
-// write to EEPROM new set of eventIDs and then magic, nextEID and nodeID
-void NodeMemory::writeNewEventIDs(Event* events, uint8_t numEvents)
-{
-  LDEBUGL("\nNodeMemory::writeNewEventIDs()");
-	EventID newEventId;
-	
-	newEventId.setNodeIdPrefix(&header.nodeId.nodeId);
-
-	for(uint16_t e = 0; e < numEvents; e++)
-	{
-		uint16_t eepromAddress = userConfigBase + getOffset(e); 
-		
-		newEventId.setEventIdSuffix(header.nextEID++);
-		
-		EEPROM.put(eepromAddress, newEventId);
-	}
-	// Save the latest value of nextEID
-	EEPROM.put(userConfigBase, header.nextEID);
+	EEPROM.put(eepromBase, nodeIdCache);
 }
 
 

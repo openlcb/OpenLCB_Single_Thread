@@ -181,7 +181,7 @@ LinkControl clink(&txBuffer, &nodeId);
     #define dg  0
 #endif
 
-OpenLcbCore OpenLcb(event, NUM_EVENT, eventIndex, &txBuffer, &clink);
+OpenLcbCore OpenLcb(event, NUM_EVENT, eventIndex, eidtab, &txBuffer, &clink);
 
 #ifndef OLCB_NO_BLUE_GOLD
     BG bg(&OpenLcb, buttons, patterns, NUM_EVENT, &blue, &gold, &txBuffer);
@@ -205,19 +205,17 @@ void Olcb_init(uint8_t forceFactoryReset) {       // was setup()
 //             LDEBUG("\nIn olcb::init");
     EEPROMbegin;       // defined in processor.h
     if(forceFactoryReset)
-        nm.forceFactoryReset();  // factory reset
+        OpenLcb.forceFactoryReset();  // factory reset
     
     eepromDirty = false;
     
     	// Read the NodeID from EEPROM
     nm.getNodeID(&nodeId);
+	nm.print();
     
-    nm.init(event, NUM_EVENT);
-
-		nm.print();
-    
+    OpenLcb.init();
     OpenLcb.initTables();
-		OpenLcb.printSortedEvents();
+	OpenLcb.printSortedEvents();
 
     PIP_setup(&txBuffer, &clink);
     SNII_setup((uint8_t)sizeof(SNII_const_data), SNII_var_offset, &txBuffer, &clink);
@@ -231,7 +229,7 @@ void Olcb_init(uint8_t forceFactoryReset) {       // was setup()
 // Soft reset, reinitiatize from EEPROM, but maintain present CAN Link.
 void Olcb_softReset() {
     dP(F("\nIn olcb_softReset"));
-    nm.init(event, NUM_EVENT);
+    OpenLcb.init();
     dP(F("\nIn olcb::softreset nm.setup()"));
 //AJS Fix    initTables();
 }

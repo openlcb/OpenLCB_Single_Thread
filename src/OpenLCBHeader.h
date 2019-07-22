@@ -25,19 +25,7 @@
 #include "NodeID.h"
 #include "processor.h"
 
-typedef struct NodeVar_ {
-} NodeVar;
-
 bool eepromDirty;
-
-// ===== eventidOffset Support =====================================
-//   Note: this allows system routines to initialize event[]
-//         since eventOffsets are constant in flash.
-typedef struct {
-    uint16_t offset;
-    uint16_t flags;
-} EIDTab;
-
 
 #include "OlcbCanInterface.h"
 #include "PIP.h"
@@ -68,8 +56,6 @@ typedef struct {
 #include "ButtonLed.h"
 #include "Event.h"
 
-
-
 // ===== CDI System Portions =======================================
 #define CDIheader "\
     <cdi xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='http://openlcb.org/trunk/prototypes/xml/schema/cdi.xsd'>\n\
@@ -79,7 +65,7 @@ typedef struct {
         <hardwareVersion>" HWVERSION "</hardwareVersion>\
         <softwareVersion>" SWVERSION "</softwareVersion>\
         </identification>\
-    <segment origin='2' space='253'> <!-- bypasses magic, nextEID, nodeID -->\
+    <segment origin='3' space='253'> <!-- bypasses magic, nextEID, nodeID -->\
         <group>\
             <name>Node ID</name>\
             <description>User-provided description of the node</description>\
@@ -88,14 +74,14 @@ typedef struct {
         </group>"
 #define CDIfooter "\
     </segment>\
-    <segment origin='0' space='253'> <!-- stuff magic to trigger resets -->\
+    <segment origin='2' space='253'> <!-- stuff magic to trigger resets -->\
         <name>Reset Control</name>\
         <description>Controls Actions at Next Board Reset. Reloading User or Factory Defaults</description>\
-        <int size='2'>\
+        <int size='1'>\
             <map>\
-                <relation><property>61013</property><value>Normal Operation</value></relation>\
-                <relation><property>13260</property><value>Clear Everything but Create New Unused EventIDs</value></relation>\
-                <relation><property>65535</property><value>Clear Everything back to Factory Defaults</value></relation>\
+                <relation><property>238</property><value>Normal Operation</value></relation>\
+                <relation><property>51</property><value>Clear Everything but Create New Unused EventIDs</value></relation>\
+                <relation><property>255</property><value>Clear Everything back to Factory Defaults</value></relation>\
             </map>\
         </int>\
     </segment>\

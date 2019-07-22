@@ -138,8 +138,8 @@ NodeID nodeid(0x05, 0x02, 0x01, 0x02, 0x02, RESET_NODE_ADDRESS);
 // ===== MemStruct =====
 //   Memory structure of NODECONFIG (EEPROM), must match CDI above
     typedef struct {
-          uint16_t  resetControl; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
-
+          EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
+          
           char nodeName[20];  // optional node-name, used by ACDI
           char nodeDesc[24];  // optional node-description, used by ACDI
        // ===== Enter User definitions below =====

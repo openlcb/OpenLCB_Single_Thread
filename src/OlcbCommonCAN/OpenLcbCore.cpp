@@ -9,14 +9,118 @@
 extern "C" {
 	uint16_t getOffset(uint16_t index);
 	uint16_t getFlags(unsigned index);
+	extern void writeEID(int index);
 }
 
+extern void userInitAll();
 extern void pceCallback(unsigned int index)  __attribute__((weak));
 
-OpenLcbCore::OpenLcbCore(Event* events, int numEvents, uint16_t* eIndex, OlcbCanInterface* b, LinkControl* li)
+OpenLcbCore::OpenLcbCore(Event* events, int numEvents, uint16_t* eIndex, const EIDTab* eidTab, OlcbCanInterface* b, LinkControl* li)
 	: PCE(events, numEvents, eIndex, b, li)
 {
+	eidOffsetsTable = eidTab;
+	NODECONFIG.get(0, header);
 }
+    
+uint16_t OpenLcbCore::getOffset(unsigned index)
+{
+    return pgm_read_word(&eidOffsetsTable[index].offset);
+}
+
+uint16_t OpenLcbCore::getFlags(unsigned index)
+{
+    return pgm_read_word(&eidOffsetsTable[index].flags);
+}
+
+void OpenLcbCore::forceFactoryReset()
+{
+  LDEBUG("\nNodeMemory::forceFactoryReset()");
+
+  eventConfigState |= RESET_FACTORY_DEFAULTS;
+  
+  header.resetControl = RESET_FACTORY_DEFAULTS_VAL;
+  NODECONFIG.put(0, header);
+}
+
+void OpenLcbCore::forceNewEventIDs() {
+  LDEBUG("\nNodeMemory::forceNewEventIDs()");
+
+  eventConfigState |= RESET_NEW_EVENTS;
+
+  header.resetControl = RESET_NEW_EVENTS_VAL;
+  NODECONFIG.put(0, header);
+}
+
+
+void OpenLcbCore::init()
+{
+  LDEBUG("\nNodeMemory::forceNewEventIDs()  State: "); LDEBUG2(eventConfigState, HEX); LDEBUGL();
+
+	if(header.resetControl == RESET_NORMAL_VAL)
+		eventConfigState |= RESET_NORMAL;
+		
+	else if(header.resetControl == RESET_NEW_EVENTS_VAL) 
+		eventConfigState |= RESET_NEW_EVENTS;
+		
+	else 
+		eventConfigState |= RESET_FACTORY_DEFAULTS;
+		
+	if(eventConfigState & RESET_NORMAL)
+	{
+	  LDEBUGL("NodeMemory: Reset Normal, Exiting ");
+
+		return; // Nothing to do
+	}
+	
+	else if(eventConfigState & RESET_NEW_EVENTS)
+	{
+	  LDEBUGL("NodeMemory: Reset New Events");
+
+		writeNewEventIDs(events, numEvents);
+		userInitAll();
+
+		header.resetControl = RESET_NORMAL_VAL;
+		NODECONFIG.put(0, header);
+	}
+
+	else if (eventConfigState & RESET_FACTORY_DEFAULTS)
+	{	//clear EEPROM
+	  LDEBUGL("NodeMemory: Reset Factory Defaults");
+
+		header.nextEID = 0;
+		nm.eraseAll();			
+		// handle the rest
+		writeNewEventIDs(events, numEvents);
+		userInitAll();
+		
+		header.resetControl = RESET_NORMAL_VAL;
+		NODECONFIG.put(0, header);
+	}
+}
+
+
+// write to EEPROM new set of eventIDs and then magic, nextEID and nodeID
+void OpenLcbCore::writeNewEventIDs(Event* events, uint8_t numEvents)
+{
+  LDEBUGL("\nNodeMemory::writeNewEventIDs()");
+	EventID newEventId;
+	
+	NodeID myNodeId;
+	nm.getNodeID(&myNodeId);
+	
+	newEventId.setNodeIdPrefix(&myNodeId);
+
+	for(uint16_t e = 0; e < numEvents; e++)
+	{
+		newEventId.setEventIdSuffix(header.nextEID++);
+		
+		NODECONFIG.put(getOffset(e), newEventId);
+	}
+	// Save the latest value of nextEID
+	NODECONFIG.put(0, header);
+}
+
+
 
 void OpenLcbCore::processEvent(unsigned int eventIndex)
 {

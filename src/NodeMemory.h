@@ -31,32 +31,18 @@
 #include "NodeID.h"
 #include "processor.h"
 
-#define RESET_NORMAL_VAL						0xEE55
-#define RESET_NEW_EVENTS_VAL				0x33CC
-#define RESET_FACTORY_DEFAULTS_VAL	0xFFFF
-
-#define RESET_NORMAL						0x01
-#define RESET_NEW_EVENTS				0x02
-#define RESET_FACTORY_DEFAULTS	0x04
-
-#define NODE_ID_MARKER_VALID		0x10
+#define NODE_ID_MARKER_VALID	0x10
 #define NODE_ID_CHECKSUM_VALID	0x20
 #define NODE_ID_OK (NODE_ID_MARKER_VALID | NODE_ID_CHECKSUM_VALID)
 
-#define NODE_ID_MARKER					'N'
+#define NODE_ID_MARKER			'N'
 
 typedef struct
 {
-	uint8_t 	nodeIdMarker;
-	NodeID 		nodeId;
-	uint8_t 	nodeIdCheckSum;
+	uint8_t 	Marker;
+	NodeID 		Id;
+	uint8_t 	CheckSum;
 } NODE_ID_STORE;
-
-typedef struct
-{
-	NODE_ID_STORE 	nodeId;
-	uint16_t				nextEID;
-} NODE_HEADER;
 
 class NodeID;
 class Event;
@@ -70,59 +56,28 @@ class NodeMemory {
    */
   NodeMemory(int eepromBaseAddress, uint16_t userConfigSize);  // doesn't do anything
     
-  /**
-   * Make sure ready to go.  NodeID should have a default
-   * value already in case this is the first time.
-   *
-   * events is address in RAM to load from EEPROM
-   * copy N=extraBytes of memory from end of EEPROM to RAM.
-   *
-   * If the EEPROM is corrupt, all that is reloaded after  
-   * N=clearBytes of memory is cleared to e.g. 
-   * clear name strings. This count EEPROM address 0 (e.g. _not_ starting
-   * at end of event strings; this is the full memory clear)   
-   */
-  void init(Event* events, uint8_t numEvents);
-    
-  /** 
-   * For debug and test, this forces a reset to factory defaults at next restart
-   */
-  void forceFactoryReset();
-    
-  /** 
-   * Reload a complete set of new events on next restart.
-   */
-  void forceNewEventIDs();
-    
   uint8_t getNodeID(NodeID *nodeIdBuffer);
 
   void changeNodeID(NodeID *newNodeId);
+  
+  uint16_t length(void);
   
   // EEPROM.h Compatibility functions that address EEPROM above the Offset specified in userConfigBase
   // that will be called by the cloned EEPROM.h classed defined in OpenLCBMid.h
   uint8_t read( int idx );
 	void write( int idx, uint8_t val );
-  /*
-   * Get a new, forever unique EventID and put in 
-   * given EventID location. Does not do a EEPROM store,
-   * which must be done separately. unique ID build using
-   * this node's nodeID. 
-   */
-  //void setToNewEventID(NodeID* nodeID, EventID* eventID);
-  void setToNewEventID(NodeID* nid, uint16_t eOff);
-  void setToNewEventID(NodeID* nid, int n);  //dph
 
+	void eraseAll(void);
 	void print();
     
   private:
-		uint8_t			loadAndValidate();	
-	  void 				writeNewEventIDs(Event* events, uint8_t numEvents);
-		
-		uint16_t		eepromBase; 		// address of 1st byte in EEPROM we can use
-		uint16_t		userConfigBase; // address of 1st byte in EEPROM for User Config Data
-		uint16_t 		userConfigSize; 			// size of the User Config Data
-		uint8_t 		nodeHeaderState;
-		NODE_HEADER	header;
+	uint8_t			loadAndValidate();	
+	
+	uint16_t		eepromBase; 		// address of 1st byte in EEPROM we can use
+	uint16_t		userConfigBase; // address of 1st byte in EEPROM for User Config Data
+	uint16_t 		userConfigSize; 			// size of the User Config Data
+	uint8_t 		nodeIdState;
+	NODE_ID_STORE 	nodeIdCache;
 };
 
 extern NodeMemory nm;
@@ -278,7 +233,7 @@ struct NMCPROMClass{
     //STL and C++11 iteration capability.
     NMCPtr begin()                        { return 0x00; }
     NMCPtr end()                          { return length(); } //Standards requires this to be the item after the last valid entry. The returned pointer is invalid.
-    uint16_t length()                    { return E2END + 1 - sizeof(NODE_HEADER); }
+    uint16_t length()                    { return nm.length() + 1; }
     
     //Functionality to 'get' and 'put' objects to and from EEPROM.
     template< typename T > T &get( int idx, T &t ){
