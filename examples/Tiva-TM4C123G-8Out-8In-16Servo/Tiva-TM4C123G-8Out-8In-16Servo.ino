@@ -33,6 +33,8 @@
 #include "OpenLcbCore.h"
 #include "OpenLCBHeader.h"
 
+//#include <Wire.h>
+//#include <Adafruit_PWMServoDriver.h>
 
 #ifdef RESET_NODE_ADDRESS
 NodeID nodeid(0x05, 0x02, 0x01, 0x02, 0x02, RESET_NODE_ADDRESS);
@@ -227,7 +229,7 @@ void userInitAll()
 
 
 
-Adafruit_PWMServoDriver servoPWM = Adafruit_PWMServoDriver();
+//Adafruit_PWMServoDriver servoPWM = Adafruit_PWMServoDriver();
 
 uint16_t servoPwmMin = SERVO_PWM_DEG_0;
 uint16_t servoPwmMax = SERVO_PWM_DEG_180;
@@ -267,7 +269,7 @@ void servoSet(uint8_t outputIndex, uint8_t outputState)
   uint8_t servoPosDegrees = outputState ? NODECONFIG.read(EEADDR(servoOutputs[outputIndex].closedPos)) : NODECONFIG.read(EEADDR(servoOutputs[outputIndex].thrownPos)); 
   uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
   DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" Pos: ")); DEBUG(servoPosDegrees); DEBUG(F(" PWM: ")); DEBUGL(servoPosPWM);
-  servoPWM.setPWM(outputIndex, 0, servoPosPWM);
+//  servoPWM.setPWM(outputIndex, 0, servoPosPWM);
 }
 
 
@@ -374,8 +376,8 @@ void setup()
 #endif
 
 
-  servoPWM.begin();
-  servoPWM.setPWMFreq(60);
+//  servoPWM.begin();
+//  servoPWM.setPWMFreq(60);
 
   servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
   servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));

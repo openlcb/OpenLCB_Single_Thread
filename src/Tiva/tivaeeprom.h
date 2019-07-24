@@ -202,7 +202,7 @@ struct EEPROMClass{
         return t;
     }
     void init(void) {
-        Serial.print("\nIn EEPROMClass::init");
+//         Serial.print("\nIn EEPROMClass::init");
         SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
         EEPROMInit();
     }
