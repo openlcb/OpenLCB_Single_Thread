@@ -26,7 +26,7 @@ class PCE {
 
   // Instansiate
     PCE(Event* evts,                // events
-        int nEvt,                   // number of events
+        uint16_t nEvt,                   // number of events
         uint16_t* eIndex,           // sorted index into events/eventids
         OlcbCanInterface* b,        // buffer
         LinkControl* li             // Link control

@@ -13,7 +13,7 @@
 
 #define EEPROMbegin
 #define EEPROMcommit
-#define ESTRING(s) s          // default conversion - nil
+// #define ESTRING(s) s          // default conversion - nil
 //#define ESTRING(s) F(s)     // alternate def
 //#define ESTRING(s) PSTR(s)  // alternate def
 

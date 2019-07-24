@@ -30,10 +30,10 @@ typedef struct
 class OpenLcbCore : public PCE
 {
 	public:
-		OpenLcbCore(Event* events, int numEvents, uint16_t* eIndex, const EIDTab* eidTab, OlcbCanInterface* b, LinkControl* li);
+		OpenLcbCore(Event* events, uint16_t numEvents, uint16_t* eIndex, const EIDTab* eidTab, OlcbCanInterface* b, LinkControl* li);
 
 		uint16_t getOffset(uint16_t index);
-		uint16_t getFlags(unsigned index);
+		uint16_t getFlags(uint16_t index);
 		
 		/**
 		* Make sure ready to go.  NodeID should have a default

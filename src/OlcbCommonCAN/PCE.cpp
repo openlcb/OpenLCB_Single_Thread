@@ -85,7 +85,7 @@ int16_t PCE::findIndexOfEventID(EventID *key, int16_t startIndex)
 	}
 }
 
-PCE::PCE(Event* evts, int nEvt, uint16_t* eIndex, OlcbCanInterface* b, LinkControl* li)
+PCE::PCE(Event* evts, uint16_t nEvt, uint16_t* eIndex, OlcbCanInterface* b, LinkControl* li)
 {
       //events = evts;
     events = evts;

@@ -15,19 +15,19 @@ extern "C" {
 extern void userInitAll();
 extern void pceCallback(unsigned int index)  __attribute__((weak));
 
-OpenLcbCore::OpenLcbCore(Event* events, int numEvents, uint16_t* eIndex, const EIDTab* eidTab, OlcbCanInterface* b, LinkControl* li)
+OpenLcbCore::OpenLcbCore(Event* events, uint16_t numEvents, uint16_t* eIndex, const EIDTab* eidTab, OlcbCanInterface* b, LinkControl* li)
 	: PCE(events, numEvents, eIndex, b, li)
 {
 	eidOffsetsTable = eidTab;
 	NODECONFIG.get(0, header);
 }
     
-uint16_t OpenLcbCore::getOffset(unsigned index)
+uint16_t OpenLcbCore::getOffset(uint16_t index)
 {
     return pgm_read_word(&eidOffsetsTable[index].offset);
 }
 
-uint16_t OpenLcbCore::getFlags(unsigned index)
+uint16_t OpenLcbCore::getFlags(uint16_t index)
 {
     return pgm_read_word(&eidOffsetsTable[index].flags);
 }
