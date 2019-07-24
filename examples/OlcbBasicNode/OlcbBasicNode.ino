@@ -15,8 +15,11 @@
 
 // Node ID --- this must come from a range controlled by the user.  
 // See: http://registry.openlcb.org/uniqueidranges
-// Uncomment the NODEID line below to force the NodeID to be written to the board 
-//#define NODEID 2,1,13,0,0,0x07   // DIY range example, not for global use.  
+// Uncomment the NEW_NODEID line below to force the NodeID to be written to the board 
+//#define NEW_NODEID 2,1,13,0,0,0x07   // DIY range example, not for global use.  
+
+// Uncomment to Force Reset to Factory Defaults
+//#define RESET_TO_FACTORY_DEFAULTS 1
 
 // Board definitions
 #define MANU "OpenLCB"           // The manufacturer of node
@@ -35,6 +38,7 @@
 //************** End of USER DEFINTIONS *****************************
   
 #include "processor.h"            // auto-selects the processor type, and CAN lib, EEPROM lib etc.  
+#include "OpenLcbCore.h"
 #include "OpenLCBHeader.h"        // System house-keeping.
 
 extern "C" {                      // the following are defined as external
@@ -72,7 +76,10 @@ extern "C" {                      // the following are defined as external
 //   Memory structure of EEPROM, **must match CDI above**
 //     -- nodeVar has system-info, and includes the node name and description fields
     typedef struct { 
-      NodeVar nodeVar;         // must remain
+          EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
+          
+          char nodeName[20];  // optional node-name, used by ACDI
+          char nodeDesc[24];  // optional node-description, used by ACDI
       // ===== Enter User definitions below =====
             struct {
               char desc[16];        // description of this input-pin
@@ -171,10 +178,10 @@ void produceFromInputs() {
         states[scanIndex] = buttons[scanIndex*2]->state;
         if (states[scanIndex]) {
                   Serial.print("\n produce true");
-          pce.produce(scanIndex*2);
+          OpenLcb.produce(scanIndex*2);
         } else {
                    Serial.print("\n produce false");
-          pce.produce(scanIndex*2+1);
+          OpenLcb.produce(scanIndex*2+1);
         }
       }
     }
@@ -208,8 +215,8 @@ void userInitAll() {
     //#define ESTRING(s) F(s)         // not tiva, AT90
     //#define ESTRING(s) PSTR(s)      // tiva
     
-    EEPROM.put(EEADDR(nodeVar.nodeName), ESTRING("OlcbBasicNode"));
-    EEPROM.put(EEADDR(nodeVar.nodeDesc), ESTRING("Testing"));
+    EEPROM.put(EEADDR(nodeName), ESTRING("OlcbBasicNode"));
+    EEPROM.put(EEADDR(nodeDesc), ESTRING("Testing"));
     EEPROM.put(EEADDR(inputs[0].desc), ESTRING("Input1"));
     EEPROM.put(EEADDR(inputs[1].desc), ESTRING("Input2"));
     EEPROM.put(EEADDR(outputs[0].desc), ESTRING("Output1"));
@@ -271,16 +278,19 @@ void setup() {
     delay(1000);
   #endif
 
-#ifdef NODEID
-  NodeID newNodeID(NODEID);
-  nm.store(&newNodeID);
+#ifdef NEW_NODEID
+  NodeID newNodeID(NEW_NODEID);
+  nm.changeNodeID(&newNodeID);
 #endif
 
-  //#define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
-  Olcb_init(FORCE_ALL_INIT);
+#ifdef RESET_TO_FACTORY_DEFAULTS  
+  Olcb_init(1);
+#else
+  Olcb_init(0);
+#endif
 
   #ifdef DEBUG
-    printEeprom();
+  nm.print();
   #endif
   //while(0==0){}
     //pC.pattern = 0xC0000000L;
