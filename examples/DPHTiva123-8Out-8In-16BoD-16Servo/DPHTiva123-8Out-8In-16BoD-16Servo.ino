@@ -3,9 +3,6 @@
 // 
 // Copyright 2019 Alex Shepherd and David Harris
 //==============================================================
-//#if !defined(ARDUINO_AVR_RS_IO)
-//  #error "Not an Io / AT90CAN"
-//#endif
 #if !defined(__LM4F120H5QR__) && !defined(__TM4C123GH6PM__)
   #error "Not a Tiva123!"
 #endif
@@ -22,6 +19,9 @@
 // To Reset the Tiva123 Node Number, Uncomment and edit the next line
 //#define INITIALIZE_TO_NODE_ADDRESS  2,1,13,0,0,1
 
+// Uncomment to Force Reset EEPROM to Factory Defaults 
+//#define RESET_TO_FACTORY_DEFAULTS
+
 // User defs
 #define NUM_OUTPUTS     8
 #define NUM_INPUTS      8
@@ -35,11 +35,8 @@
 
 #define NUM_EVENT  ((NUM_OUTPUTS*2) + (NUM_INPUTS * 2) + (NUM_BOD_INPUTS * 2) + (NUM_SERVOS * 2))
 
+#include "OpenLcbCore.h"
 #include "OpenLCBHeader.h"
-
-#ifdef INITIALIZE_TO_NODE_ADDRESS
-  NodeID nodeid(INITIALIZE_TO_NODE_ADDRESS);
-#endif
 
 #define ENABLE_DEBUG_PRINT
 #ifdef ENABLE_DEBUG_PRINT
@@ -136,7 +133,10 @@
 // ===== MemStruct =====
 //   Memory structure of EEPROM, must match CDI above
     typedef struct { 
-      NodeVar nodeVar;         // must remain
+          EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
+          
+          char nodeName[20];  // optional node-name, used by ACDI
+          char nodeDesc[24];  // optional node-description, used by ACDI
       // ===== Enter User definitions below =====
           struct {
             char desc[16];        // description of this output
@@ -165,20 +165,18 @@
       // ===== Enter User definitions above =====
     } MemStruct;                 // type definition
 
-#define E16BITVAL(x)  ESTRING((x>>8)|x<<8)
-
 void userInitAll()
 {
-  EEPROM.put(EEADDR(ServoPwmMin), E16BITVAL(SERVO_PWM_DEG_0));
-  EEPROM.put(EEADDR(ServoPwmMax), E16BITVAL(SERVO_PWM_DEG_180));
+  NODECONFIG.update16(EEADDR(ServoPwmMin), SERVO_PWM_DEG_0);
+  NODECONFIG.update16(EEADDR(ServoPwmMax), SERVO_PWM_DEG_180);
 
   uint8_t posThrown = SERVO_POS_DEG_THROWN;
   uint8_t posClosed = SERVO_POS_DEG_CLOSED;
   
   for(uint8_t i = 0; i < NUM_SERVOS; i++)
   {
-    EEPROM.put(EEADDR(servoOutputs[i].thrownPos), posThrown);
-    EEPROM.put(EEADDR(servoOutputs[i].closedPos), posClosed);
+    NODECONFIG.update(EEADDR(servoOutputs[i].thrownPos), posThrown);
+    NODECONFIG.update(EEADDR(servoOutputs[i].closedPos), posClosed);
   }
 }
 
@@ -289,7 +287,7 @@ uint16_t servoPwmMax = SERVO_PWM_DEG_180;
 // Set servo i's position to p
 void servoSet(uint8_t outputIndex, uint8_t outputState)
 {
-  uint8_t servoPosDegrees = outputState ? EEPROM.read(EEADDR(servoOutputs[outputIndex].closedPos)) : EEPROM.read(EEADDR(servoOutputs[outputIndex].thrownPos)); 
+  uint8_t servoPosDegrees = outputState ? NODECONFIG.read(EEADDR(servoOutputs[outputIndex].closedPos)) : NODECONFIG.read(EEADDR(servoOutputs[outputIndex].thrownPos)); 
   uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
   DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" Pos: ")); DEBUG(servoPosDegrees); DEBUG(F(" PWM: ")); DEBUGL(servoPosPWM);
   servoPWM.setPWM(outputIndex, 0, servoPosPWM);
@@ -325,9 +323,9 @@ void produceFromInputs() {
         DEBUG("produceFromInputs: Input: "); DEBUG(inputsScanIndex); DEBUG(" NewValue: "); DEBUGL(inputVal);
 
         if(inputVal)
-          pce.produce(FIRST_INPUT_EVENT_INDEX + (inputsScanIndex * 2));
+          OpenLcb.produce(FIRST_INPUT_EVENT_INDEX + (inputsScanIndex * 2));
         else
-          pce.produce(FIRST_INPUT_EVENT_INDEX + (inputsScanIndex * 2) + 1);
+          OpenLcb.produce(FIRST_INPUT_EVENT_INDEX + (inputsScanIndex * 2) + 1);
       }
       inputsScanIndex++;
     }
@@ -346,9 +344,9 @@ void produceFromInputs() {
         DEBUG("produceFromInputs: BODInput: "); DEBUG(bodScanIndex); DEBUG(" NewValue: "); DEBUGL(inputVal);
 
         if(inputVal)
-          pce.produce(FIRST_BOD_EVENT_INDEX + (bodScanIndex * 2));
+          OpenLcb.produce(FIRST_BOD_EVENT_INDEX + (bodScanIndex * 2));
         else
-          pce.produce(FIRST_BOD_EVENT_INDEX + (bodScanIndex * 2) + 1);
+          OpenLcb.produce(FIRST_BOD_EVENT_INDEX + (bodScanIndex * 2) + 1);
       }
       bodScanIndex++;
     }
@@ -364,25 +362,24 @@ void userSoftReset() {}
 void userHardReset() {}
 
 #include "OpenLCBMid.h"
-/*
+
 // Callback from a Configuration write
 // Use this to detect changes in the ndde's configuration
 // This may be useful to take immediate action on a change.
 // 
-#define BYTE_SWAP(x) x = (x >> 8) | (x << 8)
 
 void userConfigWritten(unsigned int address, unsigned int length, unsigned int func)
 {
   DEBUG("\nuserConfigWritten: Addr: "); DEBUG(address); DEBUG("  Len: "); DEBUG(length); DEBUG("  Func: "); DEBUGL(func);
   if(address == offsetof(MemStruct, ServoPwmMin) && (length >= sizeof(uint16_t)))
   {
-    EEPROM.get(EEADDR(ServoPwmMin), servoPwmMin); BYTE_SWAP(servoPwmMin);
+    servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
     DEBUG("Changed: ServoPwmMin: "); DEBUGL(servoPwmMin); 
   }
   
   else if(address == offsetof(MemStruct, ServoPwmMax) && (length >= sizeof(uint16_t)))
   {
-    EEPROM.get(EEADDR(ServoPwmMax), servoPwmMax); BYTE_SWAP(servoPwmMax);
+    servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
     DEBUG("Changed: ServoPwmMax: "); DEBUGL(servoPwmMax);
   }
 
@@ -395,12 +392,6 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
   }
 }
 
-void setRailStartIoNodeId(uint8_t lastByteValue)
-{
-  NodeID newNodeID(0x05, 0x02, 0x01, 0x02, 0x02, lastByteValue);
-  nm.store(&newNodeID);
-}
-*/
 // ==== Setup does initial configuration ======================
 void setup()
 {   
@@ -421,18 +412,22 @@ void setup()
   for(uint8_t i = 0; i < NUM_BOD_INPUTS; i++)
     pinMode(bodPinNums[i], INPUT_PULLUP);
 
-  #ifdef RESET_NODE_ADDRESS  
-    //setRailStartIoNodeId(RESET_NODE_ADDRESS);
-    #define FORCE_ALL_INIT 1  // uncomment to force all inint of EEPROM
-  #endif
+#ifdef INITIALIZE_TO_NODE_ADDRESS
+  NodeID newNodeID(INITIALIZE_TO_NODE_ADDRESS);
+  nm.changeNodeID(&newNodeID);
+#endif
 
-  Olcb_init(FORCE_ALL_INIT);
-  
+#ifdef RESET_TO_FACTORY_DEFAULTS  
+  Olcb_init(1);
+#else
+  Olcb_init(0);
+#endif
+
   servoPWM.begin();
   servoPWM.setPWMFreq(60);
 
-//  EEPROM.get(EEADDR(ServoPwmMin), servoPwmMin); BYTE_SWAP(servoPwmMin);
-//  EEPROM.get(EEADDR(ServoPwmMax), servoPwmMax); BYTE_SWAP(servoPwmMax);
+  servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
+  servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
 
   for(uint8_t i = 0; i < NUM_SERVOS; i++)
     servoSet(i, 0);
@@ -445,7 +440,7 @@ void setup()
   red.on  (~0x00005500L); // blink red
   delay(1000);
   Serial.print("\n NUM_EVENT="); Serial.print(NUM_EVENT);
-  printEeprom();
+  nm.print();
   //while(0==0){}
 }
 

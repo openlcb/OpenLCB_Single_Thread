@@ -46,8 +46,6 @@ Can olcbcanTx;
 OlcbCanInterface     rxBuffer(&olcbcanRx);  // CAN receive buffer
 OlcbCanInterface     txBuffer(&olcbcanTx);  // CAN send buffer
 
-#define LAST_EEPROM sizeof(MemStruct)
-
 // The variable parts of the SNII protocol are stored in EEPROM, as secribed by MemStruct
 MemStruct *pmem = 0;
 #define SNII_var_data &pmem->nodeName           // location of SNII_var_data EEPROM, and address of nodeName

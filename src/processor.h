@@ -23,6 +23,7 @@
 #ifdef ENABLE_MESSAGE_PRAGMAS 
     //#pragma message("AVR Selected")
 #endif
+	#define ESTRING(s) s          // default conversion - nil
     #include <EEPROM.h>
     #include <avr/wdt.h>
     #define REBOOT                   \

@@ -2,7 +2,7 @@
   
 #include "BG.h"
 #include "processor.h"
-#include "PCE.h"
+#include "OpenLcbCore.h"
 
 //#pragma message("!!! compiling BG_cpp")
 
@@ -144,8 +144,7 @@ void BG::sendIdent() {
  * ToDo: better name!  Not really a true "factory reset"
  */
 void BG::factoryReset() {
-    // write to keep teh node ID, but reload everything else
-    EEPROM.update(2,0x33);
-    EEPROM.update(3,0xCC);
+    // write to keep the node ID, but reload everything else
+    OpenLcb.userFactoryReset();
     REBOOT;  // defined in processor.h for each mpu
 }

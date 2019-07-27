@@ -210,17 +210,13 @@ void userInitAll() {
     Serial.print("EEADDR(outputs[0].desc)");Serial.println(EEADDR(outputs[0].desc),HEX);
     Serial.print("EEADDR(outputs[1].desc)");Serial.println(EEADDR(outputs[1].desc),HEX);
   */
-    // initialize descriptions
-    // default                           tiva, mega328
-    //#define ESTRING(s) F(s)         // not tiva, AT90
-    //#define ESTRING(s) PSTR(s)      // tiva
     
-    EEPROM.put(EEADDR(nodeName), ESTRING("OlcbBasicNode"));
-    EEPROM.put(EEADDR(nodeDesc), ESTRING("Testing"));
-    EEPROM.put(EEADDR(inputs[0].desc), ESTRING("Input1"));
-    EEPROM.put(EEADDR(inputs[1].desc), ESTRING("Input2"));
-    EEPROM.put(EEADDR(outputs[0].desc), ESTRING("Output1"));
-    EEPROM.put(EEADDR(outputs[1].desc), ESTRING("Output2")); 
+    NODECONFIG.put(EEADDR(nodeName), ESTRING("OlcbBasicNode"));
+    NODECONFIG.put(EEADDR(nodeDesc), ESTRING("Testing"));
+    NODECONFIG.put(EEADDR(inputs[0].desc), ESTRING("Input1"));
+    NODECONFIG.put(EEADDR(inputs[1].desc), ESTRING("Input2"));
+    NODECONFIG.put(EEADDR(outputs[0].desc), ESTRING("Output1"));
+    NODECONFIG.put(EEADDR(outputs[1].desc), ESTRING("Output2")); 
 }
 
 // userSoftReset() - include any initialization after a soft reset, ie after configuration changes.
@@ -255,14 +251,14 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
     Serial.print(" length="); Serial.print(length,HEX);
     Serial.print(" func="); Serial.print(func,HEX);
     for(uint8_t i=0; i<length; i++) {
-      Serial.print(" ");Serial.print(EEPROM.read(address));
+      Serial.print(" ");Serial.print(NODECONFIG.read(address));
     }
   #endif
   // Another example: if a servo's position changed, then update it immediately
   // uint8_t posn;
   // for(unsigned i=0; i<NCHANNEL; i++) {
   //    unsigned int pposn = &pmem->channel[i].posn; 
-  //    if( (address<=pposn) && (pposn<(address+length) ) posn = EEPROM.read(pposn);
+  //    if( (address<=pposn) && (pposn<(address+length) ) posn = NODECONFIG.read(pposn);
   //    servo[i].set(i,posn);
   // }
 }
