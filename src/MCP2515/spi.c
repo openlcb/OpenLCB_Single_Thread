@@ -30,7 +30,11 @@
 
 
 #if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
-defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__)
+defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || \
+defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__) || \
+defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) || \
+defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || \
+defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
 
 //#include "mcp2515_private.h"
 
