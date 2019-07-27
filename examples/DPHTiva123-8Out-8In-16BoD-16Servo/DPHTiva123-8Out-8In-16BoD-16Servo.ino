@@ -331,11 +331,6 @@ void produceFromInputs() {
     }
     else if(bodScanIndex < NUM_BOD_INPUTS)
     {
-      // The UART0 is on pins 32 & 33 so while the Serial object is being used we need to skip checking these pins
-#ifdef ENABLE_DEBUG_PRINT
-      if(bodPinNums[bodScanIndex] == 32) bodScanIndex+=2;
-#endif      
-
       uint8_t inputVal = digitalRead( bodPinNums[bodScanIndex]);
       //Serial.print(" NewValue: "); Serial.println(inputVal);
       if(boDStates[bodScanIndex] != inputVal)
