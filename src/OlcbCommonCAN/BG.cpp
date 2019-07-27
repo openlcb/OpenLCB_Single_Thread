@@ -145,6 +145,6 @@ void BG::sendIdent() {
  */
 void BG::factoryReset() {
     // write to keep the node ID, but reload everything else
-    OpenLcb.userFactoryReset();
+    OpenLcb.forceFactoryReset();
     REBOOT;  // defined in processor.h for each mpu
 }
