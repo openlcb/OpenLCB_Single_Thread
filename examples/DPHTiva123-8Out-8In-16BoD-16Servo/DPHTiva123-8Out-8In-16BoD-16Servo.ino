@@ -1,10 +1,11 @@
+
 //==============================================================
-// Tiva 8-Outputs 8-Inputs 16-BoDs 16-Servos 
-// 
+// Tiva 8-Outputs 8-Inputs 16-BoDs 16-Servos
+//
 // Copyright 2019 Alex Shepherd and David Harris
 //==============================================================
 #if !defined(__LM4F120H5QR__) && !defined(__TM4C123GH6PM__)
-  #error "Not a Tiva123!"
+#error "Not a Tiva123!"
 #endif
 
 #include <Wire.h>
@@ -35,13 +36,12 @@
 
 #define NUM_EVENT  ((NUM_OUTPUTS*2) + (NUM_INPUTS * 2) + (NUM_BOD_INPUTS * 2) + (NUM_SERVOS * 2))
 
-#include "OpenLcbCore.h"
 #include "OpenLCBHeader.h"
 
 #define ENABLE_DEBUG_PRINT
 #ifdef ENABLE_DEBUG_PRINT
   #define DEBUG_BAUD_RATE 115200
-
+  
   #define DEBUG(x) Serial.print(x)
   #define DEBUGL(x) Serial.println(x);
   #define DEBUGHEX(x,y) Serial.print(x,y);
@@ -57,78 +57,78 @@
 #define SERVO_POS_DEG_THROWN  75
 #define SERVO_POS_DEG_CLOSED  115
 
- // CDI (Configuration Description Information) in xml, must match MemStruct
- // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
-    extern "C" { 
-        const char configDefInfo[] PROGMEM = 
-            // ===== Enter User definitions below =====
-            CDIheader R"(
-                <group>
-                  <name>I/O</name>
-                  <description>Define events associated with input and output pins</description>
-                  <group replication='8'>
-                      <name>Digital Outputs</name>
-                      <repname>Output</repname>
-                      <string size='16'><name>Description</name></string>
-                      <eventid><name>Set Output Low Event</name></eventid>
-                      <eventid><name>Set Output High Event</name></eventid>
-                  </group>
-                  <group replication='8'>
-                      <name>Digital Inputs</name>
-                      <repname>Input</repname>
-                      <string size='16'><name>Description</name></string>
-                      <eventid><name>Input Low Event</name></eventid>
-                      <eventid><name>Input High Event</name></eventid>
-                  </group>
-                  <group replication='16'>
-                      <name>Block Occupancy Detector Inputs</name>
-                      <repname>Block</repname>
-                      <string size='16'><name>Description</name></string>
-                      <eventid><name>Block Empty Event</name></eventid>
-                      <eventid><name>Block Occupied Event</name></eventid>
-                  </group>
-                  <group>
-                      <name>Turnout Servo PWM Calibration</name>
-                      <int size='2'>
-                          <min>0</min>
-                          <max>4095</max>
-                          <default>120</default>
-                          <name>Servo PWM Min</name>
-                          <description>PWM Value for Servo 0 Degree Position</description>
-                      </int>
-                      <int size='2'>
-                          <min>0</min>
-                          <max>4095</max>
-                          <default>590</default>
-                          <name>Servo PWM Max</name>
-                          <description>PWM Value for Servo 180 Degree Position</description>
-                      </int>
-                   </group>
-                   <group replication='16'>
-                      <name>Turnout Servo Control</name>
-                      <repname>Servo</repname>
-                      <string size='16'><name>Description</name></string>
-                      <eventid><name>Servo Thrown Event</name></eventid>
-                      <int size='1'>
-                          <min>0</min>
-                          <max>180</max>
-                          <default>60</default>
-                          <name>Servo Thrown Position</name>
-                          <description>Position in Degrees (0-180)</description>
-                      </int>
-                      <eventid><name>Servo Closed Event</name></eventid>
-                      <int size='1'>
-                          <min>0</min>
-                          <max>180</max>
-                          <default>115</default>
-                          <name>Servo Closed Position</name>
-                          <description>Position in Degrees (0-180)</description>
-                      </int>
-                  </group>
-                </group>
-            )" CDIfooter;
-          // ===== Enter User definitions above =====
-    } // end extern
+// CDI (Configuration Description Information) in xml, must match MemStruct
+// See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
+extern "C" {
+const char configDefInfo[] PROGMEM =
+// ===== Enter User definitions below =====
+  CDIheader R"(
+    <group>
+        <name>I/O</name>
+        <description>Define events associated with input and output pins</description>
+        <group replication='8'>
+            <name>Digital Outputs</name>
+            <repname>Output</repname>
+            <string size='16'><name>Description</name></string>
+            <eventid><name>Set Output Low Event</name></eventid>
+            <eventid><name>Set Output High Event</name></eventid>
+         </group>
+        <group replication='8'>
+            <name>Digital Inputs</name>
+            <repname>Input</repname>
+            <string size='16'><name>Description</name></string>
+            <eventid><name>Input Low Event</name></eventid>
+            <eventid><name>Input High Event</name></eventid>
+        </group>
+        <group replication='16'>
+            <name>Block Occupancy Detector Inputs</name>
+            <repname>Block</repname>
+            <string size='16'><name>Description</name></string>
+            <eventid><name>Block Empty Event</name></eventid>
+            <eventid><name>Block Occupied Event</name></eventid>
+        </group>
+        <group>
+            <name>Turnout Servo PWM Calibration</name>
+            <int size='2'>
+                <min>0</min>
+                <max>4095</max>
+                <default>120</default>
+                <name>Servo PWM Min</name>
+                <description>PWM Value for Servo 0 Degree Position</description>
+            </int>
+            <int size='2'>
+                <min>0</min>
+                <max>4095</max>
+                <default>590</default>
+                <name>Servo PWM Max</name>
+                <description>PWM Value for Servo 180 Degree Position</description>
+            </int>
+        </group>
+        <group replication='16'>
+            <name>Turnout Servo Control</name>
+            <repname>Servo</repname>
+            <string size='16'><name>Description</name></string>
+            <eventid><name>Servo Thrown Event</name></eventid>
+            <int size='1'>
+                <min>0</min>
+                <max>180</max>
+                <default>60</default>
+                <name>Servo Thrown Position</name>
+                <description>Position in Degrees (0-180)</description>
+            </int>
+            <eventid><name>Servo Closed Event</name></eventid>
+            <int size='1'>
+                <min>0</min>
+                <max>180</max>
+                <default>115</default>
+                <name>Servo Closed Position</name>
+                <description>Position in Degrees (0-180)</description>
+            </int>
+        </group>
+    </group>
+    )" CDIfooter;
+// ===== Enter User definitions above =====
+} // end extern
 
 // ===== MemStruct =====
 //   Memory structure of EEPROM, must match CDI above
@@ -182,75 +182,74 @@ void userInitAll()
 
 
 extern "C" {
-  // ===== eventid Table =====
-      #define REG_OUTPUT(s)       CEID(digitalOutputs[s].setLow), CEID(digitalOutputs[s].setHigh) 
-      #define REG_INPUT(s)        PEID(digitalInputs[s].inputLow), PEID(digitalInputs[s].inputHigh)  
-      #define REG_BOD_INPUT(s)    PEID(bodInputs[s].empty), PEID(bodInputs[s].occupied) 
-      #define REG_SERVO_OUTPUT(s) CEID(servoOutputs[s].thrown), CEID(servoOutputs[s].closed) 
-  //  Array of the offsets to every eventID in MemStruct/EEPROM/mem, and P/C flags
-      const EIDTab eidtab[NUM_EVENT] PROGMEM = {
-         REG_OUTPUT(0), REG_OUTPUT(1), REG_OUTPUT(2), REG_OUTPUT(3), REG_OUTPUT(4), REG_OUTPUT(5), REG_OUTPUT(6), REG_OUTPUT(7),
-         REG_INPUT(0), REG_INPUT(1), REG_INPUT(2), REG_INPUT(3), REG_INPUT(4), REG_INPUT(5), REG_INPUT(6), REG_INPUT(7),
-         REG_BOD_INPUT(0), REG_BOD_INPUT(1), REG_BOD_INPUT(2), REG_BOD_INPUT(3), REG_BOD_INPUT(4), REG_BOD_INPUT(5), REG_BOD_INPUT(6), REG_BOD_INPUT(7),
-         REG_BOD_INPUT(8), REG_BOD_INPUT(9), REG_BOD_INPUT(10), REG_BOD_INPUT(11), REG_BOD_INPUT(12), REG_BOD_INPUT(13), REG_BOD_INPUT(14), REG_BOD_INPUT(15),
-         REG_SERVO_OUTPUT(0), REG_SERVO_OUTPUT(1), REG_SERVO_OUTPUT(2), REG_SERVO_OUTPUT(3), REG_SERVO_OUTPUT(4), REG_SERVO_OUTPUT(5), REG_SERVO_OUTPUT(6), REG_SERVO_OUTPUT(7), 
-         REG_SERVO_OUTPUT(8), REG_SERVO_OUTPUT(9), REG_SERVO_OUTPUT(10), REG_SERVO_OUTPUT(11), REG_SERVO_OUTPUT(12), REG_SERVO_OUTPUT(13), REG_SERVO_OUTPUT(14), REG_SERVO_OUTPUT(15) 
-      };
-      
- // SNIP Short node description for use by the Simple Node Information Protocol 
- // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.3-SimpleNodeInformation-2016-02-06.pdf
-    extern const char SNII_const_data[] PROGMEM = "\001Tiva123\000Tiva123 8-Out 8-In 16-BoD 16-Servo\0001.0\0002.0" ; // last zero in double-quote
+// ===== eventid Table =====
+#define REG_OUTPUT(s)       CEID(digitalOutputs[s].setLow), CEID(digitalOutputs[s].setHigh)
+#define REG_INPUT(s)        PEID(digitalInputs[s].inputLow), PEID(digitalInputs[s].inputHigh)
+#define REG_BOD_INPUT(s)    PEID(bodInputs[s].empty), PEID(bodInputs[s].occupied)
+#define REG_SERVO_OUTPUT(s) CEID(servoOutputs[s].thrown), CEID(servoOutputs[s].closed)
+
+//  Array of the offsets to every eventID in MemStruct/EEPROM/mem, and P/C flags
+const EIDTab eidtab[NUM_EVENT] PROGMEM = {
+          REG_OUTPUT(0), REG_OUTPUT(1), REG_OUTPUT(2), REG_OUTPUT(3), REG_OUTPUT(4), REG_OUTPUT(5), REG_OUTPUT(6), REG_OUTPUT(7),
+          REG_INPUT(0), REG_INPUT(1), REG_INPUT(2), REG_INPUT(3), REG_INPUT(4), REG_INPUT(5), REG_INPUT(6), REG_INPUT(7),
+          REG_BOD_INPUT(0), REG_BOD_INPUT(1), REG_BOD_INPUT(2), REG_BOD_INPUT(3), REG_BOD_INPUT(4), REG_BOD_INPUT(5), REG_BOD_INPUT(6), REG_BOD_INPUT(7),
+          REG_BOD_INPUT(8), REG_BOD_INPUT(9), REG_BOD_INPUT(10), REG_BOD_INPUT(11), REG_BOD_INPUT(12), REG_BOD_INPUT(13), REG_BOD_INPUT(14), REG_BOD_INPUT(15),
+          REG_SERVO_OUTPUT(0), REG_SERVO_OUTPUT(1), REG_SERVO_OUTPUT(2), REG_SERVO_OUTPUT(3), REG_SERVO_OUTPUT(4), REG_SERVO_OUTPUT(5), REG_SERVO_OUTPUT(6), REG_SERVO_OUTPUT(7),
+          REG_SERVO_OUTPUT(8), REG_SERVO_OUTPUT(9), REG_SERVO_OUTPUT(10), REG_SERVO_OUTPUT(11), REG_SERVO_OUTPUT(12), REG_SERVO_OUTPUT(13), REG_SERVO_OUTPUT(14), REG_SERVO_OUTPUT(15)
+};
+
+// SNIP Short node description for use by the Simple Node Information Protocol
+// See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.3-SimpleNodeInformation-2016-02-06.pdf
+extern const char SNII_const_data[] PROGMEM = "\001Tiva123\000Tiva123 8-Out 8-In 16-BoD 16-Servo\0001.0\0002.0" ; // last zero in double-quote
 
 } // end extern "C"
 
 // PIP Protocol Identification Protocol uses a bit-field to indicate which protocols this node supports
 // See 3.3.6 and 3.3.7 in http://openlcb.com/wp-content/uploads/2016/02/S-9.7.3-MessageNetwork-2016-02-06.pdf
 uint8_t protocolIdentValue[6] = {0xD7,0x58,0x00,0,0,0};
-      // PIP, Datagram, MemConfig, P/C, ident, teach/learn, 
-      // ACDI, SNIP, CDI
+// PIP, Datagram, MemConfig, P/C, ident, teach/learn,
+// ACDI, SNIP, CDI
 
-      // whole set: 
-      //  Simple, Datagram, Stream, MemConfig, Reservation, Events, Ident, Teach
-      //  Remote, ACDI, Display, SNIP, CDI, Traction, Function, DCC
-      //  SimpleTrain, FuncConfig, FirmwareUpgrade, FirwareUpdateActive,
-      //  ... additional ones may be added
+// whole set:
+//  Simple, Datagram, Stream, MemConfig, Reservation, Events, Ident, Teach
+//  Remote, ACDI, Display, SNIP, CDI, Traction, Function, DCC
+//  SimpleTrain, FuncConfig, FirmwareUpgrade, FirwareUpdateActive,
+//  ... additional ones may be added
 
-//#define OLCB_NO_BLUE_GOLD
+const uint8_t outputPinNums[] = {  1,  2,  3,  4,  7,  8,  9, 10 };  // CAN = 4+5
 
-const uint8_t outputPinNums[] = {  1,  2,  3,  4,  7,  8, 11, 12 };  // 4&5=CAN, 9&10=I2C
-
-const uint8_t inputPinNums[]  = { 13, 14, 15, 16, 17, 18, 19, 20 };  // PUSH2=17
+const uint8_t inputPinNums[]  = { 11, 12, 13, 14, 15, 16, 17, 18 };  // 17 = PUSH2
 uint8_t inputStates[]         = {  0,  0,  0,  0,  0,  0,  0,  0 };  // current input states; report when changed
 
-const uint8_t bodPinNums[]    = { 21, 22, 23, 24, 25, 26, 27, 28, 
-                                  29, 31, 32, 33, 34, 35, 36, 37 }; // RED=30, PUSH1=31, GREEN=39, BLUE=40 LEDs
+const uint8_t bodPinNums[]    = { 20, 21, 22, 23, 24, 25, 26, 27,    // I2C = 19+38
+28, 29, 31, 32, 33, 34, 35, 36 };  // 30 = RED, 31 = PUSH, 39 = GREEN, 40 = BLUE
 
-uint8_t boDStates[]           = {  0,  0,  0,  0,  0,  0,  0,  0,  
-                                   0,  0,  0,  0,  0,  0,  0,  0 };
+uint8_t boDStates[]           = {  0,  0,  0,  0,  0,  0,  0,  0,
+0,  0,  0,  0,  0,  0,  0,  0 };
 
-uint8_t servoStates[]         = {  0,  0,  0,  0,  0,  0,  0,  0,  
-                                   0,  0,  0,  0,  0,  0,  0,  0 };
+uint8_t servoStates[]         = {  0,  0,  0,  0,  0,  0,  0,  0,
+0,  0,  0,  0,  0,  0,  0,  0 };
 #define OLCB_NO_BLUE_GOLD
 #ifndef OLCB_NO_BLUE_GOLD
-    #define BLUE 40  // built-in blue LED
-    #define GOLD 39  // built-in green LED
-    ButtonLed blue(BLUE, LOW);
-    ButtonLed gold(GOLD, LOW);
-    
-    uint32_t patterns[8] = { 0x00010001L, 0xFFFEFFFEL }; // two per channel, one per event
-    ButtonLed pA(13, LOW);
-    ButtonLed pB(14, LOW);
-    ButtonLed pC(15, LOW);
-    ButtonLed pD(16, LOW);
-    ButtonLed* buttons[8] = { &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD }; 
+#define BLUE 40  // built-in blue LED
+#define GOLD 39  // built-in green LED
+ButtonLed blue(BLUE, LOW);
+ButtonLed gold(GOLD, LOW);
+
+uint32_t patterns[8] = { 0x00010001L, 0xFFFEFFFEL }; // two per channel, one per event
+ButtonLed pA(13, LOW);
+ButtonLed pB(14, LOW);
+ButtonLed pC(15, LOW);
+ButtonLed pD(16, LOW);
+ButtonLed* buttons[8] = { &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD };
 #endif // OLCB_NO_BLUE_GOLD
 
-    #define BLUE  40  // built-in blue LED
-    #define GREEN 39  // built-in green LED
-    #define RED   30  // built-in red LED
-    ButtonLed blue(BLUE, LOW);
-    ButtonLed green(GREEN, LOW);
-    ButtonLed red(RED, LOW);
+#define BLUE  40  // built-in blue LED
+#define GREEN 39  // built-in green LED
+#define RED   30  // built-in red LED
+ButtonLed blue(BLUE, LOW);
+ButtonLed green(GREEN, LOW);
+ButtonLed red(RED, LOW);
 
 Adafruit_PWMServoDriver servoPWM = Adafruit_PWMServoDriver();
 
@@ -258,31 +257,31 @@ uint16_t servoPwmMin = SERVO_PWM_DEG_0;
 uint16_t servoPwmMax = SERVO_PWM_DEG_180;
 
 // ===== Process Consumer-eventIDs =====
-   void pceCallback(unsigned int index) {
-      // Invoked when an event is consumed; drive pins as needed
-      // from index of all events.  
-      // Sample code uses inverse of low bit of pattern to drive pin all on or all off.  
-      // The pattern is mostly one way, blinking the other, hence inverse.
-      //
-      DEBUG(F("\npceCallback: Event Index: ")); DEBUGL(index);
-       
-      if(index < FIRST_INPUT_EVENT_INDEX)
-      {
-        uint8_t outputIndex = index / 2;
-        uint8_t outputState = index % 2;
-        DEBUG(F("Write Output: ")); DEBUG(outputIndex); DEBUG(F(" State: ")); DEBUGL(outputState);
-        digitalWrite(outputPinNums[outputIndex], outputState);
-      }
-        
-      else if ( (index >= FIRST_SERVO_EVENT_INDEX) && (index < (FIRST_SERVO_EVENT_INDEX + (NUM_SERVOS * 2) ) ) )
-      {
-        uint8_t outputIndex = (index - FIRST_SERVO_EVENT_INDEX) / 2;
-        uint8_t outputState = (index - FIRST_SERVO_EVENT_INDEX) % 2;
-        servoStates[outputIndex] = outputState;
-        
-        servoSet(outputIndex, outputState);
-      }
-   }
+void pceCallback(unsigned int index) {
+// Invoked when an event is consumed; drive pins as needed
+// from index of all events.
+// Sample code uses inverse of low bit of pattern to drive pin all on or all off.
+// The pattern is mostly one way, blinking the other, hence inverse.
+//
+  DEBUG(F("\npceCallback: Event Index: ")); DEBUGL(index);
+  
+  if(index < FIRST_INPUT_EVENT_INDEX)
+  {
+    uint8_t outputIndex = index / 2;
+    uint8_t outputState = index % 2;
+    DEBUG(F("Write Output: ")); DEBUG(outputIndex); DEBUG(F(" State: ")); DEBUGL(outputState);
+    digitalWrite(outputPinNums[outputIndex], outputState);
+  }
+  
+  else if ( (index >= FIRST_SERVO_EVENT_INDEX) && (index < (FIRST_SERVO_EVENT_INDEX + (NUM_SERVOS * 2) ) ) )
+  {
+    uint8_t outputIndex = (index - FIRST_SERVO_EVENT_INDEX) / 2;
+    uint8_t outputState = (index - FIRST_SERVO_EVENT_INDEX) % 2;
+    servoStates[outputIndex] = outputState;
+    
+    servoSet(outputIndex, outputState);
+  }
+}
 
 // Set servo i's position to p
 void servoSet(uint8_t outputIndex, uint8_t outputState)
@@ -296,24 +295,24 @@ void servoSet(uint8_t outputIndex, uint8_t outputState)
 
 
 void produceFromInputs() {
-  // called from loop(), this looks at changes in input pins and 
-  // and decides which events to fire
-  // with pce.produce(i);
-  // The first event of each pair is sent on button down,
-  // and second on button up.
-  // 
-  // To reduce latency, only MAX_INPUT_SCAN inputs are scanned on each loop
-  //    (Should not exceed the total number of inputs, nor about 4)
+// called from loop(), this looks at changes in input pins and
+// and decides which events to fire
+// with pce.produce(i);
+// The first event of each pair is sent on button down,
+// and second on button up.
+//
+// To reduce latency, only MAX_INPUT_SCAN inputs are scanned on each loop
+//    (Should not exceed the total number of inputs, nor about 4)
 
-  static uint8_t inputsScanIndex = 0;
-  static uint8_t bodScanIndex = 0;
-  
-  #define MAX_INPUT_SCAN 4
+static uint8_t inputsScanIndex = 0;
+static uint8_t bodScanIndex = 0;
+
+#define MAX_INPUT_SCAN 4
   for (int i = 0; i<(MAX_INPUT_SCAN); i++)
   {
 
 //    DEBUG("produceFromInputs: "); DEBUG(inputsScanIndex); DEBUG(" - "); DEBUGL(bodScanIndex);
-    
+
     if(inputsScanIndex < NUM_INPUTS)
     {
       uint8_t inputVal = digitalRead( inputPinNums[inputsScanIndex]);
@@ -440,25 +439,27 @@ void setup()
 }
 
 // ==== Loop ==========================
-void loop() {  
-
-    bool activity = Olcb_process();
-
-    /*
-        if (activity) {
-          blue.blink(0x1); // blink blue to show that the frame was received
-        }
-        if (olcbcanTx.active) { 
-          gold.blink(0x1); // blink gold when a frame sent
-          olcbcanTx.active = false;
-        }
-     */
-    // handle the status lights  
-    blue.process();
-    green.process();
-    red.process();
-
-    produceFromInputs();
-   
+void loop() {
+  
+  bool activity = Olcb_process();
+  
+  #ifndef OLCB_NO_BLUE_GOLD
+  if (activity) {
+    blue.blink(0x1); // blink blue to show that the frame was received
+  }
+  if (olcbcanTx.active) {
+    gold.blink(0x1); // blink gold when a frame sent
+    olcbcanTx.active = false;
+  }
+  // handle the status lights
+  gold.process();
+  blue.process();
+  #endif // OLCB_NO_BLUE_GOLD
+  
+  // just for fun
+  blue.process();
+  green.process();
+  red.process();
+  
+  produceFromInputs();
 }
-    
