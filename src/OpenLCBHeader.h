@@ -23,6 +23,7 @@
 
 bool eepromDirty;
 
+#include "processor.h"
 #include "OlcbCommonVersion.h"
 #include "BG.h"
 #include "ButtonLed.h"
