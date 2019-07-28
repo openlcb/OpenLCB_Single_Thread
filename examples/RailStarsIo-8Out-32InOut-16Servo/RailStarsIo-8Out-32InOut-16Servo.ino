@@ -1,5 +1,5 @@
 //==============================================================
-// RailStars Upgraded 8-Outputs, 32 Configurable Inputs / Outputs, 16-Servos 
+// RailStars Upgraded 8-Outputs, 38 Configurable Inputs / Outputs, 16-Servos 
 // 
 // Copyright 2019 Alex Shepherd and David Harris
 //==============================================================
@@ -24,19 +24,19 @@
 
 // User defs
 #define NUM_OUTPUTS     8
-#define NUM_IOS        32
+#define NUM_IOS        38
 #define NUM_SERVOS     16
 
 #define FIRST_OUTPUT_EVENT_INDEX 0
 #define FIRST_IOS_EVENT_INDEX  (NUM_OUTPUTS * 2)
-#define FIRST_SERVO_EVENT_INDEX  (FIRST_IOS_EVENT_INDEX + NUM_IOS * 2)
+#define FIRST_SERVO_EVENT_INDEX  (FIRST_IOS_EVENT_INDEX + (NUM_IOS * 2))
 
 #define NUM_EVENT  ((NUM_OUTPUTS*2) + (NUM_IOS * 2) + (NUM_SERVOS * 2))
 
 #include "OpenLcbCore.h"
 #include "OpenLCBHeader.h"
 
-#define ENABLE_DEBUG_PRINT
+//#define ENABLE_DEBUG_PRINT
 #ifdef ENABLE_DEBUG_PRINT
   #define DEBUG_BAUD_RATE 115200
 
@@ -65,85 +65,148 @@
                   <name>I/O</name>
                   <description>Define events associated with Input and Output Pins</description>
                   <group replication='8'>
-                      <name>Digital Outputs</name>
+                      <name>Digital Output Pins</name>
                       <repname>Output</repname>
                       <string size='16'><name>Description</name></string>
                       <eventid><name>Set Output Low Event</name></eventid>
                       <eventid><name>Set Output High Event</name></eventid>
                   </group>
-                  <group replication='32'>
-                      <name>Configurable Digital Inputs / Outputs</name>
-                      <repname>IOs</repname>
-                      <string size='16'><name>Description</name></string>
-                      <int size="1">
-                        <name>Pin Mode</name>
-                        <default>0</default>
-                        <map>
-                          <relation>
-                            <property>0</property>
-                            <value>Input</value>
-                          </relation>
-                          <relation>
-                            <property>1</property>
-                            <value>Output</value>
-                          </relation>
-                         </map>
-                      </int> 
-                      <eventid><name>Low Event</name></eventid>
-                      <eventid><name>High Event</name></eventid>
-                  </group>
                   <group>
-                      <name>Turnout Servo PWM Calibration</name>
-                      <int size='2'>
-                          <min>0</min>
-                          <max>4095</max>
-                          <default>120</default>
-                          <name>Servo PWM Min</name>
-                          <description>PWM Value for Servo 0 Degree Position</description>
-                      </int>
-                      <int size='2'>
-                          <min>0</min>
-                          <max>4095</max>
-                          <default>590</default>
-                          <name>Servo PWM Max</name>
-                          <description>PWM Value for Servo 180 Degree Position</description>
-                      </int>
-                   </group>
-                   <group replication='16'>
-                      <name>Turnout Servo Control</name>
-                      <repname>Servo</repname>
-                      <string size='16'><name>Description</name></string>
-                      <eventid><name>Servo Thrown Event</name></eventid>
-                      <int size='1'>
-                          <min>0</min>
-                          <max>180</max>
-                          <default>60</default>
-                          <name>Servo Thrown Position</name>
-                          <description>Position in Degrees (0-180)</description>
-                      </int>
-                      <eventid><name>Servo Closed Event</name></eventid>
-                      <int size='1'>
-                          <min>0</min>
-                          <max>180</max>
-                          <default>115</default>
-                          <name>Servo Closed Position</name>
-                          <description>Position in Degrees (0-180)</description>
-                      </int>
+                      <name>Configurable Digital Input / Output Pins</name>
+                      <group replication='8'>
+                          <name>Input Pins</name>
+                          <repname>Input-Output</repname>
+                          <string size='16'><name>Description</name></string>
+                          <int size="1">
+                              <name>Pin Mode</name>
+                              <default>0</default>
+                              <map>
+                                <relation><property>0</property><value>Input</value></relation>
+                                <relation><property>1</property><value>Output</value></relation>
+                              </map>
+                           </int> 
+                          <eventid><name>Low Event</name></eventid>
+                          <eventid><name>High Event</name></eventid>
+                      </group>
+                      
+                      <group replication='8'>
+                          <name>Port B Pins</name>
+                          <repname>Input-Output</repname>
+                          <string size='16'><name>Description</name></string>
+                          <int size="1">
+                              <name>Pin Mode</name>
+                              <default>0</default>
+                              <map>
+                                <relation><property>0</property><value>Input</value></relation>
+                                <relation><property>1</property><value>Output</value></relation>
+                              </map>
+                           </int> 
+                          <eventid><name>Low Event</name></eventid>
+                          <eventid><name>High Event</name></eventid>
+                      </group>
+                      
+                      <group replication='8'>
+                          <name>Port E Pins</name>
+                          <repname>Input-Output</repname>
+                          <string size='16'><name>Description</name></string>
+                          <int size="1">
+                              <name>Pin Mode</name>
+                              <default>0</default>
+                              <map>
+                                <relation><property>0</property><value>Input</value></relation>
+                                <relation><property>1</property><value>Output</value></relation>
+                              </map>
+                           </int> 
+                          <eventid><name>Low Event</name></eventid>
+                          <eventid><name>High Event</name></eventid>
+                      </group>
+                      
+                      <group replication='8'>
+                          <name>Port F Pins</name>
+                          <repname>Input-Output</repname>
+                          <string size='16'><name>Description</name></string>
+                          <int size="1">
+                              <name>Pin Mode</name>
+                              <default>0</default>
+                              <map>
+                                <relation><property>0</property><value>Input</value></relation>
+                                <relation><property>1</property><value>Output</value></relation>
+                              </map>
+                           </int> 
+                          <eventid><name>Low Event</name></eventid>
+                          <eventid><name>High Event</name></eventid>
+                      </group>
+                      
+                      <group replication='6'>
+                          <name>Port D/G Pins</name>
+                          <repname>Input-Output</repname>
+                          <string size='16'><name>Description</name></string>
+                          <int size="1">
+                              <name>Pin Mode</name>
+                              <default>0</default>
+                              <map>
+                                <relation><property>0</property><value>Input</value></relation>
+                                <relation><property>1</property><value>Output</value></relation>
+                              </map>
+                           </int> 
+                          <eventid><name>Low Event</name></eventid>
+                          <eventid><name>High Event</name></eventid>
+                      </group>
                   </group>
+                      
+                  <group>
+                      <name>Turnout Servo Outputs</name>
+                      <group>
+                          <name>Servo PWM Calibration</name>
+                          <int size='2'>
+                              <min>0</min>
+                              <max>4095</max>
+                              <default>120</default>
+                              <name>Servo PWM Min</name>
+                              <description>PWM Value for Servo 0 Degree Position</description>
+                          </int>
+                          <int size='2'>
+                              <min>0</min>
+                              <max>4095</max>
+                              <default>590</default>
+                              <name>Servo PWM Max</name>
+                              <description>PWM Value for Servo 180 Degree Position</description>
+                          </int>
+                       </group>
+                       <group replication='16'>
+                          <name>Servo Settings</name>
+                          <repname>Servo</repname>
+                          <string size='16'><name>Description</name></string>
+                          <eventid><name>Servo Thrown Event</name></eventid>
+                          <int size='1'>
+                              <min>0</min>
+                              <max>180</max>
+                              <default>60</default>
+                              <name>Servo Thrown Position</name>
+                              <description>Position in Degrees (0-180)</description>
+                          </int>
+                          <eventid><name>Servo Closed Event</name></eventid>
+                          <int size='1'>
+                              <min>0</min>
+                              <max>180</max>
+                              <default>115</default>
+                              <name>Servo Closed Position</name>
+                              <description>Position in Degrees (0-180)</description>
+                          </int>
+                      </group>
+                   </group>
                 </group>
             )" CDIfooter;
           // ===== Enter User definitions above =====
     } // end extern
 
-typedef enum{
-  IO_INPUT = 0,
-  IO_OUTPUT = 1
-} IO_MODE;
+const uint8_t IO_INPUT = 0;
+const uint8_t IO_OUTPUT = 1;
 
 // ===== MemStruct =====
 //   Memory structure of NODECONFIG (EEPROM), must match CDI above
     typedef struct {
-          EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
+          EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF MemStruct - DO NOT REMOVE!!!
           
           char nodeName[20];  // optional node-name, used by ACDI
           char nodeDesc[24];  // optional node-description, used by ACDI
@@ -155,7 +218,7 @@ typedef enum{
           } digitalOutputs[NUM_OUTPUTS];
           struct {
             char desc[16];        // description of this input-pin
-            IO_MODE mode;         // Pin Mode
+            uint8_t mode;         // Pin Mode
             EventID inputLow;     // eventID which is Produced on activation of this input-pin 
             EventID inputHigh;    // eventID which is Produced on deactivation of this input-pin
           } digitalIOs[NUM_IOS];
@@ -174,8 +237,8 @@ typedef enum{
 extern "C" {
   // ===== eventid Table =====
       #define REG_OUTPUT(s)       CEID(digitalOutputs[s].setLow), CEID(digitalOutputs[s].setHigh) 
-      #define REG_IO(s)           PEID(digitalIOs[s].inputLow), PEID(digitalIOs[s].inputHigh)  
-      #define REG_SERVO_OUTPUT(s) CEID(servoOutputs[s].thrown), CEID(servoOutputs[s].closed) 
+      #define REG_IO(s)           PCEID(digitalIOs[s].inputLow),  PCEID(digitalIOs[s].inputHigh)  
+      #define REG_SERVO_OUTPUT(s) CEID(servoOutputs[s].thrown),   CEID(servoOutputs[s].closed) 
   //  Array of the offsets to every eventID in MemStruct/EEPROM/mem, and P/C flags
       const EIDTab eidtab[NUM_EVENT] PROGMEM = {
          REG_OUTPUT(0), REG_OUTPUT(1), REG_OUTPUT(2), REG_OUTPUT(3), REG_OUTPUT(4), REG_OUTPUT(5), REG_OUTPUT(6), REG_OUTPUT(7),
@@ -183,13 +246,14 @@ extern "C" {
          REG_IO(8), REG_IO(9), REG_IO(10), REG_IO(11), REG_IO(12), REG_IO(13), REG_IO(14), REG_IO(15),
          REG_IO(16), REG_IO(17), REG_IO(18), REG_IO(19), REG_IO(20), REG_IO(21), REG_IO(22), REG_IO(23),
          REG_IO(24), REG_IO(25), REG_IO(26), REG_IO(27), REG_IO(28), REG_IO(29), REG_IO(30), REG_IO(31),
+         REG_IO(32), REG_IO(33), REG_IO(34), REG_IO(35), REG_IO(36), REG_IO(37),
          REG_SERVO_OUTPUT(0), REG_SERVO_OUTPUT(1), REG_SERVO_OUTPUT(2), REG_SERVO_OUTPUT(3), REG_SERVO_OUTPUT(4), REG_SERVO_OUTPUT(5), REG_SERVO_OUTPUT(6), REG_SERVO_OUTPUT(7), 
          REG_SERVO_OUTPUT(8), REG_SERVO_OUTPUT(9), REG_SERVO_OUTPUT(10), REG_SERVO_OUTPUT(11), REG_SERVO_OUTPUT(12), REG_SERVO_OUTPUT(13), REG_SERVO_OUTPUT(14), REG_SERVO_OUTPUT(15) 
       };
       
  // SNIP Short node description for use by the Simple Node Information Protocol 
  // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.3-SimpleNodeInformation-2016-02-06.pdf
-    extern const char SNII_const_data[] PROGMEM = "\001RailStars\000Io 8-Out 8-In 24-BoD 16-Servo\0001.0\0002.0" ; // last zero in double-quote
+    extern const char SNII_const_data[] PROGMEM = "\001RailStars\000Io 8-Out 32-InOut 16-Servo\0001.0\0002.0" ; // last zero in double-quote
 
 } // end extern "C"
 
@@ -210,11 +274,12 @@ uint8_t protocolIdentValue[6] = {0xD7,0x58,0x00,0,0,0};
 
 #include "OpenLCBMid.h"
 
-const uint8_t outputPinNums[] = { 0,  1,  2,  3,  4,  5,  6,  7};
+const uint8_t outputPinNums[NUM_OUTPUTS] = { 0, 1, 2, 3, 4, 5, 6, 7};
 
-const uint8_t ioPinNums[]  =  { 8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47};
-IO_MODE       ioPinModes[NUM_IOS];
+const uint8_t ioPinNums[NUM_IOS]  =  { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 26, 27, 28, 29, 30, 31};
+uint8_t       ioPinModes[NUM_IOS];
 uint8_t       ioPinStates[NUM_IOS];
+
 uint8_t       servoStates[NUM_SERVOS];
 
 ButtonLed blue(BLUE, LOW);
@@ -310,11 +375,14 @@ void produceFromInputs() {
   #define MAX_INPUT_SCAN 4
   for (int i = 0; i<(MAX_INPUT_SCAN); i++)
   {
-
 //    DEBUG("produceFromInputs: "); DEBUGL(ioScanIndex);
     
     if(ioScanIndex < NUM_IOS)
     {
+#ifdef ENABLE_DEBUG_PRINT
+      if(ioPinNums[ioScanIndex] == 32) ioScanIndex+=2;
+#endif      
+
       if(ioPinModes[ioScanIndex] == IO_INPUT)
       {
         uint8_t inputVal = digitalRead( ioPinNums[ioScanIndex]);
@@ -332,7 +400,10 @@ void produceFromInputs() {
       }
     }
     else
+    {
       ioScanIndex = 0;
+//      DEBUGL("produceFromInputs: End Scan");
+    }
   }
 }
 
@@ -371,6 +442,13 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
 // ==== Setup does initial configuration ======================
 void setup()
 { 
+// Uncomment the line below to disable JTAG Debug
+//#define DISABLE_JTAG
+#ifdef DISABLE_JTAG  
+  MCUCR|= (1<<JTD);
+  MCUCR|= (1<<JTD);
+#endif
+  
 #ifdef DEBUG_BAUD_RATE
   Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\nRailStars Io 8-Out 8-In 24-BoD 16-Servo"));
   setDebugStream(&Serial);
@@ -383,9 +461,12 @@ void setup()
   // Setup I/O Pins
   for(uint8_t i = 0; i < NUM_IOS; i++)
   {
-    ioPinModes[i] = (IO_MODE) NODECONFIG.read(EEADDR(digitalIOs[i].mode));
+    ioPinModes[i] = NODECONFIG.read(EEADDR(digitalIOs[i].mode));
     if(ioPinModes[i] == IO_INPUT)
+    {
       pinMode(ioPinNums[i], INPUT_PULLUP);
+      ioPinStates[i] = digitalRead(ioPinNums[i]);
+    } 
 
     else if(ioPinModes[i] == IO_OUTPUT)
       pinMode(ioPinNums[i], OUTPUT);
