@@ -1,11 +1,11 @@
 # OpenLCB_Single_Thread
 ## OpenLCB stack based on ArduinoIDE
 
-## **** USE with CAUTION - in development mode ****
+## **** Can be used, but this repository will be depreciated, and the contents moved elsewhere. ****
 
 This is a refresh of the original Arduino code base, developed by Dr. Bob Jacobsen.  It uses a single-threaded model, with an initialization step and a endless loop to do the processing.  These are the familiar setup() and loop() of the Arduino IDE.  Much of the standard processing for OpenLCB protocols is handled by 'systems' code.  This includes obtaing and managing an node Alias, receiving and vetting eventids, scheduling an sending eventids, CDI, configuration, Datagram management, etc.  
 
-The original codebase has been modified to make it easier for the developer to match a project's CDI xml to its internal memory structure, by making the two have parallel structures.  In addition, eventid searching uses a sorted table index and a binary search. 
+The original codebase has been modified to make it easier for the developer to match a project's CDI xml to its internal memory structure, by making the two have parallel structures.  In addition, eventid searching uses a sorted table index and a binary search.  (David Harris and Alex Shepherd)
 
 # Platforms supported:
 * ATMega series, with MCP2515 CAN support; 
