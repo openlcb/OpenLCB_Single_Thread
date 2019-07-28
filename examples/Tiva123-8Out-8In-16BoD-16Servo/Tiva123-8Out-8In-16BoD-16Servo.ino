@@ -216,32 +216,32 @@ uint8_t protocolIdentValue[6] = {0xD7,0x58,0x00,0,0,0};
 //  SimpleTrain, FuncConfig, FirmwareUpgrade, FirwareUpdateActive,
 //  ... additional ones may be added
 
-const uint8_t outputPinNums[] = {  1,  2,  3,  4,  7,  8,  9, 10 };  // CAN = 4+5
+const uint8_t outputPinNums[] = {  1,  2,  3,  4,  7,  8,  9, 10 };  // 4+5 = CAN
 
 const uint8_t inputPinNums[]  = { 11, 12, 13, 14, 15, 16, 17, 18 };  // 17 = PUSH2
 uint8_t inputStates[]         = {  0,  0,  0,  0,  0,  0,  0,  0 };  // current input states; report when changed
 
-const uint8_t bodPinNums[]    = { 20, 21, 22, 23, 24, 25, 26, 27,    // I2C = 19+38
-28, 29, 31, 32, 33, 34, 35, 36 };  // 30 = RED, 31 = PUSH, 39 = GREEN, 40 = BLUE
+const uint8_t bodPinNums[]    = { 20, 21, 22, 23, 24, 25, 26, 27,    // 19+38 = I2C
+                                  28, 29, 31, 32, 33, 34, 35, 36 };  // 30 = RED, 31 = PUSH, 39 = GREEN, 40 = BLUE
 
 uint8_t boDStates[]           = {  0,  0,  0,  0,  0,  0,  0,  0,
-0,  0,  0,  0,  0,  0,  0,  0 };
+                                   0,  0,  0,  0,  0,  0,  0,  0 };
 
 uint8_t servoStates[]         = {  0,  0,  0,  0,  0,  0,  0,  0,
-0,  0,  0,  0,  0,  0,  0,  0 };
+                                   0,  0,  0,  0,  0,  0,  0,  0 };
 #define OLCB_NO_BLUE_GOLD
 #ifndef OLCB_NO_BLUE_GOLD
-#define BLUE 40  // built-in blue LED
-#define GOLD 39  // built-in green LED
-ButtonLed blue(BLUE, LOW);
-ButtonLed gold(GOLD, LOW);
-
-uint32_t patterns[8] = { 0x00010001L, 0xFFFEFFFEL }; // two per channel, one per event
-ButtonLed pA(13, LOW);
-ButtonLed pB(14, LOW);
-ButtonLed pC(15, LOW);
-ButtonLed pD(16, LOW);
-ButtonLed* buttons[8] = { &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD };
+    #define BLUE 40  // built-in blue LED
+    #define GOLD 39  // built-in green LED
+    ButtonLed blue(BLUE, LOW);
+    ButtonLed gold(GOLD, LOW);
+    
+    uint32_t patterns[8] = { 0x00010001L, 0xFFFEFFFEL }; // two per channel, one per event
+    ButtonLed pA(13, LOW);
+    ButtonLed pB(14, LOW);
+    ButtonLed pC(15, LOW);
+    ButtonLed pD(16, LOW);
+    ButtonLed* buttons[8] = { &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD };
 #endif // OLCB_NO_BLUE_GOLD
 
 #define BLUE  40  // built-in blue LED
@@ -406,16 +406,16 @@ void setup()
   for(uint8_t i = 0; i < NUM_BOD_INPUTS; i++)
     pinMode(bodPinNums[i], INPUT_PULLUP);
 
-#ifdef INITIALIZE_TO_NODE_ADDRESS
-  NodeID newNodeID(INITIALIZE_TO_NODE_ADDRESS);
-  nm.changeNodeID(&newNodeID);
-#endif
+  #ifdef INITIALIZE_TO_NODE_ADDRESS
+    NodeID newNodeID(INITIALIZE_TO_NODE_ADDRESS);
+    nm.changeNodeID(&newNodeID);
+  #endif
 
-#ifdef RESET_TO_FACTORY_DEFAULTS  
-  Olcb_init(1);
-#else
-  Olcb_init(0);
-#endif
+  #ifdef RESET_TO_FACTORY_DEFAULTS  
+    Olcb_init(1);
+  #else
+    Olcb_init(0);
+  #endif
 
   servoPWM.begin();
   servoPWM.setPWMFreq(60);
@@ -429,13 +429,14 @@ void setup()
   blue.on(~0x0L);
   green.on(~0x0L);
   red.on(~0x0L);
-  blue.on (~0x55000000L); // blink red
-  green.on(~0x00550000L); // blink red
+  // just for fun:
+  blue.on (~0x55000000L); // blink blue
+  green.on(~0x00550000L); // blink green
   red.on  (~0x00005500L); // blink red
-  delay(1000);
-  Serial.print("\n NUM_EVENT="); Serial.print(NUM_EVENT);
-  nm.print();
-  //while(0==0){}
+  #ifdef DEBUG
+    Serial.print("\n NUM_EVENT="); Serial.print(NUM_EVENT);
+    nm.print();
+  #endif
 }
 
 // ==== Loop ==========================
@@ -444,22 +445,23 @@ void loop() {
   bool activity = Olcb_process();
   
   #ifndef OLCB_NO_BLUE_GOLD
-  if (activity) {
-    blue.blink(0x1); // blink blue to show that the frame was received
-  }
-  if (olcbcanTx.active) {
-    gold.blink(0x1); // blink gold when a frame sent
-    olcbcanTx.active = false;
-  }
-  // handle the status lights
-  gold.process();
-  blue.process();
+    if (activity) {
+      blue.blink(0x1); // blink blue to show that the frame was received
+    }
+    if (olcbcanTx.active) {
+      gold.blink(0x1); // blink gold when a frame sent
+      olcbcanTx.active = false;
+    }
+    // handle the status lights
+    gold.process();
+    blue.process();
   #endif // OLCB_NO_BLUE_GOLD
   
   // just for fun
-  blue.process();
+  blue.process();  // periodically update LED
   green.process();
   red.process();
   
   produceFromInputs();
+
 }
