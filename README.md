@@ -72,10 +72,10 @@ In addition, EIDtab[] is constructed with offsets to *every* eventid in EEPROM, 
 ```
 In this case, the first four pairs of eventids are producers, and the remaining are consumers.  The type is used by internal processing to allow eventids produced by this node to be scheduled and send, and to indetify received eventids as being consumed by this node and therefore passed to the application code.  
 
-## Memory Models:
+## Memory Model:
 Eventids are read from eeprom into event[].  Their location in EEPROM is held in EIDtab[], see above.  
 
-The indexes into eventid[] are then sorted into eventIndex[] --- event[] and EIDtab entries remain in the original order.  Binary search is then used to match received eventids to their entries in event[].  
+The index into eventid[] is then sorted into eventIndex[] --- event[] and EIDtab entries remain in the original order.  Binary search on eventIndex[] is then used to match received eventids to their entries in event[].  Diagrammatically:
 
      eventIndex[]--->EIDtab[offset,flags]-->EEPROM
      eventIndex[]--->event[eventid]
@@ -86,8 +86,8 @@ EEPROM, or equivalent, is laid out in accordance with Memstruct, which matches t
     
 #### In RAM:
 events[] holds a copy of the node's eventids initialized from EEPROM.  
-eventIndex[] holds indexes to event[] in ascending sorted order.  
 EIDtab[] holds the offsets to the eventids in EEPROM, this is built using Memstruct to calculate the eventid-offsets.  
+eventIndex[] indexes into to event[] and EIDtab[] in ascending sorted order.  
 
 ## More about OpenLCB/LCC - what is it?
 
@@ -166,12 +166,19 @@ The programmer of the Application must:
  - Write additional support and glue code for the Application.  
 
 ## Example Applications
-The provided examples will give some ideas of how to accomplish sample projects.  They can form the basis of, or  be adapted to, a new Application, or just used for inspiration.  
+The provided examples will give some ideas of how to accomplish sample projects.  They can form the basis of, or  be adapted to, a new Application, or just used for inspiration.  <br>
  - **OlcbBasicNode**<br>
     Implements a simple node which exercises most of the protocols.  It has **two inputs** and **two outputs**.  Each input has two Producer-eventIDs and each output has two Consumer-eventIDs, so **8 eventIDs in total**.  This Application makes use of the ButtonLed library to control **two buttons** and **two LEDs**.  In addition, it implements the BG (Blue-Gold) protocol to allow the **teaching** of eventIDs between this node and others.  
     
+- **RailStarsIo-8Out-38InOut-16Servo**<br>
+    Creates a node using the Railstars Io board (DevPack board) which implements 8 outputs (consumers), 8 inputs (producers), 24 BOD inputs (producers), and 16 servo outputs (consumers).  The latter uses a PCA8695 PWM chip (see: https://www.adafruit.com/product/815).  It shows how to write a different **pceCallback()**.  It also uses **userConfigWrite()** to allow real-time updating of a servo positions from a **UI Tool**, such as **JMRI** or **Model Railroad System**. 
+    
+- **Tiva123-8Out-8In-16BoD-16Servo**<br>
+    Creates a node using the Tiva123 Launchpad board from TI (see: http://www.ti.com/tool/EK-TM4C123GXL) which implements 8 outputs (consumers), 8 inputs (producers), 16 BOD inputs (producers), and 16 servo outputs (consumers).  The latter uses a PCA8695 PWM chip (see: https://www.adafruit.com/product/815).  One will want to uncomment the INITIALIZE_TO_NODE_ADDRESS and RESET_TO_FACTORY_DEFAULTS the first time to initialize the EEPROM, and then they should be recommented to minimize EEPROM rewrites.  
+    
 ## In prgress, but not uploaded
-- **OlcbServoPCA8695**<br>
-    Implements driving a number of servos from a PCA8695 PWM chip.  It shows how to write a different **pceCallback()**.  It also uses **userConfigWrite()** to allow real-time updating of a servo positions from a **UI Tool**, such as **JMRI** or **Model Railroad System**.  
+- **OlcbBlankNode**<br>
+    This is a blank node which can be used to develop a new node.  
+   
 
 
