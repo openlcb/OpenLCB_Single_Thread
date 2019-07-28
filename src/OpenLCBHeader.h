@@ -23,6 +23,10 @@
 
 bool eepromDirty;
 
+#include "OlcbCommonVersion.h"
+#include "BG.h"
+#include "ButtonLed.h"
+
 #include "OpenLcbCore.h"
 
 // specific OpenLCB implementations
