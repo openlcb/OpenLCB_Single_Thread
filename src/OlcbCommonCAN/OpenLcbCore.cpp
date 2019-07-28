@@ -263,14 +263,17 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 		// First time called startIndex == -1
 	if(startIndex == -1)
 	{
+// 		LDEBUG("\nfindIndexOfEventID: Begin")
 		for (lim = numEvents; lim != 0; lim >>= 1)
 		{
 			p = base + (lim >> 1);
+// 			LDEBUG("\nCompare: p: "); LDEBUG(p); LDEBUG(" Key: "); key->print(); LDEBUG(" Event: "); events[p].eid.print();
 			cmp = events[p].eid.compare(key);
 			if (cmp == 0)
 			{
+// 				LDEBUG("\nMatch. Step Back");
 				// Ok we have a match but step down the list checking for duplicates to find the first match
-				while(p > 0)
+				while(p >= 0)
 				{
 						// if not equal then we we have the first match
 					if(!events[p - 1].eid.equals(key));
@@ -455,7 +458,7 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
   }
 
   void OpenLcbCore::handlePCEventReport(OlcbCanInterface* rcv) {
-                //LDEBUG("\nIn handlePCEventReport");
+//                 LDEBUG("\nIn handlePCEventReport");
       EventID eventid;
       rcv->getEventID(&eventid);
 //                 LDEBUG("\nIn handlePCEventReport: ");eventid.print();
@@ -464,17 +467,13 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
 			while((index = findIndexOfEventID(&eventid, index)) != -1)
 			{
         uint16_t eindex = eventsIndex[index];
-                //LDEBUG("\nhandlePCRep ind: "); LDEBUG(ind);
-                //LDEBUG("\nhandlePCRep Index: "); LDEBUG(index);
-                //LDEBUG("\numEvents[index].flags: "); LDEBUG2(events[index].flags,HEX);
-                //LDEBUG("\nhandlePCRep index: "); LDEBUG(index);
-                //LDEBUG("\nhandlePCRep eindex: "); LDEBUG(eindex);
-                //LDEBUG("\numEvents[index].flags: "); LDEBUG2(events[index].flags,HEX);
+//                 LDEBUG("\nhandlePCRep index: "); LDEBUG(index);
+//                 LDEBUG("\nhandlePCRep eindex: "); LDEBUG(eindex);
+//                 LDEBUG("\numEvents[index].flags: "); LDEBUG2(events[index].flags,HEX);
         if (events[eindex].flags & Event::CAN_CONSUME_FLAG)
         {
-                //LDEBUG(F("Found Consumer: Index: ")); LDEBUG(index);
-                //LDEBUG("\nFound Consumer: Index: ");LDEBUG(index);
-                //LDEBUG(", EIndex: ");LDEBUG(eindex);
+//                 LDEBUG("\nFound Consumer: Index: ");LDEBUG(index);
+//                 LDEBUG(", EIndex: ");LDEBUG(eindex);
           processEvent(eindex);
         }
         index++;

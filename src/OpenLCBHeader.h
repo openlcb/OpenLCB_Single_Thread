@@ -21,15 +21,8 @@
 #ifndef OpenLCBHeader_h
 #define OpenLCBHeader_h
 
-#include "OlcbCommonVersion.h"
-#include "NodeID.h"
-#include "processor.h"
-
 bool eepromDirty;
 
-#include "OlcbCanInterface.h"
-#include "PIP.h"
-#include "SNII.h"
 #include "OpenLcbCore.h"
 
 // specific OpenLCB implementations
@@ -49,11 +42,6 @@ bool eepromDirty;
 //#endif
 
 #include "NodeMemory.h"
-#include "PIP.h"
-#include "SNII.h"
-#include "BG.h"
-#include "ButtonLed.h"
-#include "Event.h"
 
 // ===== CDI System Portions =======================================
 #define CDIheader "\
