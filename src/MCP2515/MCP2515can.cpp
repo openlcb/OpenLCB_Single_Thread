@@ -646,6 +646,4 @@ extern void can_regdump(void);
 //#if defined (__cplusplus)
 //}
 //#endif
-#else
-   #error "Unrecognized cpu by MCP2515 libraries"
 #endif // AVR
