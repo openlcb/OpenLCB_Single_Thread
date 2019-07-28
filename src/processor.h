@@ -46,15 +46,15 @@
 
 // Mega 16, 32
 #elif defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) 
-    #include <can.h>
+    #include "MCP2515/MCPcan.h"
 
 // Mega 128, 1280 & 2560
 #elif defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-    #include <can.h>
+    #include "MCP2515/MCPcan.h"
 
 // Sanguino
 #elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
-    #include <can.h>
+    #include "MCP2515/MCPcan.h"
 
 // AT90CAN
 #elif defined(__AVR_AT90CAN32__) || defined(__AVR_AT90CAN64__) || defined(__AVR_AT90CAN128__)

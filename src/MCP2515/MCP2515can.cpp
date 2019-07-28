@@ -1,8 +1,12 @@
-// OpenLCB Adaptation of FlexCAN library
+// OpenLCB Adaptation of MCP2515 library
 // copyright DPH 2017
 
 #if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
-defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__)
+    defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || \
+    defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__) || \
+    defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) || \
+    defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || \
+    defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
 
 #include <Arduino.h>
 #include "MCP2515can.h"
@@ -642,5 +646,6 @@ extern void can_regdump(void);
 //#if defined (__cplusplus)
 //}
 //#endif
-
+#else
+   #error "Unrecognized cpu by MCP2515 libraries"
 #endif // AVR
