@@ -30,7 +30,7 @@ bool eepromDirty;
 #include "OlcbCanInterface.h"
 #include "PIP.h"
 #include "SNII.h"
-#include "PCE.h"
+#include "OpenLcbCore.h"
 
 // specific OpenLCB implementations
 #include "LinkControl.h"
@@ -49,7 +49,6 @@ bool eepromDirty;
 //#endif
 
 #include "NodeMemory.h"
-#include "PCE.h"
 #include "PIP.h"
 #include "SNII.h"
 #include "BG.h"

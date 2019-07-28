@@ -29,7 +29,6 @@
 #endif
 
 #include "NodeMemory.h"
-#include "PCE.h"
 #include "PIP.h"
 #include "SNII.h"
 #include "BG.h"

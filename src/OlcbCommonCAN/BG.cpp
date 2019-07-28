@@ -9,8 +9,8 @@
 #define UNREADY_BLINK 0xFF00FFL
 #define READY_BLINK   0x1L
 
-BG::BG(PCE* pc, ButtonLed** bC, uint32_t* pt, uint8_t n, ButtonLed* bptr, ButtonLed* gptr, OlcbInterface* b) {
-      pce = pc;
+BG::BG(OpenLcbCore* pOpenLcbCore, ButtonLed** bC, uint32_t* pt, uint8_t n, ButtonLed* bptr, ButtonLed* gptr, OlcbInterface* b) {
+      this->pOpenLcbCore = pOpenLcbCore;
       buttons = bC;
       patterns = pt;
       nEvents = n;
@@ -73,7 +73,7 @@ void BG::check() {
         // turn blue off
         blue->on(0L);
         for (int i = 0; i < nEvents; i++)
-            pce->markToLearn(i, false);
+            pOpenLcbCore->markToLearn(i, false);
     }
 
     // check if gold button pressed
@@ -95,7 +95,7 @@ void BG::check() {
                         
                     } else if (index>=0 && index<nEvents) {
                         buttons[index]->on(0x0); // off if lit
-                        pce->sendTeach(index);
+                        pOpenLcbCore->sendTeach(index);
                     } // otherwise, nothing to do?
                     gold->on(READY_BLINK);  // turn off (back to ready blink)
                     blue->on(0);  // turn off
@@ -104,7 +104,7 @@ void BG::check() {
                 } else if (blue->pattern == ~0L) {
                     if (index>=0 && index<nEvents) {
                         buttons[index]->on(0x0); // off if lit
-                        pce->markToLearn(index, true);
+                        pOpenLcbCore->markToLearn(index, true);
                     } // otherwise, nothing to do?
                     blue->on(0);  // turn off
                     index = -1;

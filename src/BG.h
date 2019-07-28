@@ -3,9 +3,11 @@
 
 //#pragma message("!!! compiling BG_h")
 
-#include <ButtonLed.h>
+#include "ButtonLed.h"
 #include "OlcbNet.h"
 #include "OlcbInterface.h"
+#include "OpenLcbCore.h"
+
 /**
  * Class for Blue/Gold configuration.
  * Works with a PCE instance to do the actual operations.
@@ -38,13 +40,13 @@ class ButtonLed;
 class BG {
   public:
 
-    BG(PCE* pce, ButtonLed** buttons, uint32_t* patterns, uint8_t nEvents, ButtonLed* blue, ButtonLed* gold, OlcbInterface* buffer);
+    BG(OpenLcbCore* pOpenLcbCore, ButtonLed** buttons, uint32_t* patterns, uint8_t nEvents, ButtonLed* blue, ButtonLed* gold, OlcbInterface* buffer);
   
   void check();
   
   private:
 
-  PCE* pce;
+  OpenLcbCore* pOpenLcbCore;
   ButtonLed** buttons;
   uint32_t* patterns;
   uint8_t nEvents;
