@@ -135,7 +135,7 @@ void Configuration::processWrite(uint8_t* data, int length) {
     }
     // notify user App by callback
     //eepromDirty = true;  // mark eeprom changed
-    if(writeCB) writeCB(address, length, 0);
+    if(writeCB) writeCB(address, length-6, 0);
 }
 
 void Configuration::processCmd(uint8_t* data, int length) {
