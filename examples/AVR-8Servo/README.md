@@ -1,7 +1,7 @@
-*** AVR 8Servo Example
+# AVR 8Servo Example
 
-This uses one half of a PCA9685 16-channel PWM board.  
+This uses one half of a PCA9685 16-channel PWM board via I2C.  
 
-Each of the eight servos has 3 positions.  
-Each can be set to a position between 0-180 degrees.  
-The end-points of teh servos can be set.  
+* Each of the eight servos has 3 positions.  
+* Each can be set to a position between 0-180 degrees.  
+* The end-points of teh servos can be set.  
