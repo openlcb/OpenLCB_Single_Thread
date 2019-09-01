@@ -1,5 +1,5 @@
 //==============================================================
-// RailStars Upgraded 8-Outputs, 38 Configurable Inputs / Outputs, 16-Servos 
+// RailStars Upgraded 8-Outputs, 37 Configurable Inputs / Outputs, 16-Servos 
 // 
 // Copyright 2019 Alex Shepherd and David Harris
 //==============================================================
@@ -14,7 +14,7 @@
 #define MANU "RailStars"  // The manufacturer of node
 #define MODEL "Io"        // The model of the board
 #define HWVERSION "1.0"   // Hardware version
-#define SWVERSION "2.0"   // Software version
+#define SWVERSION "3.0"   // Software version
 
 // To Reset the RailStars Io Node Number, Uncomment and edit the next line
 //#define RESET_NODE_ADDRESS  0x24
@@ -24,7 +24,7 @@
 
 // User defs
 #define NUM_OUTPUTS     8
-#define NUM_IOS        38
+#define NUM_IOS        37
 #define NUM_SERVOS     16
 
 #define FIRST_OUTPUT_EVENT_INDEX 0
@@ -49,6 +49,7 @@
   #define DEBUGHEX(x,y)
 #endif
 
+#define SERVO_ENABLE_PIN    26 // This Pin enables the PCA9685 Servo PWM Driver Outputs
 #define SERVO_PWM_DEG_0    120 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVO_PWM_DEG_180  590 // this is the 'maximum' pulse length count (out of 4096)
 
@@ -137,7 +138,7 @@
                           <eventid><name>High Event</name></eventid>
                       </group>
                       
-                      <group replication='6'>
+                      <group replication='5'>
                           <name>Port D/G Pins</name>
                           <repname>Input-Output</repname>
                           <string size='16'><name>Description</name></string>
@@ -171,6 +172,13 @@
                               <default>590</default>
                               <name>Servo PWM Max</name>
                               <description>PWM Value for Servo 180 Degree Position</description>
+                          </int>
+                          <int size='2'>
+                              <min>0</min>
+                              <max>10000</max>
+                              <default>0</default>
+                              <name>Servo Initial Delay</name>
+                              <description>Millisecond Delay after Power-Up or Reset</description>
                           </int>
                        </group>
                        <group replication='16'>
@@ -224,6 +232,7 @@ const uint8_t IO_OUTPUT = 1;
           } digitalIOs[NUM_IOS];
           uint16_t ServoPwmMin;
           uint16_t ServoPwmMax;
+          uint16_t ServoStartDelayMs;
           struct {
             char desc[16];        // description of this Servo Turnout Driver
             EventID thrown;       // consumer eventID which sets turnout to Diverging 
@@ -246,14 +255,14 @@ extern "C" {
          REG_IO(8), REG_IO(9), REG_IO(10), REG_IO(11), REG_IO(12), REG_IO(13), REG_IO(14), REG_IO(15),
          REG_IO(16), REG_IO(17), REG_IO(18), REG_IO(19), REG_IO(20), REG_IO(21), REG_IO(22), REG_IO(23),
          REG_IO(24), REG_IO(25), REG_IO(26), REG_IO(27), REG_IO(28), REG_IO(29), REG_IO(30), REG_IO(31),
-         REG_IO(32), REG_IO(33), REG_IO(34), REG_IO(35), REG_IO(36), REG_IO(37),
+         REG_IO(32), REG_IO(33), REG_IO(34), REG_IO(35), REG_IO(36),
          REG_SERVO_OUTPUT(0), REG_SERVO_OUTPUT(1), REG_SERVO_OUTPUT(2), REG_SERVO_OUTPUT(3), REG_SERVO_OUTPUT(4), REG_SERVO_OUTPUT(5), REG_SERVO_OUTPUT(6), REG_SERVO_OUTPUT(7), 
          REG_SERVO_OUTPUT(8), REG_SERVO_OUTPUT(9), REG_SERVO_OUTPUT(10), REG_SERVO_OUTPUT(11), REG_SERVO_OUTPUT(12), REG_SERVO_OUTPUT(13), REG_SERVO_OUTPUT(14), REG_SERVO_OUTPUT(15) 
       };
       
  // SNIP Short node description for use by the Simple Node Information Protocol 
  // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.3-SimpleNodeInformation-2016-02-06.pdf
-    extern const char SNII_const_data[] PROGMEM = "\001RailStars\000Io 8-Out 32-InOut 16-Servo\0001.0\0002.0" ; // last zero in double-quote
+    extern const char SNII_const_data[] PROGMEM = "\001RailStars\000Io 8-Out 37-InOut 16-Servo\0001.0\0003.0" ; // last zero in double-quote
 
 } // end extern "C"
 
@@ -276,10 +285,9 @@ uint8_t protocolIdentValue[6] = {0xD7,0x58,0x00,0,0,0};
 
 const uint8_t outputPinNums[NUM_OUTPUTS] = { 0, 1, 2, 3, 4, 5, 6, 7};
 
-const uint8_t ioPinNums[NUM_IOS]  =  { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 26, 27, 28, 29, 30, 31};
+const uint8_t ioPinNums[NUM_IOS]  =  { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 27, 28, 29, 30, 31};
 uint8_t       ioPinModes[NUM_IOS];
 uint8_t       ioPinStates[NUM_IOS];
-
 uint8_t       servoStates[NUM_SERVOS];
 
 ButtonLed blue(BLUE, LOW);
@@ -352,9 +360,8 @@ void pceCallback(unsigned int index)
     uint8_t servoIndex = (index - FIRST_SERVO_EVENT_INDEX) / 2;
     uint8_t servoState = (index - FIRST_SERVO_EVENT_INDEX) % 2;
     servoStates[servoIndex] = servoState;
-    
-    DEBUG(F("Write Servo: ")); DEBUG(servoIndex); DEBUG(F(" State: ")); DEBUGL(servoState);
 
+    DEBUG(F("Write Servo: ")); DEBUG(servoIndex); DEBUG(F(" State: ")); DEBUGL(servoState);
     servoSet(servoIndex, servoState);
   }
 }
@@ -450,14 +457,15 @@ void setup()
 #endif
   
 #ifdef DEBUG_BAUD_RATE
-  Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\nRailStars Io 8-Out 8-In 24-BoD 16-Servo"));
+  Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\nRailStars Io 8-Out 37-InOut 16-Servo"));
   setDebugStream(&Serial);
 #endif  
-
+  DEBUGL("setup: Setup Outputs");
   // Setup Output Pins
   for(uint8_t i = 0; i < NUM_OUTPUTS; i++)
     pinMode(outputPinNums[i], OUTPUT);
 
+  DEBUGL("setup: Setup I/Os");
   // Setup I/O Pins
   for(uint8_t i = 0; i < NUM_IOS; i++)
   {
@@ -471,6 +479,31 @@ void setup()
     else if(ioPinModes[i] == IO_OUTPUT)
       pinMode(ioPinNums[i], OUTPUT);
   }
+
+  DEBUGL("setup: Setup Servos");
+
+  servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
+  servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
+  uint16_t servoStartDelayMs = NODECONFIG.read16(EEADDR(ServoStartDelayMs));
+
+  // First Disable the PWM Outputs while we setup the PWMs to Valid (for servos) timings, so they don't overload the Power Supply.
+  pinMode(SERVO_ENABLE_PIN, OUTPUT);
+  digitalWrite(SERVO_ENABLE_PIN, HIGH);
+  
+  DEBUG("setup: Servo Start Delay: ");   DEBUGL(servoStartDelayMs);
+  if(servoStartDelayMs)
+    delay(servoStartDelayMs);
+
+  servoPWM.begin();
+  servoPWM.setPWMFreq(60);
+
+  DEBUGL("setup: Set Servo Home Positions");
+  for(uint8_t i = 0; i < NUM_SERVOS; i++)
+  {
+    DEBUG("setup: Setup Servo"); DEBUGL(i);
+    servoSet(i, 0);
+  }
+  digitalWrite(SERVO_ENABLE_PIN, LOW);
   
 #ifdef RESET_NODE_ADDRESS
   NodeID newNodeID(0x05, 0x02, 0x01, 0x02, 0x02, RESET_NODE_ADDRESS);
@@ -482,32 +515,23 @@ void setup()
 #else
   Olcb_init(0);
 #endif
-
-  servoPWM.begin();
-  servoPWM.setPWMFreq(60);
-
-  servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
-  servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
-
-  for(uint8_t i = 0; i < NUM_SERVOS; i++)
-    servoSet(i, 0);
 }
 
 // ==== Loop ==========================
-    void loop() {    
-        bool activity = Olcb_process();
-        if (activity) {
-          blue.blink(0x1); // blink blue to show that the frame was received
-        }
-        if (olcbcanTx.active) { 
-          gold.blink(0x1); // blink gold when a frame sent
-          olcbcanTx.active = false;
-        }
-        
-        // handle the status lights  
-        blue.process();
-        gold.process();
+void loop() {    
+  bool activity = Olcb_process();
+  if (activity) {
+    blue.blink(0x1); // blink blue to show that the frame was received
+  }
+  if (olcbcanTx.active) { 
+    gold.blink(0x1); // blink gold when a frame sent
+    olcbcanTx.active = false;
+  }
+  
+  // handle the status lights  
+  blue.process();
+  gold.process();
 
-        produceFromInputs();
-    }
+  produceFromInputs();
+}
     
