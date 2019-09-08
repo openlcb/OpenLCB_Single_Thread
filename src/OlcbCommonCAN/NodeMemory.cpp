@@ -111,9 +111,13 @@ void NodeMemory::print()
 		{
 			char c = EEPROM.read(i);
 			if( c<' ' || c==0x8F )
+			{
 				LDEBUG('.')
+			}
 			else
+			{
 				LDEBUG(c);
+			}
 		}
 	}
 	LDEBUGL();

@@ -3,7 +3,7 @@
 #define LIB_ENABLE_DEBUG_PRINT_INC
 
 // Uncomment the line below to enable Library Common Debug Printing
-#define LIB_DEBUG_PRINT_ENABLE
+// #define LIB_DEBUG_PRINT_ENABLE
 #ifdef LIB_DEBUG_PRINT_ENABLE
 
 #include <Stream.h>
