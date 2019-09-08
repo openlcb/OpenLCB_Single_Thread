@@ -12,9 +12,9 @@
 
 // Board definitions
 #define MANU "RailStars"  // The manufacturer of node
-#define MODEL "Io"        // The model of the board
+#define MODEL "Io 8-Out 37-InOut 16-Servo"        // The model of the board
 #define HWVERSION "1.0"   // Hardware version
-#define SWVERSION "3.0"   // Software version
+#define SWVERSION "3.1"   // Software version
 
 // To Reset the RailStars Io Node Number, Uncomment and edit the next line
 //#define RESET_NODE_ADDRESS  0x24
@@ -262,7 +262,7 @@ extern "C" {
       
  // SNIP Short node description for use by the Simple Node Information Protocol 
  // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.3-SimpleNodeInformation-2016-02-06.pdf
-    extern const char SNII_const_data[] PROGMEM = "\001RailStars\000Io 8-Out 37-InOut 16-Servo\0001.0\0003.0" ; // last zero in double-quote
+    extern const char SNII_const_data[] PROGMEM = "\001" MANU "\000" MODEL "\000" HWVERSION "\000" SWVERSION ; // last zero in double-quote
 
 } // end extern "C"
 
@@ -457,7 +457,7 @@ void setup()
 #endif
   
 #ifdef DEBUG_BAUD_RATE
-  Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\nRailStars Io 8-Out 37-InOut 16-Servo"));
+  Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\n" MANU " " MODEL " SW: " SWVERSION " HW: " HWVERSION));
   setDebugStream(&Serial);
 #endif  
   DEBUGL("setup: Setup Outputs");
