@@ -258,6 +258,7 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 	register int16_t base = 0;
 	register int16_t lim;
 	register int16_t p;
+	register int16_t eventIndex;
 	register int cmp;
 	
 		// First time called startIndex == -1
@@ -267,18 +268,37 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 		for (lim = numEvents; lim != 0; lim >>= 1)
 		{
 			p = base + (lim >> 1);
-// 			LDEBUG("\nCompare: p: "); LDEBUG(p); LDEBUG(" Key: "); key->print(); LDEBUG(" Event: "); events[p].eid.print();
-			cmp = events[p].eid.compare(key);
+			eventIndex = eventsIndex[p];
+			cmp = events[eventIndex].eid.compare(key);
+// 			LDEBUG("\nCompare: p: "); LDEBUG(p); LDEBUG(" Key: "); key->print(); LDEBUG(" Event: "); events[eventIndex].eid.print(); LDEBUG(" cmp: "); LDEBUG(cmp);
 			if (cmp == 0)
 			{
-// 				LDEBUG("\nMatch. Step Back");
-				// Ok we have a match but step down the list checking for duplicates to find the first match
-				while(p >= 0)
+				if(p == 0)
 				{
-						// if not equal then we we have the first match
-					if(!events[p - 1].eid.equals(key));
+// 					LDEBUG("\nMatch at beginning of list");
+					return p;
+				}	
+				else
+				{
+						// Ok we have a match but step down the list checking for duplicates to find the lowest match
+// 					LDEBUG("\nMatch. Step Down List Checking for Duplicates");
+					while(p > 0)
+					{
+						eventIndex = eventsIndex[p - 1];
+						uint8_t equal = events[eventIndex].eid.equals(key);
+// 						LDEBUG("\nEqual: p - 1: "); LDEBUG(p - 1); LDEBUG(" Key: "); key->print(); LDEBUG(" Event: "); events[eventIndex].eid.print(); LDEBUG(" cmp: "); LDEBUG(equal);
+
+							// if not equal then we already had the first match to return p
+						if(!equal)
+							return p ;
+
+						p--;
+// 						LDEBUG("\nCompare: Equal Step Down p: "); LDEBUGL(p);
+					}
+					
+						// If we get here we're at the beginning of the list so return p 
+					if(p == 0)
 						return p;
-					p--;
 				}
 			}	
 			if (cmp > 0)
@@ -294,7 +314,7 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 	else
 	{
 			// If a duplicate match then return startIndex
-		if(events[startIndex].eid.equals(key))
+		if(events[eventsIndex[startIndex]].eid.equals(key))
 			return startIndex;
 			
 			// Not a duplicate
@@ -464,16 +484,16 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
 //                 LDEBUG("\nIn handlePCEventReport: ");eventid.print();
       // find matching eventID
       int index = -1;
-			while((index = findIndexOfEventID(&eventid, index)) != -1)
-			{
+      while((index = findIndexOfEventID(&eventid, index)) != -1)
+      {
         uint16_t eindex = eventsIndex[index];
 //                 LDEBUG("\nhandlePCRep index: "); LDEBUG(index);
 //                 LDEBUG("\nhandlePCRep eindex: "); LDEBUG(eindex);
 //                 LDEBUG("\numEvents[index].flags: "); LDEBUG2(events[index].flags,HEX);
         if (events[eindex].flags & Event::CAN_CONSUME_FLAG)
         {
-//                 LDEBUG("\nFound Consumer: Index: ");LDEBUG(index);
-//                 LDEBUG(", EIndex: ");LDEBUG(eindex);
+//           LDEBUG("\nFound Consumer: Index: ");LDEBUG(index);
+//           LDEBUG(", EIndex: ");LDEBUG(eindex);
           processEvent(eindex);
         }
         index++;
