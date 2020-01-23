@@ -11,11 +11,11 @@ This sketch implements:
 -  5 Port-D/G input/output pins
 -  16 Turnout Servo Outputs, using an external I2C board and the Adafruit_PWMServoDriver
 
-The CDI is quite detailed, and shows how to use \<map\>, \<min\>, \<max\>, and \<default\>.  
-The memStruct reflects the CDI.  
-The eidtab[] definition shows how to use macros to simplify its definition.  
-This sketch does not rely on ButtonLeds for most of its i/o.  
-The **pceCallback(index)** definition is complex, but instructive, because of the multitude of ports. 
-The **produceFromInputs()** definition is also complex but instructive.  
-The **userConfigWritten()** definition shows how it can be very useful in the UI 
-    to provide immediate feedback on servo positioning.  
+Sketch details:
+-  The CDI is quite detailed, and shows how to use \<map\>, \<min\>, \<max\>, and \<default\>.  
+-  The memStruct reflects the CDI.  
+- The eidtab[] definition shows how to use macros to simplify its definition.  
+-  This sketch does not rely on ButtonLeds for most of its i/o.  
+-  The **pceCallback(index)** definition is complex, but instructive, because of the multitude of ports.  
+-  The **produceFromInputs()** definition is also complex but instructive.  
+-  The **userConfigWritten()** definition shows how it can be very useful in the UI to provide immediate feedback on servo positioning.  
