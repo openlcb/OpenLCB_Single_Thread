@@ -9,7 +9,7 @@ This sketch implements:
 -  8 Port-E input/output pins
 -  8 Port-F input/output pins
 -  5 Port-D/G input/output pins
--  16 Turnout Servo Outputs, using an external I2C board and the Adafruit_PWMServoDriver
+-  16 Turnout Servo Outputs, using an external I2C 16-channel PCA9685 PWMboard and the Adafruit_PWMServoDriver library.  
 
 Sketch details:
 -  The CDI is quite detailed, and shows how to use \<map\>, \<min\>, \<max\>, and \<default\>.  
