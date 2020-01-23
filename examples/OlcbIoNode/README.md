@@ -1,4 +1,4 @@
-OlcbIoNode
+**OlcbIoNode Sketch**
 
 Implements function equivalent to the Railstars Io board, and the associated DevKit.  
 
@@ -8,5 +8,7 @@ Implements function equivalent to the Railstars Io board, and the associated Dev
 Good example of use of CDI, ButtonLeds, etc.  
 
 References:
+-  https://openlcb.org/knowledge-base/railstars/
+-  https://github.com/Railstars/Io
 -  https://sourceforge.net/p/openlcb/svn/HEAD/tree/trunk/prototypes/hardware/r-io/
 -  https://sourceforge.net/p/openlcb/svn/HEAD/tree/trunk/prototypes/hardware/DevKit/
