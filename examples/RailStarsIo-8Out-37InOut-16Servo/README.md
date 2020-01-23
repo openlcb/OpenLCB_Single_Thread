@@ -11,7 +11,7 @@ This sketch implements:
 -  5 Port-D/G input/output pins
 -  16 Turnout Servo Outputs, using an external I2C board and the Adafruit_PWMServoDriver
 
-The CDI is quite detailed, and shows how to use <map>, <min>, <max>, and defualt.  
+The CDI is quite detailed, and shows how to use \<map\>, \<min\>, \<max\>, and \<default\>.  
 The memStruct reflects the CDI.  
 The eidtab[] definition shows how to use macros to simplify its definition.  
 This sketch does not rely on ButtonLeds for most of teh i/o.  
