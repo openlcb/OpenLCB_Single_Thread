@@ -7,11 +7,11 @@ This sketch only uses one half of a PCA9685 16-channel PWM board, contolled via 
 This sketch has: 
 * Each of the eight servos has 3 positions.  
 * Each can be set to a position between 0-180 degrees.  
-* The end-points of teh servos can be set.  
+* The end-points of the servos can be set.  
 
 It demonstrates: 
 * CDI
 * memstruct of EEPROM reflecting the CDI structure
-* setting flags to refect whether eveentids are used as consumers, producers, or both, see: const EIDTab eidtab[NUM_EVENT] PROGMEM
+* setting flags to refect whether eveentids are used as consumers, producers, or both, see: *const EIDTab eidtab[NUM_EVENT] PROGMEM*
 * Initialization routine to initialize the EEPROM, see: userInitAll()
 * Eventid processing to set a servo's position, see: pceCallback(unsigned int index)
