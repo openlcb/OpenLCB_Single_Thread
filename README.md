@@ -176,6 +176,9 @@ The provided examples will give some ideas of how to accomplish sample projects.
 - **Tiva123-8Out-8In-16BoD-16Servo**<br>
     Creates a node using the Tiva123 Launchpad board from TI (see: http://www.ti.com/tool/EK-TM4C123GXL) which implements 8 outputs (consumers), 8 inputs (producers), 16 BOD inputs (producers), and 16 servo outputs (consumers).  The latter uses a PCA8695 PWM chip (see: https://www.adafruit.com/product/815).  One will want to uncomment the INITIALIZE_TO_NODE_ADDRESS and RESET_TO_FACTORY_DEFAULTS the first time to initialize the EEPROM, and then they should be recommented to minimize EEPROM rewrites.  
     
+- **OlcbIoNode**<br>
+    Implements the equivalent function to the base code in the Railstars Io and associated DevKit.  It uses this frame work and implements 8 inputs and 8 outputs, with two eventids per i/o.  
+    
 ## In prgress, but not uploaded
 - **OlcbBlankNode**<br>
     This is a blank node which can be used to develop a new node.  
