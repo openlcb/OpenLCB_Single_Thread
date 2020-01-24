@@ -73,16 +73,19 @@ In addition, EIDtab[] is constructed with offsets to *every* eventid in EEPROM, 
 In this case, the first four pairs of eventids are producers, and the remaining are consumers.  The type is used by internal processing to allow eventids produced by this node to be scheduled and send, and to indetify received eventids as being consumed by this node and therefore passed to the application code.  
 
 ## Memory Model:
-Eventids are read from eeprom into event[].  Their location in EEPROM is held in EIDtab[], see above.  
+The underlying code handles system needs, such as start-up and message receiving and transmission over tthe bus. EEPROM contains node inforamtion that needs to be maintained across seesions.  However, access to EEPROM is relatively slow, so some of its information is copied to RAM to speed processing.     
 
-The index into eventid[] is then sorted into eventIndex[] --- event[] and EIDtab entries remain in the original order.  Binary search on eventIndex[] is then used to match received eventids to their entries in event[].  Diagrammatically:
+Therfore, Eventids are read from eeprom into event[], and their location in EEPROM is held in EIDtab[], see above.  
+
+The eventids are effectively sorted into numerical indirectly by using a index called eventIndex[], which is sorted.  Binary search on eventIndex[] is then used to match received eventids to their entries in event[].  eventIndex[] indexes both event[] and EIDtab entries, which remain in their original order.  Diagrammatically:
 
      eventIndex[]--->EIDtab[offset,flags]-->EEPROM
      eventIndex[]--->event[eventid]
- 
 
-#### In Flash:<br>
-EEPROM, or equivalent, is laid out in accordance with Memstruct, which matches the CDI xml, see above.  
+This trades memory space for speed of processing.  
+
+#### In EEPROM/Flash:<br>
+EEPROM, or equivalent, is laid out in accordance with Memstruct, which matches the CDI xml, see above. The EEPROM/Flash contains both fixed information, such as the nodeID, and updatable infromation, such as eventids and user descriptions. 
     
 #### In RAM:
 events[] holds a copy of the node's eventids initialized from EEPROM.  
