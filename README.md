@@ -3,7 +3,7 @@
 
 ## **** Can be used, but this repository will be depreciated, and the contents moved elsewhere. ****
 
-This is a refresh of the original Arduino code base, developed by Dr. Bob Jacobsen.  It uses a single-threaded model, with an initialization step and a endless loop to do the processing.  These are the familiar setup() and loop() of the Arduino IDE.  Much of the standard processing for OpenLCB protocols is handled by 'systems' code.  This includes obtaing and managing an node Alias, receiving and vetting eventids, scheduling an sending eventids, CDI, configuration, Datagram management, etc.  
+This is a refresh of the original Arduino code base, developed by Dr. Bob Jacobsen.  It uses a single-threaded model, with an initialization step and a endless loop to do the processing.  These are the familiar setup() and loop() of the Arduino IDE.  Much of the standard processing for OpenLCB protocols is handled by 'systems' code.  This includes obtaining and managing an node Alias, receiving and vetting eventids, scheduling and sending eventids, CDI, configuration, Datagram management, etc.  
 
 The original codebase has been modified to make it easier for the developer to match a project's CDI xml to its internal memory structure, by making the two have parallel structures.  In addition, eventid searching uses a sorted table index and a binary search.  (David Harris and Alex Shepherd)
 
@@ -70,14 +70,14 @@ In addition, EIDtab[] is constructed with offsets to *every* eventid in EEPROM, 
         CEID(channels[7].event0),   CEID(channels[7].event1),  // 8th channel - output, ie consumer
       };
 ```
-In this case, the first four pairs of eventids are producers, and the remaining are consumers.  The type is used by internal processing to allow eventids produced by this node to be scheduled and send, and to indetify received eventids as being consumed by this node and therefore passed to the application code.  
+In this case, the first four pairs of eventids are producers, and the remaining are consumers.  The type is used by internal processing to allow eventids produced by this node to be scheduled and sent, and to indentify received-eventids as being consumed by this node, and therefore passed to the application code.  
 
 ## Memory Model:
-The underlying code handles system needs, such as start-up and message receiving and transmission over tthe bus. EEPROM contains node inforamtion that needs to be maintained across seesions.  However, access to EEPROM is relatively slow, so some of its information is copied to RAM to speed processing.     
+The underlying code handles most system needs, such as start-up and message receiving and transmission over the bus. The Flash/EEPROM contains node information that needs to be maintained across sessions.  However, access to EEPROM is relatively slow, so some of its information is copied to RAM to speed-up processing of eventids.     
 
 Therfore, Eventids are read from eeprom into event[], and their location in EEPROM is held in EIDtab[], see above.  
 
-The eventids are effectively sorted into numerical indirectly by using a index called eventIndex[], which is sorted.  Binary search on eventIndex[] is then used to match received eventids to their entries in event[].  eventIndex[] indexes both event[] and EIDtab entries, which remain in their original order.  Diagrammatically:
+The eventids are effectively sorted into numerical indirectly by using a index called eventIndex[].  Binary search on eventIndex[] is then used to quickly match received-eventids to their entries in event[].  eventIndex[] indexes both event[] and EIDtab entries, which remain in their original order.  Diagrammatically:
 
      eventIndex[]--->EIDtab[offset,flags]-->EEPROM
      eventIndex[]--->event[eventid]
@@ -85,11 +85,11 @@ The eventids are effectively sorted into numerical indirectly by using a index c
 This trades memory space for speed of processing.  
 
 #### In EEPROM/Flash:<br>
-EEPROM, or equivalent, is laid out in accordance with Memstruct, which matches the CDI xml, see above. The EEPROM/Flash contains both fixed information, such as the nodeID, and updatable infromation, such as eventids and user descriptions. 
+Flash/EEPROM is laid out in accordance with Memstruct, which matches the CDI xml, see above. The Flash/EEPROM contains both fixed information, such as the nodeID, and updatable infromation, such as eventids and user descriptions. 
     
 #### In RAM:
-events[] holds a copy of the node's eventids initialized from EEPROM.  
-EIDtab[] holds the offsets to the eventids in EEPROM, this is built using Memstruct to calculate the eventid-offsets.  
+events[] holds a copy of the node's eventids copied from EEPROM.  
+EIDtab[] holds the offsets to the eventids in Flash/EEPROM, this is built using Memstruct to calculate the eventid-offsets at compile-time.  
 eventIndex[] indexes into to event[] and EIDtab[] in ascending sorted order.  
 
 ## More about OpenLCB/LCC - what is it?
@@ -101,7 +101,7 @@ For protocol descriptions, see: [Adopted LCC Documents](http://openlcb.org/openl
 These protocols consist of: 
  - **Systems/Application Messaging**<br>
     These are the 'workhorse' messages on which most applications will be built, they are useful for sytems-messaging as well, and for building further systems-protocols.  
-   - PCE - Produver/Consumer Event Messages
+   - PCE - Producer/Consumer Event Messages
      - These are *unaddressed* EventID messages.
      - They implement *Producer/Consumer Events* (64-bit)
      - EventIDs are globally unique 64-bit numbers.
@@ -113,14 +113,14 @@ These protocols consist of:
      - These are *addressed* messages carrying unlimited data in multiple messages.
      - These are one-to-one messages.
  - **Systems/Housekeeping**<br>
-    These are the 'behind-the-scenes' protocol that enables and ensures the system's integrity. 
+    These are the 'behind-the-scenes' protocols that enable and ensure the system's integrity. 
    - Link - establishes and maintains the node's link to the network
      - Announces state of Node
      - Announcement of *Intialization Complete*
      - Announcement of *Consumed-* and *Produced-eventIDs*
      - *NodeID reporting* on request.
      - *EventID reporting* on request.
-     - On the CAN-implementation, this maintains *alias assignment and maintenance*;
+     - On the CAN-implementation, this also does *alias assignment and maintenance*;
    - SNIP - Simple Node Information Protocol
      - Provides a brief description of the node for *UI Tools* to use.
    - PIP - Protocol Identification Protocol
@@ -131,8 +131,9 @@ These protocols consist of:
      - Reading and writing to the node's memory spaces, including Configuration, RAM and EEPROM spaces.
  - **Additional Protocols**<br>
     These protocols extend the base-system.
-   - Teaching -- teaching an eventID from one node to one or more others.  
+   - Teaching -- teaching an eventID from one node to one, or many, others.  
    - Traction Control -- train control.
+   - Search -- allows identification of numeric train nodes (in development)
  - **Additional Utility-Libraries**<br>
     These libraries implement useful functionality.  
    - BG - Blue/Green -- node health indicators and system buttons.
@@ -154,7 +155,7 @@ For example there are some selected lines of code from the OlcbBasicNode example
   uint8_t protocolIdentValue[6] = {0xD7,0x58,0x00,0,0,0};
   ButtonLed* buttons[] = { &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD };
 ```
-Most of the **processing** is hidden as functions in the #include files, specifiaclly OpenLCBHeader.h and OpenLCBMid.h.  
+Most of the **processing** is hidden as functions in the #include files, specifically OpenLcbCore.h, OpenLCBHeader.h and OpenLCBMid.h.  
 
 ## How Does the Application Interact with the Codebase?
 The programmer of the Application must: 
