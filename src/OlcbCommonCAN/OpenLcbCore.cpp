@@ -11,7 +11,7 @@
 extern "C" {
 	uint16_t getOffset(uint16_t index);
 	uint16_t getFlags(unsigned index);
-	extern void writeEID(int index);
+	extern void writeEID(int index, EventID eid);
 }
 
 extern void userInitAll();
@@ -518,7 +518,7 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
                 //LDEBUG("\ni:"); LDEBUG(i);
                 //LDEBUG("\neid.writeEID(i):");
                 //LDEBUG2(i,HEX);
-                writeEID(i);
+                writeEID(i, eid);
                 events[i].flags |= Event::IDENT_FLAG; // notify new eventID
                 events[i].flags &= ~Event::LEARN_FLAG; // enough learning
                 sendEvent = sendEvent < i ? sendEvent : i;

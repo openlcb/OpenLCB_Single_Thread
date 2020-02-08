@@ -189,11 +189,12 @@ OpenLcbCore OpenLcb(event, NUM_EVENT, eventIndex, eidtab, &txBuffer, &clink);
 
 extern "C" {
     
-    extern void writeEID(int index) {
+    extern void writeEID(int index, EventID eid) {
         // All write to EEPROM, may have to restore to RAM.
         LDEBUG("\nwriteEID() "); LDEBUG(index);
         eepromDirty = true; // flag eeprom changed
-        NODECONFIG.put(getOffset(index), event[index].eid);
+        //NODECONFIG.put(getOffset(index), event[index].eid);
+        NODECONFIG.put(getOffset(index), eid);
     }
 }
 
