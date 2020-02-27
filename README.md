@@ -7,6 +7,23 @@ This is a refresh of the original Arduino code base, developed by Dr. Bob Jacobs
 
 The original codebase has been modified to make it easier for the developer to match a project's CDI xml to its internal memory structure, by making the two have parallel structures.  In addition, eventid searching uses a sorted table index and a binary search.  (David Harris and Alex Shepherd)
 
+## Summary of library functionality
+### System handles and receives/sends messages (OpenLCBHeader.h and OpenLCBMid.h):
+* Bus connections and maintenance: obtaining and maintaining alias.  
+* Message reception and transmission, with hooks.
+* Flash and EEPROM storage and maintenance, including access-macros, default and replacement eventids, reset-hooks.  
+* Node announcement and maintenance: nodeid, eventids.  
+* Abbreviated node-info (ACDI): manufacturer, versions, name.
+* Node-info (CDI): field types, descriptions, contents, its updating. 
+### User supplies code for:
+1. Memory-layout design (memstruct{}).  
+2. CDI xml design (configDefInfo[]).  
+3. Memory-field initialization and retrieval.  
+4. Collection of inputs and triggers, and flagging  of eventids to send (produceFromInputs()).  
+5. Reaction to Events (pceCallback()).  
+6. Reaction to CDI changes (userConfigWritten()). 
+7. Sketch-specific I/O interfacing.  
+
 # Platforms supported:
 * ATMega series, with MCP2515 CAN support; 
 * AT90CAN series, with native CAN support; 
