@@ -8,7 +8,7 @@ This is a refresh of the original Arduino code base, developed by Dr. Bob Jacobs
 The original codebase has been modified to make it easier for the developer to match a project's CDI xml to its internal memory structure, by making the two have parallel structures.  In addition, eventid searching uses a sorted table index and a binary search.  (David Harris and Alex Shepherd)
 
 ## Summary of library functionality
-### System handles and receives/sends messages (OpenLCBHeader.h and OpenLCBMid.h):
+### Library-code handles, and receives/sends messages re: (OpenLCBHeader.h and OpenLCBMid.h):
 * Bus connections and maintenance: obtaining and maintaining alias.  
 * Message reception and transmission, with hooks.
 * Flash and EEPROM storage and maintenance, including access-macros, default and replacement eventids, reset-hooks.  
