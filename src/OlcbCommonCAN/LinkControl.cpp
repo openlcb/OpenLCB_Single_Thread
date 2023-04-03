@@ -49,7 +49,7 @@ void LinkControl::nextAlias() {
        lfsr1 = lfsr1 + temp1 + 0x1B0CA3l;
        
        // carry
-       lfsr1 = (lfsr1 & 0xFFFFFF) | ((lfsr2&0xFF000000) >> 24);
+       lfsr1 = (lfsr1 & 0xFFFFFF) + ((lfsr2&0xFF000000) >> 24);
        lfsr2 = lfsr2 & 0xFFFFFF;
 
     } while (getAlias() == 0);  // force advance again if get zero alias
