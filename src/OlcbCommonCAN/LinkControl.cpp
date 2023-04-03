@@ -1,4 +1,4 @@
-// The timing here is done in an Arduino-specific way via the 
+// The timing here is done in an Arduino-specific way via the
 // "millis" function, here advance defined
 //#include <Arduino.h>
 
@@ -43,11 +43,11 @@ void LinkControl::nextAlias() {
        // First, form 2^9*val
        uint32_t temp1 = ((lfsr1<<9) | ((lfsr2>>15)&0x1FF)) & 0xFFFFFF;
        uint32_t temp2 = (lfsr2<<9) & 0xFFFFFF;
-       
+
        // add
        lfsr2 = lfsr2 + temp2 + 0x7A4BA9l;
        lfsr1 = lfsr1 + temp1 + 0x1B0CA3l;
-       
+
        // carry
        lfsr1 = (lfsr1 & 0xFFFFFF) + ((lfsr2&0xFF000000) >> 24);
        lfsr2 = lfsr2 & 0xFFFFFF;
@@ -60,7 +60,7 @@ void LinkControl::reset() {
   // initialize sequence from node ID
   lfsr1 = (((uint32_t)nid->val[0]) << 16) | (((uint32_t)nid->val[1]) << 8) | ((uint32_t)nid->val[2]);
   lfsr2 = (((uint32_t)nid->val[3]) << 16) | (((uint32_t)nid->val[4]) << 8) | ((uint32_t)nid->val[5]);
-  
+
   if (getAlias() == 0) nextAlias(); // advancing one step here if get zero
 }
 
@@ -143,7 +143,7 @@ void LinkControl::check() {
   case STATE_INITIAL+4:
     // last CIM, sent, wait for delay
     timer = millis();
-    state = STATE_WAIT_CONFIRM; 
+    state = STATE_WAIT_CONFIRM;
 
     return;
   case STATE_WAIT_CONFIRM:
@@ -211,7 +211,7 @@ bool LinkControl::receivedFrame(OlcbCanInterface* rcv) {
    // check for aliasMapReset
 
    // see if this is a Verify request to us; first check type
-   else if (rcv->isVerifyNID() && 
+   else if (rcv->isVerifyNID() &&
                 ( rcv->isAddressedMessage() ? rcv->getDestAlias() == alias
                                     : (rcv->net->length == 0 || rcv->matchesNid(nid))
                 )
@@ -221,7 +221,7 @@ bool LinkControl::receivedFrame(OlcbCanInterface* rcv) {
      txBuffer->net->write(200);
      return true;
    }
-   
+
    return false;
 }
 
