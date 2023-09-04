@@ -1,6 +1,17 @@
-{
-    "name":"OpenLCB_Single_Thread",
-    "description":"OpenLCB_Single_Thread a library to implement openLCB/LCC nodes in the Arduino IDE.  ",
+{ 
+    "name": "OpenLCB_Single_Thread",
     "version": "0.0.2",
-    "url": "https://github.com/openlcb/OpenLCB_Single_Thread"
+    "description":"OpenLCB_Single_Thread a library to implement openLCB/LCC nodes in the Arduino IDE.  ",
+    "keywords": [
+      "framework",
+      "arduino",
+      "espressif",
+      "esp32",
+      "tiva"
+    ],
+    "license": "LGPL-2.1-or-later",
+    "repository": {
+      "type": "git"
+      "url": "https://github.com/openlcb/OpenLCB_Single_Thread"
+    }
 }
