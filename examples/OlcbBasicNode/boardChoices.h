@@ -9,7 +9,7 @@
 //#define Teensy
 //#define ESP32
 
-#if defined(ARDUINO_AVR_DUEMILANOVE)
+#if defined(ARDUINO_AVR_DUEMILANOVE) || defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO)
 #define BLUE 18   // BLUE is 18 LEDuino; others defined by board (48 IO, 14 IOuino)
 #define GOLD 19   // GOLD is 19 LEDuino; others defined by board (49 IO, 15 IOuino)
 //#pragma message("LEDuino i/o")
