@@ -37,6 +37,7 @@ typedef struct
 {
 	uint16_t	nextEID;
 	uint8_t		resetControl;
+	uint8_t     pack; // Added
 } EVENT_SPACE_HEADER;
 
 class OpenLcbCore
