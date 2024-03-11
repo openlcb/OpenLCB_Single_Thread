@@ -79,7 +79,7 @@ void NodeMemory::changeNodeID(NodeID *newNodeId)
 		checkSum ^= *pByte++;
 	
 	nodeIdCache.CheckSum = checkSum;
-	
+	LDEBUG("\nEEPROM: Base Offset: "); LDEBUG(eepromBase); LDEBUG(", EEPROM length: "); LDEBUG(EEPROM.length()); LDEBUG("\n");
 	EEPROM.put(eepromBase, nodeIdCache);
 }
 
@@ -110,7 +110,7 @@ void NodeMemory::print()
 		for(int i = rb; i < (rb + 16); i++)
 		{
 			char c = EEPROM.read(i);
-			if( c<' ' || c==0x8F )
+			if( c<' ' || c==0x8F || c == 0xFF )
 			{
 				LDEBUG('.')
 			}
@@ -121,5 +121,6 @@ void NodeMemory::print()
 		}
 	}
 	LDEBUGL();
+	Serial.flush();
 }
 
