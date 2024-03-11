@@ -56,6 +56,7 @@ void OpenLcbCore::forceFactoryReset()
   eventConfigState |= RESET_FACTORY_DEFAULTS;
   
   header.resetControl = RESET_FACTORY_DEFAULTS_VAL;
+  header.pack = 0;
   NODECONFIG.put(0, header);
 }
 
@@ -65,13 +66,14 @@ void OpenLcbCore::forceNewEventIDs() {
   eventConfigState |= RESET_NEW_EVENTS;
 
   header.resetControl = RESET_NEW_EVENTS_VAL;
+  header.pack = 1;
   NODECONFIG.put(0, header);
 }
 
 
 void OpenLcbCore::init()
 {
-  LDEBUG("\nNodeMemory::forceNewEventIDs()  State: "); LDEBUG2(eventConfigState, HEX); LDEBUGL();
+    LDEBUG("\nNodeMemory::forceNewEventIDs()  State: "); LDEBUG2(eventConfigState, HEX); LDEBUGL();
 
 	if(header.resetControl == RESET_NORMAL_VAL)
 		eventConfigState |= RESET_NORMAL;
@@ -119,7 +121,7 @@ void OpenLcbCore::init()
 // write to EEPROM new set of eventIDs and then magic, nextEID and nodeID
 void OpenLcbCore::writeNewEventIDs(Event* events, uint8_t numEvents)
 {
-  LDEBUGL("\nNodeMemory::writeNewEventIDs()");
+  //LDEBUGL("\nNodeMemory::writeNewEventIDs()");
 	EventID newEventId;
 	
 	NodeID myNodeId;
@@ -223,9 +225,10 @@ void OpenLcbCore::initTables()
 		NODECONFIG.get(getOffset(e), events[e].eid);
 		events[e].flags |= getFlags(e);
 	}
-//     LDEBUG("\nSort eventIndex");
+    //LDEBUG("\nSort eventIndex");
 	qsort(eventsIndex, numEvents, sizeof(uint16_t), cmpfunc);
-//     LDEBUG("\nSorted\n");
+    //LDEBUG("\nSorted\n");
+	//Serial.flush();
 }
 
 // avr-libc bsearch source code 
