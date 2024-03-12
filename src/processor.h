@@ -7,12 +7,15 @@
 #define processor_h
 
 // Uncomment the next line to enable #pragma messages
-// #define ENABLE_MESSAGE_PRAGMAS
+#define ENABLE_MESSAGE_PRAGMAS
 
 //#pragma message("!!! compiling processor_h")
-
+#ifndef ESP32
 #define EEPROMbegin
 #define EEPROMcommit
+#else
+#define ESTRING(s) s          // default conversion - nil
+#endif 
 // #define ESTRING(s) s          // default conversion - nil
 //#define ESTRING(s) F(s)     // alternate def
 //#define ESTRING(s) PSTR(s)  // alternate def
@@ -144,15 +147,36 @@
 #ifdef ENABLE_MESSAGE_PRAGMAS 
     #pragma message("ARDUINO_ARCH_ESP32 selected ")
 #endif
+#ifndef ESP32
     #define ESP32
+#endif
     #include "ESP32/ESPcan.h"
     #define RAMEND 0x7FFFF
     #define REBOOT esp_restart()
-    //#include "ESPeeprom.h"
-    #include "EEPROM.h"
+	#define NO_GLOBAL_EEPROM
+    #include "ESP32/ESPeeprom.h"
+	extern ESPeeprom EEPROM;
+    //#include "EEPROM.h"
     #define EEPROMbegin EEPROM.begin(1000)
     #define EEPROMcommit EEPROM.commit()
-
+#elif defined __SAM3X8E__
+#ifdef ENABLE_MESSAGE_PRAGMAS 
+    #pragma message("ARDUINO_DUE selected ")
+#endif
+    #define DUE
+	#define E2END 0x3FF // 1K byte for DueFlashStorage
+    #include "DUE/DUEcan.h"
+	#define ESTRING(s) s          // default conversion - nil
+    //#include <DueFlashStorage.h>  // use Due eeprom emulation library, will overwrite every time program is uploaded !
+    //extern "C" char* sbrk(int incr);
+	// These need to be checked.
+    #define RAMEND 0x7FFFF // This looks O.K.
+// Implemented in DUEcan.cpp. Not yet tested.
+// https://forum/arduino.cc/t/due-software-reset/332764/9 
+//void due_restart() {
+//	RSTC->RSTC_CR = 0xA5000005; // Reset processor and internal peripherals.
+//}
+	#define REBOOT due_restart()
 #else
     #define reboot
 
