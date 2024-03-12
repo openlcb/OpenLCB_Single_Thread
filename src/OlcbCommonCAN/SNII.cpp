@@ -42,8 +42,8 @@ void SNII_setup(uint8_t count, uint8_t offset, OlcbCanInterface* b, LinkControl*
       buffer = b;
       clink = li;
       state = STATE_DONE;
-                    //LDEBUG("\nSNII_setup  buffer->net->id=");
-                    //LDEBUG2(buffer->net->id,HEX);
+      //LDEBUG("\nSNII_setup  buffer->net->id=");
+      //LDEBUG2(buffer->net->id,HEX);
   }
   
 const uint8_t SNII_nextByte() { 
