@@ -1,7 +1,22 @@
 # OpenLCB_Single_Thread
 ## OpenLCB stack based on ArduinoIDE
 
-## **** This repository has been updated.  ****
+## **** 2024.09 This repository has been updated.  ****
+
+This repositiory has been updated:
+(1) The debug system has been changed to functions:
+    #define DEBUG Serial -- this will activate the debuggin statemtents, and direct them to the selected serial
+    dP(x) will print uint8_t, uint16_t, uint32_t, char*. char, and F() strings, e.g. dP( (uint32_t)value );
+    dPH(x) will print uint8_t, uint16_t, uint32_t in HEX, e.g. dPH( (uint32_t)value )
+    dP(s,x) will print the string s and the value of x, e.g. dPS("The value of x is ", x);
+(2) GCSerial: This will mock a CAN connection by converting OpenLCB messages to Gridconnect format and 
+    sending them via the serial connection, usually USB. 
+(3) Added PicoCan
+(4) Added mock CAN via Wifi for Esp32 and PicoW
+    This automatically will connect to a OpenLCB/LCC hub named openlcb-can, such as the JMRI one.
+    For the ESP32, it will open an AP to obtain the local network.
+
+## Description  ****
 
 This is a refresh of the original Arduino code base, developed by Dr. Bob Jacobsen.  It uses a single-threaded model, with an initialization step and a endless loop to do the processing.  These are the familiar setup() and loop() of the Arduino IDE.  Much of the standard processing for OpenLCB protocols is handled by 'systems' code.  This includes obtaining and managing an node Alias, receiving and vetting eventids, scheduling and sending eventids, CDI, configuration, Datagram management, etc.  
 
@@ -13,7 +28,7 @@ The original codebase has been modified to make it easier for the developer to m
 * TI Tiva series, with native CAN support; 
 * Teensy series, with native CAN support; 
 * ESP32, with native CAN supprt; 
-* Pico, with firmware CAN support.  
+* Pico and PicoW, with firmware CAN support.  
 
 In addition, individual nodes can be connected directly to a PC via USB allowing the use of JMRI and other software to program and trial them.  This is demoed in the example sketches.  
 
