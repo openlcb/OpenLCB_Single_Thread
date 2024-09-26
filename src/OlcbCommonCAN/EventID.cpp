@@ -8,7 +8,7 @@
 
 #include "EventID.h"
 
-#include "lib_debug_print_common.h"
+#include "debugging.h"
 
 EventID::EventID() {
     memset(val, 0, sizeof(val));
@@ -37,8 +37,8 @@ void EventID::setEventIdSuffix(uint16_t suffix)
 }
 
 bool EventID::equals(EventID* n) {
-                        //LDEBUG("\nequals("); this->print();
-                        //n->print(); LDEBUG(")");
+        //dP("\nequals("); this->print();
+        //n->print(); dP(")");
     return  (val[0]==n->val[0])&&(val[1]==n->val[1])
          &&(val[2]==n->val[2])&&(val[3]==n->val[3])
          &&(val[4]==n->val[4])&&(val[5]==n->val[5])
@@ -56,16 +56,32 @@ int EventID::compare(EventID *key)
     }    
 		return 0;
 }
+/* For ranges: ** better to compare Events.  
+int EventID::compare(EventID *key, uint8_t nbits)
+{
+    EventID diff;
+    uint8_t B = nbits/8;
+    uint8_t b = nbits%8;
+    uint8_t mask= 1-(1<<(b+1));
+    for(int i=0; i<B; i++) {
+    if(key->val[i] > val[i]) return 1;
+    if(key->val[i] < val[i]) return -1;
+    }
+    if(B>0) {
+        if((key->val[i]&mask) > (val[i]&mask)) return 1;
+        if((key->val[i]&mask) < (val[i]&mask)) return -1;
+    }
+    return 0;
+}
+*/
 
+#include <Arduino.h>
 void EventID::print()
 {
-	LDEBUG(' ');
-	for (int i=0;i<8;i++)
-	{
-		if(i>0)
-			LDEBUG(".");
-		if(val[i] < 16)
-			LDEBUG('0');
-		LDEBUG2(val[i],HEX);
-	}
+    dP(' ');
+    for (int i=0;i<8;i++) {
+        if(i>0) dP('.');
+        if(val[i] < 16) dP('0');
+        dPH(val[i]);
+    }
 }

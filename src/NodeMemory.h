@@ -56,23 +56,23 @@ class NodeMemory {
    */
   NodeMemory(int eepromBaseAddress, uint16_t userConfigSize);  // doesn't do anything
     
+  void init();
   uint8_t getNodeID(NodeID *nodeIdBuffer);
 
-  void changeNodeID(NodeID *newNodeId);
+  void changeNodeID(NodeID newNodeId);
   
   uint16_t length(void);
   
   // EEPROM.h Compatibility functions that address EEPROM above the Offset specified in userConfigBase
   // that will be called by the cloned EEPROM.h classed defined in OpenLCBMid.h
-  uint8_t read( int idx );
-	void write( int idx, uint8_t val );
+    uint8_t read( int idx );
+	void    write( int idx, uint8_t val );
 
 	void eraseAll(void);
-	void print();
-    
+	void print(int n);
+    uint8_t         loadAndValidate();
+
   private:
-	uint8_t			loadAndValidate();	
-	
 	uint16_t		eepromBase; 		// address of 1st byte in EEPROM we can use
 	uint16_t		userConfigBase; // address of 1st byte in EEPROM for User Config Data
 	uint16_t 		userConfigSize; 			// size of the User Config Data

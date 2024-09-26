@@ -1,5 +1,6 @@
 //#pragma message("!!! In MCP2515can.h ")
 
+
 #if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
     defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || \
     defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__) || \
@@ -7,8 +8,9 @@
     defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || \
     defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
 
-#ifndef CAN_H
-#define CAN_H
+
+#ifndef MCP2515CAN_H
+#define MCP2515CAN_H
 
 //#pragma message("!!! compiling MCP2515can.h ")
 
@@ -61,12 +63,6 @@
         #error	choosen AVR-type is not supported yet!
     #endif
 #endif
-    
-    
-
-
-        
-        
         
 #ifdef  SUPPORT_FOR_MCP2515__
     
@@ -111,7 +107,6 @@
           uint16_t timestamp;
          #endif
     } tCAN;
-//#pragma message("!!! AT90can.h tCAN")
 
     typedef struct
     {
@@ -156,6 +151,6 @@
     }
 #endif
 
-#endif // CAN_H
+#endif // MCP2515CAN_H
 
 #endif // AVR

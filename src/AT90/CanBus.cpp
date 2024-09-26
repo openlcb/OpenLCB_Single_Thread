@@ -213,15 +213,15 @@ bool can_buffer_empty(can_buffer_t *buf) {
 // -----------------------------------------------------------------------------
 bool can_buffer_full(can_buffer_t *buf)
 {
-                //CAN_DEBUG("\nIn CanBus  can_buffer_full:");
+                //dP(F("\nIn CanBus  can_buffer_full:"));
 	uint8_t used;
 	uint8_t size;
 	ENTER_CRITICAL_SECTION;
 	used = buf->used;
 	size = buf->size;
 	LEAVE_CRITICAL_SECTION;
-                //CAN_DEBUG("used="); CAN_DEBUG(used);
-                //CAN_DEBUG(" size="); CAN_DEBUG(size);
+                //dP(F("used=")); dP((uint8_t)used);
+                //dP(F(" size=")); dP((uint8_t)size);
 	if(used >= size) return true;
 	else	return false;
 }
@@ -298,18 +298,18 @@ void _enable_mob_interrupt(uint8_t mob) {
 // Checks if there is any waiting message in the registers
 
 bool _check_message(void) {
-    //CAN_DEBUG("\nIn CanBus  _check_message:");
+    //dP(F("\nIn CanBus  _check_message:"));
     //bool r = !can_buffer_empty( &can_rx_buffer );
-    //CAN_DEBUG(r);
+    //dP((bool)r);
     //return r;
 	return !can_buffer_empty( &can_rx_buffer );
 }
 
 // ----------------------------------------------------------------------------
 bool _check_free_buffer(void) {
-    //CAN_DEBUG("\nIn CanBus  _check_free_buffer:");
+    //dP(F("\nIn CanBus  _check_free_buffer:"));
     //bool r = !can_buffer_full( &can_tx_buffer );
-    //CAN_DEBUG(r);
+    //dP((bool)r);
     //while(0==0){}
     //return r;
 	return !can_buffer_full( &can_tx_buffer );
@@ -383,18 +383,18 @@ CanBus::CanBus() {}
 // -----------------------------------------------------------------------------
 // check buffers
 bool CanBus::check_message(void) {
-    //CAN_DEBUG("\nIn CanBus::check_message:");
-    bool r = _check_message();
-    //CAN_DEBUG(r);
-    return r;
-    //return _check_message();
+    //dP(F("\nIn CanBus::check_message:"));
+    //bool r = _check_message();
+    //dP((bool)r);
+    //return r;
+    return _check_message();
 }
 bool CanBus::check_free_buffer(void) {
-    //CAN_DEBUG("\nIn CanBus::check_free_buffer:");
-    bool r = _check_free_buffer();
-    //CAN_DEBUG(r);
-    return r;
-    //return _check_free_buffer();
+    //dP(F("\nIn CanBus::check_free_buffer:"));
+    //bool r = _check_free_buffer();
+    //dP((bool)r);
+    //return r;
+    return _check_free_buffer();
 }
 
 
@@ -624,8 +624,7 @@ void CanBus::set_mode(can_mode_t mode) {
 
 //bool CanBus::init(uint8_t bitrate) {
 bool CanBus::init() {
-    //CAN_DEBUG("\nIn CanBus::init");
-                        //Serial.print("\nIn CanBus::init");
+    //dP((bool)r);"\nIn CanBus::init"));
     uint8_t bitrate = 4; // fixed at 125k
 	if (bitrate >= 8) return false;
 	// switch CAN controller to reset mode
@@ -686,8 +685,8 @@ bool CanBus::init() {
 			CANCDMOB = 0; //(1 << IDE);
 	}
 	
-    //CAN_DEBUG("\nCAN_RX_BUFFER_SIZE=");    CAN_DEBUG(CAN_RX_BUFFER_SIZE);
-    //CAN_DEBUG("  CAN_TX_BUFFER_SIZE=");    CAN_DEBUG(CAN_TX_BUFFER_SIZE);
+    //dP(F("\nCAN_RX_BUFFER_SIZE=")); dP(CAN_RX_BUFFER_SIZE);
+    //dP(F("  CAN_TX_BUFFER_SIZE="); dP(CAN_TX_BUFFER_SIZE);
 	// activate CAN controller
 	CANGCON = (1 << ENASTB);
 	

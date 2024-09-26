@@ -1,5 +1,4 @@
 #include "ButtonLed.h"
-#include "lib_debug_print_common.h"
 
 void ButtonLed::init(uint8_t s) {
   sense = s;
@@ -52,7 +51,6 @@ bool ButtonLed::unique() {
 //   returns: F T F F 
 
 void ButtonLed::process() {
-    //LDEBUG("\n ButtonLED::process");
   long now = millis();
   int period = now & 0xFFE0;                    // each period is 32 ms
   if(period != lastButtonPeriod) {              // If we are in a new period
@@ -76,7 +74,7 @@ void ButtonLed::process() {
     }
   }
   // process LED
-  period = now & 0xFFC0;                          // Each period is 64 ms 
+  period = now & 0xFFC0;                        // Each period is 64 ms 
   if( period != lastLEDPeriod ) {               // if we are in a new period
     lastLEDPeriod = period;                     // .. remember it
     if ((pattern & 0x1) !=0) {                  // ..if low bit 1 then ..

@@ -6,18 +6,6 @@
 //
 //
 
-#ifdef DEBUG
-    #define dP(x) Serial.print(x)
-    #define dPH(x) Serial.print(x,HEX)
-    #define dPL Serial.println()
-    #define dPN(x) Serial.print("\n" #x ":") Serial.print(x)
-#else
-    #define dP(x)
-    #define dPH(x)
-    #define dPL
-    #define dPN(x)
-#endif
-
 #ifndef OpenLCBHeader_h
 #define OpenLCBHeader_h
 
@@ -57,7 +45,7 @@ bool eepromDirty;
         <hardwareVersion>" HWVERSION "</hardwareVersion>\
         <softwareVersion>" SWVERSION "</softwareVersion>\
         </identification>\
-    <segment origin='3' space='253'> <!-- bypasses magic, nextEID, nodeID -->\
+    <segment origin='4' space='253'> <!-- bypasses magic, nextEID, nodeID -->\
         <group>\
             <name>Node ID</name>\
             <description>User-provided description of the node</description>\
@@ -120,9 +108,6 @@ extern void userConfigWritten(unsigned int address, unsigned int length, unsigne
 extern void pceCallback(unsigned int index)  __attribute__((weak));
 extern void produceFromInputs() __attribute__((weak));
 
-Stream * DebugStream = NULL;
-
-static void setDebugStream(Stream *newStream) { DebugStream = newStream; }
 
 Event event[NUM_EVENT];             // operating flags
 uint16_t eventIndex[NUM_EVENT];     // Sorted index to eventids

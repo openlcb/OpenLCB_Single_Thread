@@ -136,7 +136,7 @@ EventID ident(0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0xFE, 0x00);
 
 void BG::sendIdent() {
     buffer->setProducerIdentified(&ident);
-    buffer->net->write(100);  // wait until buffer queued, need to improve this  // dph ?? how long
+    buffer->net->write(100);  // wait until buffer queued, need to improve this  
 }
 
 /**

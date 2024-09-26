@@ -9,6 +9,10 @@
 #ifndef OpenLCBMid_h
 #define OpenLCBMid_h
 
+//#pragma message "OpenLCBMid.h"
+
+#include "processCAN.h"
+#include "processor.h"
 #include "NodeID.h"
 #include "EventID.h"
 #include "Event.h"
@@ -33,13 +37,15 @@
 #include "SNII.h"
 #include "BG.h"
 #include "ButtonLed.h"
-#include "lib_debug_print_common.h"
+
+#include "debugging.h"
 
 #include "OpenLcbCore.h"
 
 NodeID nodeId;
+void setEepromDirty();
 
-class Can;
+//class Can;
 Can olcbcanRx;
 Can olcbcanTx;
 OlcbCanInterface     rxBuffer(&olcbcanRx);  // CAN receive buffer
@@ -86,9 +92,9 @@ extern "C" {
         } else if (space == 0xFD) { //253
             // Configuration space is entire EEPROM
             uint8_t r = NODECONFIG.read(address);
-                        //LDEBUG("\ngetRead "); LDEBUG2(space,HEX);
-                        //LDEBUG(":"); LDEBUG2(address,HEX);
-                        //LDEBUG("="); LDEBUG2(r,HEX);
+                //dP((String)"\ngetRead="); dPH((uint8_t)space);
+                //dP(':'); dPH((uint32_t)address);
+                //dP('='); dPH((uint8_t)r);
             return r;
         } else if (space == 0xFC) { // 252
             // used by ADCDI/SNII for constant data
@@ -103,47 +109,41 @@ extern "C" {
     }
     
     void getWrite(uint32_t address, int space, uint8_t val) {
-                        //LDEBUG("\nolcbinc getWrite");
-                        //LDEBUG(" space: "); LDEBUG2(space,HEX);
-                        //LDEBUG(":"); LDEBUG2(address,HEX);
-                        //LDEBUG("="); LDEBUG2(val,HEX);
+        //dP((String)"\ngetWrite="); dPH((uint8_t)space);
+        //dP(':'); dPH((uint32_t)address);
+        //dP('='); dPH((uint8_t)val);
         if (space == 0xFE) {
             // All memory
             *(((uint8_t*)&rxBuffer)+address) = val;
         } else if (space == 0xFD) {
             // Configuration space
             NODECONFIG.update(address, val);
-            //eepromDirty = true;                 // ???
+            setEepromDirty();
         }
         // all other spaces not written
     }
-//     
-//     void printeidtab() {
-//         LDEBUG("\neidtab:\n");
-//         for(int i=0;i<NUM_EVENT;i++) {
-//             LDEBUG("[");
-//             LDEBUG2(getOffset(i),HEX); LDEBUG(", ");
-//             LDEBUG2(getFlags(i),HEX); LDEBUG("], ");
-//         }
-//     }
-
     // Extras
 } // end of extern
 
 void configWritten(unsigned int address, unsigned int length, unsigned int func) {
-    LDEBUG("\nconfigWritten: Addr: "); LDEBUG2(address,HEX); LDEBUG(" func:"); LDEBUG2(func,HEX);
+    //dP("\nconfigWritten: Addr: "); dPH((uint32_t)address);
+    //dPS(" length:", (uint16_t)length);
+    //dPS(" func:", (uint16_t)func);
     for(unsigned i=0; i<NUM_EVENT; i++) {
         uint16_t off = getOffset(i);
-        if((address == off) && (length >= 8)) 
-        	eepromDirty = true;
-    }
-    if(func == CFG_CMD_UPDATE_COMPLETE) {
-        dP("\ncomplete, eepromDirty="); dP(eepromDirty);
-        if(eepromDirty) {
-            Olcb_softReset();   // trigger re-init from EEPROM.  ??? should this be in Olcb_loop()???
+        if((address == off) && (length >= 8)) {
+            OpenLcb.initTables();
+            setEepromDirty();
         }
     }
-    if(userConfigWritten) userConfigWritten(address, length, func);
+    if(func == CFG_CMD_UPDATE_COMPLETE) {
+        if(eepromDirty) {
+            Olcb_softReset();   // trigger re-init from EEPROM.  ??? should this be in Olcb_loop()???
+            eepromDirty = false;
+        }
+    }
+    if(userConfigWritten)
+        userConfigWritten(address, length, func);
 }
 
 
@@ -167,10 +167,10 @@ LinkControl clink(&txBuffer, &nodeId);
 
     unsigned int datagramCallback(uint8_t *rbuf, unsigned int length, unsigned int from) {
         // invoked when a datagram arrives
-        //logstr("consume datagram of length ");loghex(length); lognl();
-        //for (int i = 0; i<length; i++) printf("%x ", rbuf[i]);
-        //printf("\n");
         // pass to consumers
+        //dP("consume datagram of length ");dP((uint32_t)length); dP("\n");
+        //for (int i = 0; i<length; i++) { dPH(rbuf[i]); dP(" "); }
+        //dP("\n");
         return cfg.receivedDatagram(rbuf, length, from);
     }
 #else
@@ -191,58 +191,77 @@ extern "C" {
     
     extern void writeEID(int index, EventID eid) {
         // All write to EEPROM, may have to restore to RAM.
-        LDEBUG("\nwriteEID() "); LDEBUG(index);
-        eepromDirty = true; // flag eeprom changed
-        //NODECONFIG.put(getOffset(index), event[index].eid);
+        //dPS("\nwriteEID() ", (uint16_t)index);
         NODECONFIG.put(getOffset(index), eid);
+        setEepromDirty(); // flag Eeprom changed
     }
 }
 
 // ===== System Interface
-void Olcb_init(uint8_t forceFactoryReset) {       // was setup()
-//             LDEBUG("\nIn olcb::init");
-    EEPROMbegin;       // defined in processor.h
+//void Olcb_init(uint8_t forceFactoryReset) {       // was setup()
+void Olcb_init(NodeID nid, uint8_t forceFactoryReset) {
+    //dP(F("\nOpenLCBMid.h/Olcb_init()"));
+    //dP(F(" nid=")); nid.print();
+    //dP(F(" forceFactoryReset=")); dP((bool)forceFactoryReset);
+    EEPROMbegin;
+    eepromDirty = false;
+
     if(forceFactoryReset)
         OpenLcb.forceFactoryReset();  // factory reset
-    
-    eepromDirty = false;
-    
+        
     	// Read the NodeID from EEPROM
+    nm.loadAndValidate();  // moved from nm constructor
     nm.getNodeID(&nodeId);
-	nm.print();
     
+    //dP((String)"\n    Stored nid="); nodeId.print();
+	//nm.print(1000);
+    //dP((String)"\n    New nid=")); nid.print();
+    
+    if( !nodeId.equals(&nid) ) {
+        nm.changeNodeID(nid);
+        setEepromDirty();
+    }
+
     OpenLcb.init();
     OpenLcb.initTables();
-	OpenLcb.printSortedEvents();
+	//OpenLcb.printSortedEvents();
 
     PIP_setup(&txBuffer, &clink);
     SNII_setup((uint8_t)sizeof(SNII_const_data), SNII_var_offset, &txBuffer, &clink);
-            //LDEBUG("\nIn olcb::init4");
+    delay(500);
     olcbcanTx.init();
-            //LDEBUG("\nIn olcb::init5");
     clink.reset();
-            //LDEBUG("\nIn olcb::init6");
+    EEPROMcommit;
+    //dP((String)"\n    eeprom.commit()");
 }
 
 // Soft reset, reinitiatize from EEPROM, but maintain present CAN Link.
 void Olcb_softReset() {
-    dP(F("\nIn olcb_softReset"));
+    //dP(F("\nIn olcb_softReset"));
     OpenLcb.init();
-    dP(F("\nIn olcb::softreset nm.setup()"));
-//AJS Fix    initTables();
+    //dP(F("\nIn olcb::softreset nm.setup()"));
+//AJS Fix    initTables();  // dph?? is fixed?
 }
 
+unsigned long eepromupdatedue = 0;
+void setEepromDirty() {
+    //dP("\nmemory is dirty");
+    eepromDirty = true;
+    eepromupdatedue = millis();
+}
 
 // Main processing loop
 //
 bool Olcb_process() {   // was loop()
-                //LDEBUG(F("\nIn Olcb_process()"));
-
+    if( eepromDirty && (millis()-eepromupdatedue)>10000 ) {
+        EEPROMcommit;
+        eepromDirty = false;
+        dP(F("\nOlcb_process() eeprom saved "));
+    }
+    
     bool rcvFramePresent = rxBuffer.net->read();
-                //LDEBUG(F("\n Olcb_process() 1"));
 
     clink.check();
-                //LDEBUG(F("\n Olcb_process() 2"));
 
     bool handled = false;  // start accumulating whether it was processed or skipped
     if (rcvFramePresent) {
@@ -251,9 +270,7 @@ bool Olcb_process() {   // was loop()
 
     if (clink.linkInitialized()) {
         if (rcvFramePresent && rxBuffer.isForHere(clink.getAlias()) ) {
-                    //LDEBUG(F("\nOlcb_process got one"));
 #ifndef OLCB_NO_DATAGRAM
-            //#pragma message("!!! DG active ")
             handled |= dg.receivedFrame(&rxBuffer);  // has to process frame level
 #endif
             if(rxBuffer.isFrameTypeOpenLcb()) {  // skip if not OpenLCB message (already for here)
@@ -267,28 +284,20 @@ bool Olcb_process() {   // was loop()
             }
         }
         OpenLcb.check();
-                    //LDEBUG(F("\nLeft PCE::check()")); //while(0==0){}
 #ifndef OLCB_NO_DATAGRAM
         dg.check();
-                    //LDEBUG(F("\nLeft dg.check()")); //while(0==0){}
 #endif
 #ifndef OLCB_NO_STREAM
         str.check();
-                    //LDEBUG(F("\nLeft str.check()")); //while(0==0){}
 #endif
 #ifndef OLCB_NO_MEMCONFIG
         cfg.check();
-                    //LDEBUG(F("\nLeft cfg.check()")); //while(0==0){}
 #endif
 #ifndef OLCB_NO_BLUE_GOLD
         bg.check();
-                    //LDEBUG(F("\nLeft bg.check()")); //while(0==0){}
 #endif
         PIP_check();
-                    //LDEBUG(F("\nLeft PIP_check()")); //while(0==0){}
         SNII_check();
-                    //LDEBUG(F("\nLeft SNII_check()")); while(0==0){}
-        //produceFromInputs();  ??
     }
     return rcvFramePresent;
 }

@@ -2,24 +2,33 @@
 // AVR 8Servos
 //
 // Copyright 2019 Alex Shepherd and David Harris
+// Updated 2024.09 DPH
 //==============================================================
+
+// Debugging -- uncomment to activate debugging statements:
+    // dP(x) prints x, dPH(x) prints x in hex,
+    //  dPS(string,x) prints string and x
+//#define DEBUG Serial
+
+// Allow direct to JMRI via USB, without CAN controller, comment out for CAN
+//   Note: disable debugging if this is chosen
+//#include "GCSerial.h"
 
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
 // Board definitions
-#define MANU "OpenLCB"  // The manufacturer of node
-#define MODEL "AVRServos"        // The model of the board
-#define HWVERSION "0.1"   // Hardware version
-#define SWVERSION "0.1"   // Software version
+#define MANU "OpenLCB"      // The manufacturer of node
+#define MODEL "AVRServos"   // The model of the board
+#define HWVERSION "0.1"     // Hardware version
+#define SWVERSION "0.1"     // Software version
 
-// To Reset the Node Number, Uncomment and edit the next line
-// Need to do this at least once.  
-#define INITIALIZE_TO_NODE_ADDRESS  2,1,13,0,0,0x21
+// To set a new nodeid edit the next line
+#define NODE_ADDRESS  2,1,13,0,0,0x21
 
-// Uncomment to Force Reset EEPROM to Factory Defaults 
-// Need to do this at least once.  
-#define RESET_TO_FACTORY_DEFAULTS
+// To Force Reset EEPROM to Factory Defaults set this value t0 1, else 0.
+// Need to do this at least once.
+#define RESET_TO_FACTORY_DEFAULTS 1
 
 // User defs
 #define NUM_SERVOS 8
@@ -27,20 +36,10 @@
 
 #define NUM_EVENT NUM_SERVOS * NUM_POS
 
-#include "OpenLCBHeader.h"
-
-#define ENABLE_DEBUG_PRINT
-#ifdef ENABLE_DEBUG_PRINT
-  #define DEBUG_BAUD_RATE 115200
-  
-  #define DEBUG(x) Serial.print(x)
-  #define DEBUGL(x) Serial.println(x);
-  #define DEBUGHEX(x,y) Serial.print(x,y);
-#else
-  #define DEBUG(x)
-  #define DEBUGL(x)
-  #define DEBUGHEX(x,y)
-#endif
+#include "mdebugging.h"           // debugging
+#include "processCAN.h"           // Auto-select CAN library
+#include "processor.h"            // auto-selects the processor type, EEPROM lib etc.
+#include "OpenLCBHeader.h"        // System house-keeping.
 
 #define SERVO_PWM_DEG_0    120 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVO_PWM_DEG_180  590 // this is the 'maximum' pulse length count (out of 4096)
@@ -48,6 +47,8 @@
 // CDI (Configuration Description Information) in xml, must match MemStruct
 // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
 extern "C" {
+    #define N(x) xN(x)     // allow the insertion of the value (x) ..
+    #define xN(x) #x       // .. into the CDI string.
 const char configDefInfo[] PROGMEM =
 // ===== Enter User definitions below =====
   CDIheader R"(
@@ -67,11 +68,11 @@ const char configDefInfo[] PROGMEM =
                 <default>590</default>
             </int>
         </group>
-        <group replication='8'>
+        <group replication=')" N(NUM_SERVOS) R"('>
             <name>Servos</name>
             <repname>Servo</repname>
             <string size='8'><name>Description</name></string>
-            <group replication='3'>
+            <group replication=')" N(NUM_POS) R"('>
                 <repname>Position</repname>
                 <eventid><name>EventID</name></eventid>
                 <int size='1'>
@@ -87,7 +88,7 @@ const char configDefInfo[] PROGMEM =
 
 // ===== MemStruct =====
 //   Memory structure of EEPROM, must match CDI above
-    typedef struct { 
+    typedef struct {
           EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
           
           char nodeName[20];  // optional node-name, used by ACDI
@@ -128,7 +129,8 @@ extern "C" {
     
     //  Array of the offsets to every eventID in MemStruct/EEPROM/mem, and P/C flags
     const EIDTab eidtab[NUM_EVENT] PROGMEM = {
-        REG_SERVO_OUTPUT(0), REG_SERVO_OUTPUT(1), REG_SERVO_OUTPUT(2), REG_SERVO_OUTPUT(3), REG_SERVO_OUTPUT(4), REG_SERVO_OUTPUT(5), REG_SERVO_OUTPUT(6), REG_SERVO_OUTPUT(7),
+        REG_SERVO_OUTPUT(0), REG_SERVO_OUTPUT(1), REG_SERVO_OUTPUT(2), REG_SERVO_OUTPUT(3),
+        REG_SERVO_OUTPUT(4), REG_SERVO_OUTPUT(5), REG_SERVO_OUTPUT(6), REG_SERVO_OUTPUT(7),
         //REG_SERVO_OUTPUT(8), REG_SERVO_OUTPUT(9), REG_SERVO_OUTPUT(10), REG_SERVO_OUTPUT(11), REG_SERVO_OUTPUT(12), REG_SERVO_OUTPUT(13), REG_SERVO_OUTPUT(14), REG_SERVO_OUTPUT(15)
     };
     
@@ -174,7 +176,7 @@ void pceCallback(unsigned int index) {
 // Sample code uses inverse of low bit of pattern to drive pin all on or all off.
 // The pattern is mostly one way, blinking the other, hence inverse.
 //
-  DEBUG(F("\npceCallback: Event Index: ")); DEBUGL(index);
+  dP("\npceCallback: Event Index: "); dP((uint16_t)index);
     uint8_t outputIndex = index / 4;
     uint8_t outputState = index % 4;
     servoStates[outputIndex] = outputState;
@@ -182,15 +184,14 @@ void pceCallback(unsigned int index) {
 }
 
 // Set servo i's position to p
-void servoSet(uint8_t outputIndex, uint8_t outputState)
-{
-  uint8_t servoPosDegrees = NODECONFIG.read(EEADDR(servos[outputIndex].pos[outputState].pos)); 
+void servoSet(uint8_t outputIndex, uint8_t outputState){
+  uint8_t servoPosDegrees = NODECONFIG.read(EEADDR(servos[outputIndex].pos[outputState].pos));
   uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
-  DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" Pos: ")); DEBUG(servoPosDegrees); DEBUG(F(" PWM: ")); DEBUGL(servoPosPWM);
+  dPS("\nWrite Servo: ", (uint16_t)outputIndex);
+  dPS(" Pos: ", servoPosDegrees);
+  dPS(" PWM: ", servoPosPWM);
   servoPWM.setPWM(outputIndex, 0, servoPosPWM);
 }
-
-
 
 void produceFromInputs() {
     // called from loop(), this looks at changes in input pins and
@@ -201,39 +202,32 @@ void produceFromInputs() {
 void userSoftReset() {}
 void userHardReset() {}
 
-#include "OpenLCBMid.h"
+#include "OpenLCBMid.h"    // Essential, do not move or delete
 
 // Callback from a Configuration write
 // Use this to detect changes in the ndde's configuration
 // This may be useful to take immediate action on a change.
-// 
+//
 
 void userConfigWritten(unsigned int address, unsigned int length, unsigned int func)
 {
-  DEBUG("\nuserConfigWritten: Addr: "); DEBUG(address); DEBUG("  Len: "); DEBUG(length); DEBUG("  Func: "); DEBUGL(func);
+  dPS("\nuserConfigWritten: Addr: ", (uint32_t)address);
+  dPS(" Len: ", (uint16_t)length);
+  dPS(" Func: ", (uint8_t)func);
 }
 
 // ==== Setup does initial configuration ======================
 void setup()
-{   
-  #ifdef DEBUG_BAUD_RATE
+{
+  #ifdef DEBUG
     delay(1000);
-    Serial.begin(DEBUG_BAUD_RATE);
+    Serial.begin(115200);
     delay(1000);
-    setDebugStream(&Serial);
-    DEBUGL(F("\n AVR-8Servo"));
-  #endif  
-
-  #ifdef INITIALIZE_TO_NODE_ADDRESS
-    NodeID newNodeID(INITIALIZE_TO_NODE_ADDRESS);
-    nm.changeNodeID(&newNodeID);
+    dP("\n AVR-8Servo");
   #endif
 
-  #ifdef RESET_TO_FACTORY_DEFAULTS  
-    Olcb_init(1);
-  #else
-    Olcb_init(0);
-  #endif
+  NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
+  Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   servoPWM.begin();
   servoPWM.setPWMFreq(60);
@@ -244,10 +238,8 @@ void setup()
   for(uint8_t i = 0; i < NUM_SERVOS; i++)
     servoSet(i, 0);
 
-  #ifdef DEBUG
-    Serial.print("\n NUM_EVENT="); Serial.print(NUM_EVENT);
-    nm.print();
-  #endif
+  dP("\n NUM_EVENT="); dP(NUM_EVENT);
+
 }
 
 // ==== Loop ==========================
@@ -268,6 +260,6 @@ void loop() {
     blue.process();
   #endif // OLCB_NO_BLUE_GOLD
   
-  produceFromInputs();
+  //produceFromInputs();
 
 }

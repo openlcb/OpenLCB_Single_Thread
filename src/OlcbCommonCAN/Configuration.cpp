@@ -3,9 +3,9 @@
 #include "OlcbStream.h"
 #include "processor.h"
 
-#include "lib_debug_print_common.h"
+#include "debugging.h"
 
-extern bool eepromDirty;
+extern void setEepromDirty();
 
 /**
  * Structure: Requests come in via 
@@ -35,25 +35,30 @@ extern bool eepromDirty;
 
 void Configuration::check() {
     if (!request) return;
+    //dP("\nvoid Configuration::check()");
+    //dP(" (buffer[1]&0xC0)=");dP(buffer[1]&0xC0, HEX);
     // have a request pending
     switch (buffer[1]&0xC0) {
         case CFG_CMD_READ:
+            //dP("\nCFG_CMD_READ");
             processRead(buffer, length);
             break;
         case CFG_CMD_WRITE:
+            //dP("\nCFG_CMD_WRITE");
             processWrite(buffer, length);
             break;
         case CFG_CMD_OPERATION:
+            //dP("\nCFG_CMD_OPERATION");
             processCmd(buffer, length);
             break;
     }
 }
 
 int Configuration::receivedDatagram(uint8_t* data, int ln, unsigned int f) {
-    //LDEBUG("\nIn Configuration::receivedDatagram");
-    //LDEBUG("\ndata: ");
-    //for(signed i=0;i<ln;i++) { LDEBUG2(data[i],HEX); LDEBUG(", "); }
-    //LDEBUG("\n");
+    //dP("\nIn Configuration::receivedDatagram");
+    //dP("\ndata: ");
+    //for(signed i=0;i<ln;i++) { dP2(data[i],HEX); dP(", "); }
+    //dP("\n");
     // decode whether this is a configuration request
     if (data[0] != CONFIGURATION_DATAGRAM_CODE) return 1;  // 1 is error
     // yes, copy to our buffer
@@ -105,6 +110,8 @@ int Configuration::decodeSpace(uint8_t* data) {
 
 // length is the datagram data length
 void Configuration::processRead(uint8_t* data, int length) {
+    //dP("\nvoid Configuration::processRead(uint8_t* data, int length)");
+    //dPS(" length=", length);
     // see if we can get datagram buffer to reply
     uint8_t* d = dg->getTransmitBuffer();
     if (d == 0) return; // skip and return again later
@@ -127,6 +134,8 @@ void Configuration::processRead(uint8_t* data, int length) {
 // length is the datagram data length
 void Configuration::processWrite(uint8_t* data, int length) {
     // will reply, mark as done.
+    //dP("\nvoid Configuration::processWrite(uint8_t* data, int length)");
+    //dPS("\nConfiguration::processWrite(length=", (uint16_t) length);
     request = false;
     uint32_t address = getAddress(data);
     int space = decodeSpace(data);
@@ -134,13 +143,14 @@ void Configuration::processWrite(uint8_t* data, int length) {
         getWrite(address+i, space, data[i+6]);
     }
     // notify user App by callback
-    //eepromDirty = true;  // mark eeprom changed
+    //dPS("\ncallback(address=", (uint32_t)address );
+    //dPS(", length-6=", length-6);
     if(writeCB) writeCB(address, length-6, 0);
+    setEepromDirty();
 }
 
 void Configuration::processCmd(uint8_t* data, int length) {
-    //logstr("  processCmd\n");
-    //dP("\nConfiguration::processCmd");
+        //dP((String)"\nConfiguration::processCmd");
     //switch (data[1]&0xFC) {
     switch (data[1]&0xFF) {
         case CFG_CMD_GET_CONFIG: {  // to partition local variable below
@@ -179,15 +189,16 @@ void Configuration::processCmd(uint8_t* data, int length) {
           }
         case CFG_CMD_UPDATE_COMPLETE:
             if(writeCB) writeCB(0, 0, CFG_CMD_UPDATE_COMPLETE);
+            EEPROMcommit;
             request = false;  // mark as done.
             break;
         case CFG_CMD_RESETS:
             // will handle, mark as done.
             request = false;
-            LDEBUG("\n Request to reboot");
+            dP(F("\n Request to reboot"));
             // force restart (may not reply?)
             if(restart) REBOOT;
-            LDEBUG("\n Oops REBOOT returned?!"); 
+            dP(F("\n Oops REBOOT returned?!"));
             while(0==0){}
             break;
         // TODO: Handle other cases:
@@ -204,6 +215,5 @@ void Configuration::processCmd(uint8_t* data, int length) {
             // these do nothing in this implementation
             break;
     }
-    //dP("\nexit Configuration::processCmd");
 }
 

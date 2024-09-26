@@ -1,11 +1,15 @@
 
+#if 0 // This file subsumed into ESPcan.h so we can prevent compilation with NO_CAN
 
 // OpenLCB Adaptation of FlexCAN library
 // copyright DPH 2017
 
 #if defined ARDUINO_ARCH_ESP32
+#include "processCAN.h"
+#ifndef NOCAN
 
-//#pragma message("!!! compiling ESPcan.cpp ")
+
+#pragma message("!!! compiling ESPcan.cpp ")
 
 
 #include "Arduino.h"
@@ -27,24 +31,24 @@ ESP32can esp32can;
  * \return  false falls das CAN Interface nicht initialisiert werden konnte,
  *      true ansonsten.
  */
-void Can::init() {
-    //Serial.print("\nIn ESP Can::init");
-    //esp32can.begin(125000);
-    if (!CAN.begin(125E3)) {
-        Serial.println("Starting CAN failed!");
+void EspCan::init() {
+    //Serial.print("\nIn ESP EspCan::init");
+    //esp32EspCan::.begin(125000);
+    if (!esp32can.begin(125E3)) {
+        Serial.println("Starting EspCan:: failed!");
         while (1);
     }
     return;
 }
 
-uint8_t Can::avail() {
+uint8_t EspCan::avail() {
     uint8_t r = esp32can.avail();
-                //Serial.print("\n Can::avail()="); Serial.print(r);
+                //Serial.print("\n EspCan::avail()="); Serial.print(r);
     return r;
     //return esp32can.avail();
 }
 
-uint8_t Can::read() {
+uint8_t EspCan::read() {
     //Serial.print("\nIn ESPcan::read()");
     if(!esp32can.avail()) return 0;
     bool extended;
@@ -59,15 +63,15 @@ uint8_t Can::read() {
     return 1;
 }
 
-uint8_t Can::txReady() {
+uint8_t EspCan::txReady() {
             //Serial.print("\n ESPcan::txReady()");
     bool b = esp32can.txReady();
-            //Serial.print("\n esp Can::txReady()=");
+            //Serial.print("\n esp EspCan::txReady()=");
             //Serial.print(b );
     return b;
 }
 
-uint8_t Can::write(long timeout) {
+uint8_t EspCan::write(long timeout) {
     //CAN_message_t m;
             //Serial.print("\n ESP Can::write()");
     //m.id = this->id;
@@ -84,7 +88,7 @@ uint8_t Can::write(long timeout) {
         active = true;
         return esp32can.write(id, length, data);
     }
-            //Serial.print("\n     TivaCan::write()#C");
+            //Serial.print("\n     EspCan::write()#C");
     long to = millis() + timeout;
     while(millis()<to) {
         if(this->txReady()) {
@@ -94,6 +98,10 @@ uint8_t Can::write(long timeout) {
     }
     return false;
 }
-uint8_t Can::write() { return this->write(0); }
+uint8_t EspCan::write() { return this->write(0); }
 
+#endif // NOCAN
 #endif // ESP32
+
+
+#endif // #if 0

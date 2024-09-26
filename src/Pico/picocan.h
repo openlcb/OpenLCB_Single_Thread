@@ -1,20 +1,23 @@
-//#pragma message("!!! in tivacan.h ")
-#if defined TARGET_IS_BLIZZARD_RB1
-#pragma message("!!! in tivacan.h ")
+// OpenLCB Adaptation of can2040 library
+// copyright DPH 2022
 
-#ifndef NO_CAN
-#pragma message("compiling tivacan.h")
-#ifndef TIVACAN_H
-#define TIVACAN_H
+// Using 'native' CAN library:
+//     Software CANbus implementation for rp2040
+//     Copyright (C) 2022  Kevin O'Connor <kevin@koconnor.net>
+//     This file may be distributed under the terms of the GNU GPLv3 license.
 
+
+#if defined(ARDUINO_ARCH_RP2040)
+#pragma message("!!! compiling picocan.h ")
+
+#ifndef PICOCAN_H
+#define PICOCAN_H
 
 #include "OlcbCan.h"
-#include "TivaCANv0.h"
+#include "can2040.h"
 
 class Can : public OlcbCan {
   public:
-    //class CANClass;
-    //CANClass canbus(0);
     void init();                    // initialization
     uint8_t avail();                // read rxbuffer available
     uint8_t read();                 // read a buffer
@@ -24,11 +27,9 @@ class Can : public OlcbCan {
     void setL(uint16_t l);
 };
 
-#endif // TIVACAN_H
+#endif // PICOCAN_H
 
-#endif // NO_CAN
-
-#endif // Blizzard
+#endif // TARGET_RP2040
 
 
 

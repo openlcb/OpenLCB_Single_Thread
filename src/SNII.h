@@ -10,7 +10,6 @@
 class LinkControl;
 
 #include <stdint.h>
-#include "lib_debug_print_common.h"
 
 /**
 * Call once to record constants and do needed setup

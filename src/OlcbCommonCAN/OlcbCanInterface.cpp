@@ -8,10 +8,7 @@
 
 #include <string.h>
 
-#ifdef debug
-#pragma message("!!! compiling OlcbCanInterface.cpp")
-#endif
-
+//#pragma message("!!! compiling OlcbCanInterface.cpp")
 
 // The following line is needed because the Arduino environment
 // won't search a library directory unless the library is included
@@ -24,7 +21,8 @@
 #include "OlcbCan.h"
 #include "NodeID.h"
 #include "EventID.h"
-#include "lib_debug_print_common.h"
+
+#include "debugging.h"
 
 // for definiton, see
 // http://openlcb.sf.net/trunk/documents/can/index.html
@@ -326,17 +324,16 @@ void OlcbCanInterface::setFrameTypeCAN(uint16_t alias, uint16_t var) {
 }
 
 void OlcbCanInterface::setSourceAlias(uint16_t a) {
-                    //LDEBUG("\nOlcbCanInterface::setSourceAlias() alias=");
-                    //LDEBUG2(a,HEX);
+        //dP(F("\nOlcbCanInterface::setSourceAlias() alias=")); dP2(a,HEX);
     net->id &= ~MASK_SRC_ALIAS;
     net->id |= a & MASK_SRC_ALIAS;
-                    //LDEBUG(" id="); LDEBUG2(net->id,HEX);
+        //dP(F(" id=")); dP2(net->id,HEX);
 }
 uint16_t OlcbCanInterface::getSourceAlias() {
-                    //LDEBUG("\nOlcbCanInterface::getSourceAlias() id=");
-                    //LDEBUG2(net->id,HEX);
-                    //LDEBUG(" srcAlias=");
-                    //LDEBUG2(net->id & MASK_SRC_ALIAS,HEX);
+            //dP(F("\nOlcbCanInterface::getSourceAlias() id=)");
+            //dPH(net->id);
+            //dP(F(" srcAlias="));
+            //dPH(net->id & MASK_SRC_ALIAS);
         return net->id & MASK_SRC_ALIAS;
 }
 

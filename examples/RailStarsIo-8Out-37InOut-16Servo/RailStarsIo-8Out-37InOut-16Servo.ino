@@ -1,11 +1,21 @@
 //==============================================================
-// RailStars Upgraded 8-Outputs, 37 Configurable Inputs / Outputs, 16-Servos 
-// 
+// RailStars Upgraded 8-Outputs, 37 Configurable Inputs / Outputs, 16-Servos
+//
 // Copyright 2019 Alex Shepherd and David Harris
+// Updated 2024.09 DPH
 //==============================================================
 #if !defined(ARDUINO_AVR_RS_IO)
   #error "Not an Io / AT90CAN"
 #endif
+
+// Debugging -- uncomment to activate debugging statements:
+    // dP(x) prints x, dPH(x) prints x in hex,
+    //  dPS(string,x) prints string and x
+//#define DEBUG Serial
+
+// Allow direct to JMRI via USB, without CAN controller, comment out for CAN
+//   Note: disable debugging if this is chosen
+//#include "GCSerial.h"
 
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
@@ -16,11 +26,11 @@
 #define HWVERSION "1.0"   // Hardware version
 #define SWVERSION "3.1"   // Software version
 
-// To Reset the RailStars Io Node Number, Uncomment and edit the next line
-//#define RESET_NODE_ADDRESS  0x24
+// To Reset the RailStars Io Node Number, edit the next line
+#define NODE_ADDRESS  5,2,13,0,0,0xB0
 
-// Uncomment to Force Reset to Factory Defaults
-//#define RESET_TO_FACTORY_DEFAULTS
+// Set to 1 to Force Reset to Factory Defaults, else 0.
+#define RESET_TO_FACTORY_DEFAULTS 1
 
 // User defs
 #define NUM_OUTPUTS     8
@@ -33,21 +43,11 @@
 
 #define NUM_EVENT  ((NUM_OUTPUTS*2) + (NUM_IOS * 2) + (NUM_SERVOS * 2))
 
-#include "OpenLcbCore.h"
-#include "OpenLCBHeader.h"
-
-//#define ENABLE_DEBUG_PRINT
-#ifdef ENABLE_DEBUG_PRINT
-  #define DEBUG_BAUD_RATE 115200
-
-  #define DEBUG(x) Serial.print(x)
-  #define DEBUGL(x) Serial.println(x);
-  #define DEBUGHEX(x,y) Serial.print(x,y);
-#else
-  #define DEBUG(x)
-  #define DEBUGL(x)
-  #define DEBUGHEX(x,y)
-#endif
+#include "mdebugging.h"           // debugging
+#include "processCAN.h"           // Auto-select CAN library
+#include "processor.h"            // auto-selects the processor type, EEPROM lib etc.
+#include "OpenLCBHeader.h"        // System house-keeping.
+//#include "OpenLcbCore.h"
 
 #define SERVO_ENABLE_PIN    26 // This Pin enables the PCA9685 Servo PWM Driver Outputs
 #define SERVO_PWM_DEG_0    120 // this is the 'minimum' pulse length count (out of 4096)
@@ -58,8 +58,8 @@
 
  // CDI (Configuration Description Information) in xml, must match MemStruct
  // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
-    extern "C" { 
-        const char configDefInfo[] PROGMEM = 
+    extern "C" {
+        const char configDefInfo[] PROGMEM =
             // ===== Enter User definitions below =====
             CDIheader R"(
                 <group>
@@ -85,7 +85,7 @@
                                 <relation><property>0</property><value>Input</value></relation>
                                 <relation><property>1</property><value>Output</value></relation>
                               </map>
-                           </int> 
+                           </int>
                           <eventid><name>Low Event</name></eventid>
                           <eventid><name>High Event</name></eventid>
                       </group>
@@ -101,7 +101,7 @@
                                 <relation><property>0</property><value>Input</value></relation>
                                 <relation><property>1</property><value>Output</value></relation>
                               </map>
-                           </int> 
+                           </int>
                           <eventid><name>Low Event</name></eventid>
                           <eventid><name>High Event</name></eventid>
                       </group>
@@ -117,7 +117,7 @@
                                 <relation><property>0</property><value>Input</value></relation>
                                 <relation><property>1</property><value>Output</value></relation>
                               </map>
-                           </int> 
+                           </int>
                           <eventid><name>Low Event</name></eventid>
                           <eventid><name>High Event</name></eventid>
                       </group>
@@ -133,7 +133,7 @@
                                 <relation><property>0</property><value>Input</value></relation>
                                 <relation><property>1</property><value>Output</value></relation>
                               </map>
-                           </int> 
+                           </int>
                           <eventid><name>Low Event</name></eventid>
                           <eventid><name>High Event</name></eventid>
                       </group>
@@ -149,7 +149,7 @@
                                 <relation><property>0</property><value>Input</value></relation>
                                 <relation><property>1</property><value>Output</value></relation>
                               </map>
-                           </int> 
+                           </int>
                           <eventid><name>Low Event</name></eventid>
                           <eventid><name>High Event</name></eventid>
                       </group>
@@ -227,7 +227,7 @@ const uint8_t IO_OUTPUT = 1;
           struct {
             char desc[16];        // description of this input-pin
             uint8_t mode;         // Pin Mode
-            EventID inputLow;     // eventID which is Produced on activation of this input-pin 
+            EventID inputLow;     // eventID which is Produced on activation of this input-pin
             EventID inputHigh;    // eventID which is Produced on deactivation of this input-pin
           } digitalIOs[NUM_IOS];
           uint16_t ServoPwmMin;
@@ -235,7 +235,7 @@ const uint8_t IO_OUTPUT = 1;
           uint16_t ServoStartDelayMs;
           struct {
             char desc[16];        // description of this Servo Turnout Driver
-            EventID thrown;       // consumer eventID which sets turnout to Diverging 
+            EventID thrown;       // consumer eventID which sets turnout to Diverging
             uint8_t thrownPos;    // position of turount in Diverging
             EventID closed;       // consumer eventID which sets turnout to Main
             uint8_t closedPos;    // position of turnout in Normal
@@ -245,9 +245,9 @@ const uint8_t IO_OUTPUT = 1;
 
 extern "C" {
   // ===== eventid Table =====
-      #define REG_OUTPUT(s)       CEID(digitalOutputs[s].setLow), CEID(digitalOutputs[s].setHigh) 
-      #define REG_IO(s)           PCEID(digitalIOs[s].inputLow),  PCEID(digitalIOs[s].inputHigh)  
-      #define REG_SERVO_OUTPUT(s) CEID(servoOutputs[s].thrown),   CEID(servoOutputs[s].closed) 
+      #define REG_OUTPUT(s)       CEID(digitalOutputs[s].setLow), CEID(digitalOutputs[s].setHigh)
+      #define REG_IO(s)           PCEID(digitalIOs[s].inputLow),  PCEID(digitalIOs[s].inputHigh)
+      #define REG_SERVO_OUTPUT(s) CEID(servoOutputs[s].thrown),   CEID(servoOutputs[s].closed)
   //  Array of the offsets to every eventID in MemStruct/EEPROM/mem, and P/C flags
       const EIDTab eidtab[NUM_EVENT] PROGMEM = {
          REG_OUTPUT(0), REG_OUTPUT(1), REG_OUTPUT(2), REG_OUTPUT(3), REG_OUTPUT(4), REG_OUTPUT(5), REG_OUTPUT(6), REG_OUTPUT(7),
@@ -256,11 +256,11 @@ extern "C" {
          REG_IO(16), REG_IO(17), REG_IO(18), REG_IO(19), REG_IO(20), REG_IO(21), REG_IO(22), REG_IO(23),
          REG_IO(24), REG_IO(25), REG_IO(26), REG_IO(27), REG_IO(28), REG_IO(29), REG_IO(30), REG_IO(31),
          REG_IO(32), REG_IO(33), REG_IO(34), REG_IO(35), REG_IO(36),
-         REG_SERVO_OUTPUT(0), REG_SERVO_OUTPUT(1), REG_SERVO_OUTPUT(2), REG_SERVO_OUTPUT(3), REG_SERVO_OUTPUT(4), REG_SERVO_OUTPUT(5), REG_SERVO_OUTPUT(6), REG_SERVO_OUTPUT(7), 
-         REG_SERVO_OUTPUT(8), REG_SERVO_OUTPUT(9), REG_SERVO_OUTPUT(10), REG_SERVO_OUTPUT(11), REG_SERVO_OUTPUT(12), REG_SERVO_OUTPUT(13), REG_SERVO_OUTPUT(14), REG_SERVO_OUTPUT(15) 
+         REG_SERVO_OUTPUT(0), REG_SERVO_OUTPUT(1), REG_SERVO_OUTPUT(2), REG_SERVO_OUTPUT(3), REG_SERVO_OUTPUT(4), REG_SERVO_OUTPUT(5), REG_SERVO_OUTPUT(6), REG_SERVO_OUTPUT(7),
+         REG_SERVO_OUTPUT(8), REG_SERVO_OUTPUT(9), REG_SERVO_OUTPUT(10), REG_SERVO_OUTPUT(11), REG_SERVO_OUTPUT(12), REG_SERVO_OUTPUT(13), REG_SERVO_OUTPUT(14), REG_SERVO_OUTPUT(15)
       };
       
- // SNIP Short node description for use by the Simple Node Information Protocol 
+ // SNIP Short node description for use by the Simple Node Information Protocol
  // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.3-SimpleNodeInformation-2016-02-06.pdf
     extern const char SNII_const_data[] PROGMEM = "\001" MANU "\000" MODEL "\000" HWVERSION "\000" SWVERSION ; // last zero in double-quote
 
@@ -269,10 +269,10 @@ extern "C" {
 // PIP Protocol Identification Protocol uses a bit-field to indicate which protocols this node supports
 // See 3.3.6 and 3.3.7 in http://openlcb.com/wp-content/uploads/2016/02/S-9.7.3-MessageNetwork-2016-02-06.pdf
 uint8_t protocolIdentValue[6] = {0xD7,0x58,0x00,0,0,0};
-      // PIP, Datagram, MemConfig, P/C, ident, teach/learn, 
+      // PIP, Datagram, MemConfig, P/C, ident, teach/learn,
       // ACDI, SNIP, CDI
 
-      /* whole set: 
+      /* whole set:
        *  Simple, Datagram, Stream, MemConfig, Reservation, Events, Ident, Teach
        *  Remote, ACDI, Display, SNIP, CDI, Traction, Function, DCC
        *  SimpleTrain, FuncConfig, FirmwareUpgrade, FirwareUpdateActive,
@@ -289,6 +289,9 @@ const uint8_t ioPinNums[NUM_IOS]  =  { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
 uint8_t       ioPinModes[NUM_IOS];
 uint8_t       ioPinStates[NUM_IOS];
 uint8_t       servoStates[NUM_SERVOS];
+
+#define BLUE 42
+#define GOLD 43
 
 ButtonLed blue(BLUE, LOW);
 ButtonLed gold(GOLD, LOW);
@@ -318,9 +321,11 @@ uint16_t servoPwmMax = SERVO_PWM_DEG_180;
 // Set servo i's position to p
 void servoSet(uint8_t outputIndex, uint8_t outputState)
 {
-  uint8_t servoPosDegrees = outputState ? NODECONFIG.read(EEADDR(servoOutputs[outputIndex].closedPos)) : NODECONFIG.read(EEADDR(servoOutputs[outputIndex].thrownPos)); 
+  uint8_t servoPosDegrees = outputState ? NODECONFIG.read(EEADDR(servoOutputs[outputIndex].closedPos)) : NODECONFIG.read(EEADDR(servoOutputs[outputIndex].thrownPos));
   uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
-  DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" Pos: ")); DEBUG(servoPosDegrees); DEBUG(F(" PWM: ")); DEBUGL(servoPosPWM);
+  dPS("\nWrite Servo: ", outputIndex);
+  dPS(" Pos: ", servoPosDegrees);
+  dPS(" PWM: ", servoPosPWM);
   servoPWM.setPWM(outputIndex, 0, servoPosPWM);
 }
 
@@ -329,17 +334,18 @@ void servoSet(uint8_t outputIndex, uint8_t outputState)
 void pceCallback(unsigned int index)
 {
   // Invoked when an event is consumed; drive pins as needed
-  // from index of all events.  
-  // Sample code uses inverse of low bit of pattern to drive pin all on or all off.  
+  // from index of all events.
+  // Sample code uses inverse of low bit of pattern to drive pin all on or all off.
   // The pattern is mostly one way, blinking the other, hence inverse.
   //
-  DEBUG(F("\npceCallback: Event Index: ")); DEBUGL(index);
+  dPS("\npceCallback: Event Index: ", index);
    
   if(index < FIRST_IOS_EVENT_INDEX)
   {
     uint8_t outputIndex = index / 2;
     uint8_t outputState = index % 2;
-    DEBUG(F("Write Output: ")); DEBUG(outputIndex); DEBUG(F(" State: ")); DEBUGL(outputState);
+    dPS("\nWrite Output: ", outputIndex);
+    dPS(" State: ", outputState);
     digitalWrite(outputPinNums[outputIndex], outputState);
   }
   
@@ -350,7 +356,9 @@ void pceCallback(unsigned int index)
     if(ioPinModes[ioIndex] == IO_OUTPUT)
     {
       uint8_t ioPin = ioPinNums[ioIndex];
-      DEBUG(F("Write I/O Index: ")); DEBUG(ioIndex); DEBUG(F(" Pin: ")); DEBUG(ioPin); DEBUG(F(" State: ")); DEBUGL(ioState);
+      dPS("\nWrite I/O Index: ", ioIndex);
+      dPS(" Pin: ", ioPin);
+      dPS(" State: ", ioState);
       digitalWrite(ioPin, ioState);
     }
   }
@@ -361,19 +369,20 @@ void pceCallback(unsigned int index)
     uint8_t servoState = (index - FIRST_SERVO_EVENT_INDEX) % 2;
     servoStates[servoIndex] = servoState;
 
-    DEBUG(F("Write Servo: ")); DEBUG(servoIndex); DEBUG(F(" State: ")); DEBUGL(servoState);
+    dPS("\nWrite Servo: ", servoIndex);
+    dPS(" State: ", servoState);
     servoSet(servoIndex, servoState);
   }
 }
 
 
 void produceFromInputs() {
-  // called from loop(), this looks at changes in input pins and 
+  // called from loop(), this looks at changes in input pins and
   // and decides which events to fire
   // with OpenLcb.produce(i);
   // The first event of each pair is sent on button down,
   // and second on button up.
-  // 
+  //
   // To reduce latency, only MAX_INPUT_SCAN inputs are scanned on each loop
   //    (Should not exceed the total number of inputs, nor about 4)
 
@@ -382,13 +391,13 @@ void produceFromInputs() {
   #define MAX_INPUT_SCAN 4
   for (int i = 0; i<(MAX_INPUT_SCAN); i++)
   {
-//    DEBUG("produceFromInputs: "); DEBUGL(ioScanIndex);
+//    dPS("produceFromInputs: ", ioScanIndex);
     
     if(ioScanIndex < NUM_IOS)
     {
 #ifdef ENABLE_DEBUG_PRINT
       if(ioPinNums[ioScanIndex] == 32) ioScanIndex+=2;
-#endif      
+#endif
 
       if(ioPinModes[ioScanIndex] == IO_INPUT)
       {
@@ -396,7 +405,8 @@ void produceFromInputs() {
         if(ioPinStates[ioScanIndex] != inputVal)
         {
           ioPinStates[ioScanIndex] = inputVal;
-          DEBUG("produceFromInputs: Input: "); DEBUG(ioScanIndex); DEBUG(" NewValue: "); DEBUGL(inputVal);
+          dPS("\nproduceFromInputs: Input: ", ioScanIndex);
+          dPS(" NewValue: ", inputVal);
   
           if(inputVal)
             OpenLcb.produce(FIRST_IOS_EVENT_INDEX + (ioScanIndex * 2));
@@ -409,7 +419,7 @@ void produceFromInputs() {
     else
     {
       ioScanIndex = 0;
-//      DEBUGL("produceFromInputs: End Scan");
+//      dP("\nproduceFromInputs: End Scan");
     }
   }
 }
@@ -420,26 +430,28 @@ void userHardReset() {}
 // Callback from a Configuration write
 // Use this to detect changes in the ndde's configuration
 // This may be useful to take immediate action on a change.
-// 
+//
 
 void userConfigWritten(unsigned int address, unsigned int length, unsigned int func)
 {
-  DEBUG("\nuserConfigWritten: Addr: "); DEBUG(address); DEBUG("  Len: "); DEBUG(length); DEBUG("  Func: "); DEBUGL(func);
+  dPS("\nuserConfigWritten: Addr: ", address);
+  dPS("  Len: ", length);
+  dPS("  Func: ", func);
   if(address == offsetof(MemStruct, ServoPwmMin) && (length >= sizeof(uint16_t)))
   {
     servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
-    DEBUG("Changed: ServoPwmMin: "); DEBUGL(servoPwmMin); 
+    dPS("\nChanged: ServoPwmMin: ", servoPwmMin);
   }
   
   else if(address == offsetof(MemStruct, ServoPwmMax) && (length >= sizeof(uint16_t)))
   {
     servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
-    DEBUG("Changed: ServoPwmMax: "); DEBUGL(servoPwmMax);
+    dPS("\nChanged: ServoPwmMax: ", servoPwmMax);
   }
 
   else if(address >= offsetof(MemStruct, servoOutputs))
   {
-    DEBUGL("Changed: Servo Data");
+    dP("\nChanged: Servo Data");
 
     for(uint8_t i = 0; i < NUM_SERVOS; i++)
       servoSet(i, servoStates[i]);
@@ -448,87 +460,80 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
 
 // ==== Setup does initial configuration ======================
 void setup()
-{ 
-// Uncomment the line below to disable JTAG Debug
-//#define DISABLE_JTAG
-#ifdef DISABLE_JTAG  
-  MCUCR|= (1<<JTD);
-  MCUCR|= (1<<JTD);
-#endif
-  
-#ifdef DEBUG_BAUD_RATE
-  Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\n" MANU " " MODEL " SW: " SWVERSION " HW: " HWVERSION));
-  setDebugStream(&Serial);
-#endif  
-  DEBUGL("setup: Setup Outputs");
-  // Setup Output Pins
-  for(uint8_t i = 0; i < NUM_OUTPUTS; i++)
-    pinMode(outputPinNums[i], OUTPUT);
+{
+  // Uncomment the line below to disable JTAG Debug
+  //#define DISABLE_JTAG
+  #ifdef DISABLE_JTAG
+    MCUCR|= (1<<JTD);
+    MCUCR|= (1<<JTD);
+  #endif
+    
+  #ifdef DEBUG_BAUD_RATE
+    Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\n" MANU " " MODEL " SW: " SWVERSION " HW: " HWVERSION));
+    setDebugStream(&Serial);
+  #endif
+    dP("\nsetup: Setup Outputs");
+    // Setup Output Pins
+    for(uint8_t i = 0; i < NUM_OUTPUTS; i++)
+      pinMode(outputPinNums[i], OUTPUT);
 
-  DEBUGL("setup: Setup I/Os");
-  // Setup I/O Pins
-  for(uint8_t i = 0; i < NUM_IOS; i++)
-  {
-    ioPinModes[i] = NODECONFIG.read(EEADDR(digitalIOs[i].mode));
-    if(ioPinModes[i] == IO_INPUT)
+    dP("\nsetup: Setup I/Os");
+    // Setup I/O Pins
+    for(uint8_t i = 0; i < NUM_IOS; i++)
     {
-      pinMode(ioPinNums[i], INPUT_PULLUP);
-      ioPinStates[i] = digitalRead(ioPinNums[i]);
-    } 
+      ioPinModes[i] = NODECONFIG.read(EEADDR(digitalIOs[i].mode));
+      if(ioPinModes[i] == IO_INPUT)
+      {
+        pinMode(ioPinNums[i], INPUT_PULLUP);
+        ioPinStates[i] = digitalRead(ioPinNums[i]);
+      }
 
-    else if(ioPinModes[i] == IO_OUTPUT)
-      pinMode(ioPinNums[i], OUTPUT);
-  }
+      else if(ioPinModes[i] == IO_OUTPUT)
+        pinMode(ioPinNums[i], OUTPUT);
+    }
 
-  DEBUGL("setup: Setup Servos");
+    dP("\nsetup: Setup Servos");
 
-  servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
-  servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
-  uint16_t servoStartDelayMs = NODECONFIG.read16(EEADDR(ServoStartDelayMs));
+    servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
+    servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
+    uint16_t servoStartDelayMs = NODECONFIG.read16(EEADDR(ServoStartDelayMs));
 
-  // First Disable the PWM Outputs while we setup the PWMs to Valid (for servos) timings, so they don't overload the Power Supply.
-  pinMode(SERVO_ENABLE_PIN, OUTPUT);
-  digitalWrite(SERVO_ENABLE_PIN, HIGH);
-  
-  DEBUG("setup: Servo Start Delay: ");   DEBUGL(servoStartDelayMs);
-  if(servoStartDelayMs)
-    delay(servoStartDelayMs);
+    // First Disable the PWM Outputs while we setup the PWMs to Valid (for servos) timings, so they don't overload the Power Supply.
+    pinMode(SERVO_ENABLE_PIN, OUTPUT);
+    digitalWrite(SERVO_ENABLE_PIN, HIGH);
+    
+    dPS("\nsetup: Servo Start Delay: ", servoStartDelayMs);
+    if(servoStartDelayMs)
+      delay(servoStartDelayMs);
 
-  servoPWM.begin();
-  servoPWM.setPWMFreq(60);
+    servoPWM.begin();
+    servoPWM.setPWMFreq(60);
 
-  DEBUGL("setup: Set Servo Home Positions");
-  for(uint8_t i = 0; i < NUM_SERVOS; i++)
-  {
-    DEBUG("setup: Setup Servo"); DEBUGL(i);
-    servoSet(i, 0);
-  }
-  digitalWrite(SERVO_ENABLE_PIN, LOW);
-  
-#ifdef RESET_NODE_ADDRESS
-  NodeID newNodeID(0x05, 0x02, 0x01, 0x02, 0x02, RESET_NODE_ADDRESS);
-  nm.changeNodeID(&newNodeID);
-#endif
+    dP("\nsetup: Set Servo Home Positions");
+    for(uint8_t i = 0; i < NUM_SERVOS; i++)
+    {
+      dPS("setup: Setup Servo", i);
+      servoSet(i, 0);
+    }
+    digitalWrite(SERVO_ENABLE_PIN, LOW);
 
-#ifdef RESET_TO_FACTORY_DEFAULTS  
-  Olcb_init(1);
-#else
-  Olcb_init(0);
-#endif
+    NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
+    Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
+
 }
 
 // ==== Loop ==========================
-void loop() {    
+void loop() {
   bool activity = Olcb_process();
   if (activity) {
     blue.blink(0x1); // blink blue to show that the frame was received
   }
-  if (olcbcanTx.active) { 
+  if (olcbcanTx.active) {
     gold.blink(0x1); // blink gold when a frame sent
     olcbcanTx.active = false;
   }
   
-  // handle the status lights  
+  // handle the status lights
   blue.process();
   gold.process();
 
