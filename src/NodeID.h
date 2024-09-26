@@ -1,8 +1,11 @@
 #ifndef NodeID_h
 #define NodeID_h
 
+#include <Arduino.h>
 #include <string.h>
 #include <stdint.h>
+
+#include "debugging.h"
 
 #define NODEID_SIZE	6
 
@@ -25,6 +28,14 @@ class NodeID {
     
   bool equals(NodeID* n) {
     return memcmp(val, n->val, sizeof(val)) == 0;
+  }
+    
+  void print() {
+    for(int i=0; i<5; i++) {
+        dPH((uint8_t)val[i]);
+        dP((char)'.');
+    }
+    dP(val[5]);
   }
 };
 

@@ -1,18 +1,16 @@
-// The timing here is done in an Arduino-specific way via the
+// The timing here is done in an Arduino-specific way via the 
 // "millis" function, here advance defined
 //#include <Arduino.h>
 
 #include "LinkControl.h"
 
 #include "OpenLcbCan.h"
-//#include "OpenLcbCanBuffer.h"
-//#include "OpenLcbCanInterface.h"
 
 #include "OlcbCan.h"
 
 #include "NodeID.h"
 
-#include "lib_debug_print_common.h"
+#include "debugging.h"
 
 // state machine definitions
 #define STATE_INITIAL 0
@@ -43,24 +41,24 @@ void LinkControl::nextAlias() {
        // First, form 2^9*val
        uint32_t temp1 = ((lfsr1<<9) | ((lfsr2>>15)&0x1FF)) & 0xFFFFFF;
        uint32_t temp2 = (lfsr2<<9) & 0xFFFFFF;
-
+       
        // add
        lfsr2 = lfsr2 + temp2 + 0x7A4BA9l;
        lfsr1 = lfsr1 + temp1 + 0x1B0CA3l;
-
+       
        // carry
-       lfsr1 = (lfsr1 & 0xFFFFFF) + ((lfsr2&0xFF000000) >> 24);
+       lfsr1 = (lfsr1 & 0xFFFFFF) | ((lfsr2&0xFF000000) >> 24);
        lfsr2 = lfsr2 & 0xFFFFFF;
 
     } while (getAlias() == 0);  // force advance again if get zero alias
 }
 
 void LinkControl::reset() {
-    //LDEBUG("\nIn LinkControl::reset");
+    //dP("\nIn LinkControl::reset");
   // initialize sequence from node ID
   lfsr1 = (((uint32_t)nid->val[0]) << 16) | (((uint32_t)nid->val[1]) << 8) | ((uint32_t)nid->val[2]);
   lfsr2 = (((uint32_t)nid->val[3]) << 16) | (((uint32_t)nid->val[4]) << 8) | ((uint32_t)nid->val[5]);
-
+  
   if (getAlias() == 0) nextAlias(); // advancing one step here if get zero
 }
 
@@ -73,7 +71,7 @@ void LinkControl::restart() {
 // send the next CIM message.  "i" is the 0-3 ordinal number of the message, which
 // becomes F-C in the CIM itself. Returns true if successfully sent.
 bool LinkControl::sendCIM(uint8_t i) {
-    //LDEBUG("\nIn LinkControl::sendCIM");
+    //dP("\nIn LinkControl::sendCIM");
   uint16_t fragment;
   switch (i) {
     case 0:  fragment = ( (nid->val[0]<<4)&0xFF0) | ( (nid->val[1] >> 4) &0xF);
@@ -91,7 +89,7 @@ bool LinkControl::sendCIM(uint8_t i) {
 }
 
 bool LinkControl::sendRIM() {
-   //LDEBUG("\nIn LinkControl::sendRIM");
+    //dP("\nIn LinkControl::sendRIM");
   txBuffer->setRIM(getAlias());
   return sendFrame();
 }
@@ -113,20 +111,19 @@ bool LinkControl::sendAMR() {
 }
 
 bool LinkControl::sendFrame() {
-    //LDEBUG("\nIn LinkControl::sendFrame");
-    //LDEBUG("\n LinkControl::sendframe()#A");
+    //dP("\nIn LinkControl::sendFrame");
+    //dP("\n LinkControl::sendframe()#A");
 
     if (!txBuffer->net->txReady()) return false; // couldn't send just now
-    //LDEBUG("\n LinkControl::sendframe()#B");
+    //dP("\n LinkControl::sendframe()#B");
 
     txBuffer->net->write(200); // wait for queue, but earlier check says will succeed
   return true;
 }
 
 void LinkControl::check() {
-    //LDEBUG("\nIn LinkControl::check");
-    //LDEBUG("\n LinkControl::check()#A");
-
+    //dP("\nIn LinkControl::check");
+    //dP("\n LinkControl::check()#A");
   // find current state and act
   if (state == STATE_INITIALIZED) return;
   switch (state) {
@@ -135,15 +132,15 @@ void LinkControl::check() {
   case STATE_INITIAL+2:
   case STATE_INITIAL+3:
     // send next CIM message if possible
-          //LDEBUG("\n LinkControl::check()#B");
+          //dP("\n LinkControl::check()#B");
     if (sendCIM(state-STATE_INITIAL))
       state++;
-          //LDEBUG("\n LinkControl::check()#C");
+          //dP("\n LinkControl::check()#C");
     return;
   case STATE_INITIAL+4:
     // last CIM, sent, wait for delay
     timer = millis();
-    state = STATE_WAIT_CONFIRM;
+    state = STATE_WAIT_CONFIRM; 
 
     return;
   case STATE_WAIT_CONFIRM:
@@ -168,7 +165,7 @@ void LinkControl::check() {
 }
 
 bool LinkControl::linkInitialized() {
-    //LDEBUG("\nIn LinkControl::reset");
+    //dP("\nIn LinkControl::reset");
   return state == STATE_INITIALIZED;
 }
 
@@ -183,7 +180,7 @@ void LinkControl::rejectMessage(OlcbCanInterface* rcv, uint16_t code) {
 }
 
 bool LinkControl::receivedFrame(OlcbCanInterface* rcv) {
-    //LDEBUG("\nIn LinkControl::receivedFrame");
+    //dP("\nIn LinkControl::receivedFrame");
     uint16_t alias = getAlias();
    // check received message
    // see if this is a frame with our alias
@@ -205,23 +202,19 @@ bool LinkControl::receivedFrame(OlcbCanInterface* rcv) {
       // reply
       txBuffer->setAMD(alias, nid);
       txBuffer->net->write(200);
-
    }
    // check for aliasMapDefinition
    // check for aliasMapReset
 
    // see if this is a Verify request to us; first check type
-   else if (rcv->isVerifyNID() &&
-                ( rcv->isAddressedMessage() ? rcv->getDestAlias() == alias
-                                    : (rcv->net->length == 0 || rcv->matchesNid(nid))
-                )
-            ) {
+   else if (rcv->isVerifyNID()) {
      // reply; should be threaded, but isn't
+     //dP("\nisVerifyNID");
      txBuffer->setVerifiedNID(nid);
      txBuffer->net->write(200);
      return true;
    }
-
+   
    return false;
 }
 

@@ -1,47 +1,38 @@
 # OpenLCB_Single_Thread
 ## OpenLCB stack based on ArduinoIDE
 
-## **** Can be used, but this repository will be depreciated, and the contents moved elsewhere. ****
+## **** This repository has been updated.  ****
 
 This is a refresh of the original Arduino code base, developed by Dr. Bob Jacobsen.  It uses a single-threaded model, with an initialization step and a endless loop to do the processing.  These are the familiar setup() and loop() of the Arduino IDE.  Much of the standard processing for OpenLCB protocols is handled by 'systems' code.  This includes obtaining and managing an node Alias, receiving and vetting eventids, scheduling and sending eventids, CDI, configuration, Datagram management, etc.  
 
 The original codebase has been modified to make it easier for the developer to match a project's CDI xml to its internal memory structure, by making the two have parallel structures.  In addition, eventid searching uses a sorted table index and a binary search.  (David Harris and Alex Shepherd)
-
-## Summary of library functionality
-### Library-code handles, and receives/sends messages re: (OpenLCBHeader.h and OpenLCBMid.h):
-* Bus connections and maintenance: obtaining and maintaining alias.  
-* Message reception and transmission, with hooks.
-* Flash and EEPROM storage and maintenance, including access-macros, default and replacement eventids, reset-hooks.  
-* Node announcement and maintenance: nodeid, eventids.  
-* Abbreviated node-info (ACDI): manufacturer, versions, name.
-* Node-info (CDI): field types, descriptions, contents, its updating. 
-### User supplies code for:
-1. Memory-layout design (memstruct{}).  
-2. CDI xml design (configDefInfo[]).  
-3. Memory-field initialization and retrieval.  
-4. Collection of inputs and triggers, and flagging  of eventids to send (produceFromInputs()).  
-5. Reaction to Events (pceCallback()).  
-6. Reaction to CDI changes (userConfigWritten()). 
-7. Sketch-specific I/O interfacing.  
 
 # Platforms supported:
 * ATMega series, with MCP2515 CAN support; 
 * AT90CAN series, with native CAN support; 
 * TI Tiva series, with native CAN support; 
 * Teensy series, with native CAN support; 
-* ESP32, with native CAN supprt.  
+* ESP32, with native CAN supprt; 
+* Pico, with firmware CAN support.  
+
+In addition, individual nodes can be connected directly to a PC via USB allowing the use of JMRI and other software to program and trial them.  This is demoed in the example sketches.  
 
 Using a specific platform requires downloading of the appropriate compiler support.  
-A platform is automagically selected in the processor.h file, allowing the same sketch to be used on multiple platforms.  Platform specific items are included in the processor.h file.  
+
+A platform can automagically selected in the processor.h file, allowing the same sketch to be used on multiple platforms.  
+  -- Platform specific items are included in the processor.h file.
+  -- Platform specific CAN lins are included by the processCAN.h file  
 
 NB: support for Nucleo boards is pending.  
 
 ### At this point, the example sketch OlcbBasicNode compiles in the supported platforms.  
 
 ## Changes: 
-1. Added support for multiple processors: AVR/MCP2515, AT90CAN, Teensy, Tiva, and ESP32. 
+1. Added support for multiple processors: AVR/MCP2515, AT90CAN, Teensy, Tiva, ESP32, and Pico. 
    - Each set of files specific to a CAN-processor is kept in its own directory.   
-   - The processor is automatically selected in the processor.h file. 
+   - The processor is automatically selected in the processor.h file, but can be selected by including the appropriate .h file. 
+   - Direct connection of one node via USB can be made by including the GCSerial.h file, and disabling the auto-select.  
+   - Debugging statements have now been implemented as a set of rint routines that are included or stubbed-out.  These include dP(x), dPH(x), and dPS(s,y), where the first will print the value of x in decimal, the second in hex, and the third will print a string and then the value of x in decimal.  In addition, the output can be directed to any hardware Serial prt by defining it in the "#define DEBUG Serialx" line. See the examples.  
 2. A sorted eventIndex[] is used to speed eventID processing.  
 3. Simplified the definition of CDI/xml for the node by matching a struct{} to the xml structure, see the example below.   
 
@@ -188,17 +179,32 @@ The programmer of the Application must:
 
 ## Example Applications
 The provided examples will give some ideas of how to accomplish sample projects.  They can form the basis of, or  be adapted to, a new Application, or just used for inspiration.  <br>
+
+- **AVR-8Servo**<br>
+    Implements an eight servo node. This example uses the Adafruit_PWMServoDriver.h and demonstrates how one might implement a node using an external library.      
+
+ - **OlcbBlankNode**<br>
+    The example shows the minimal node code without any additional logic.  
+
  - **OlcbBasicNode**<br>
     Implements a simple node which exercises most of the protocols.  It has **two inputs** and **two outputs**.  Each input has two Producer-eventIDs and each output has two Consumer-eventIDs, so **8 eventIDs in total**.  This Application makes use of the ButtonLed library to control **two buttons** and **two LEDs**.  In addition, it implements the BG (Blue-Gold) protocol to allow the **teaching** of eventIDs between this node and others.  
-    
+        The example connects the BUILTIN_LED to the first output, so triggering the two associated events will turn that LED on and off.  
+
+- **Olcb328_8InputNode**<br>
+    Implements an eight input node. Similarly to the above, example. 
+        
+- **Olcb328_8OutputNode**<br>
+    Implements an eight output node. Similarly to the above, example. 
+
+- **OlcbIoNode**<br>
+    Implements the equivalent function to the base code in the Railstars Io and associated DevKit.  It uses this frame work and implements 8 inputs and 8 outputs, with two eventids per i/o.  
+
 - **RailStarsIo-8Out-38InOut-16Servo**<br>
     Creates a node using the Railstars Io board (DevPack board) which implements 8 outputs (consumers), 8 inputs (producers), 24 BOD inputs (producers), and 16 servo outputs (consumers).  The latter uses a PCA8695 PWM chip (see: https://www.adafruit.com/product/815).  It shows how to write a different **pceCallback()**.  It also uses **userConfigWrite()** to allow real-time updating of a servo positions from a **UI Tool**, such as **JMRI** or **Model Railroad System**. 
     
 - **Tiva123-8Out-8In-16BoD-16Servo**<br>
     Creates a node using the Tiva123 Launchpad board from TI (see: http://www.ti.com/tool/EK-TM4C123GXL) which implements 8 outputs (consumers), 8 inputs (producers), 16 BOD inputs (producers), and 16 servo outputs (consumers).  The latter uses a PCA8695 PWM chip (see: https://www.adafruit.com/product/815).  One will want to uncomment the INITIALIZE_TO_NODE_ADDRESS and RESET_TO_FACTORY_DEFAULTS the first time to initialize the EEPROM, and then they should be recommented to minimize EEPROM rewrites.  
     
-- **OlcbIoNode**<br>
-    Implements the equivalent function to the base code in the Railstars Io and associated DevKit.  It uses this frame work and implements 8 inputs and 8 outputs, with two eventids per i/o.  
     
 ## In prgress, but not uploaded
 - **OlcbBlankNode**<br>

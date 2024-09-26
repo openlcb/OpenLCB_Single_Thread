@@ -8,16 +8,22 @@
 //      based on examples by Alex Shepherd and David Harris
 //==============================================================
 
-#define DEBUG    // comment out, if not wanted
+//// Debugging -- uncomment to activate debugging statements:
+    // dP(x) prints x, dPH(x) prints x in hex, 
+    //  dPS(string,x) prints string and x
+//#define DEBUG Serial
+
+//// Allow direct to JMRI via USB, without CAN controller, comment out for CAN
+//   Note: disable debugging AND WifiGC if this is chosen
+//#include "GCSerial.h"  
+
 #define OLCB_NO_BLUE_GOLD
 
 //************ USER DEFINITIONS ************************************
 
 // Node ID --- this must come from a range controlled by the user.  
 // See: http://registry.openlcb.org/uniqueidranges
-// Uncomment the NEW_NODEID line below to force the NodeID to be written to the board 
-// This MUST be done at least once.  
-#define NEW_NODEID 2,1,13,0,0,0x08   // DIY range example, not for global use.
+#define NODE_ADDRESS 2,1,13,0,0,0x08   // DIY range example, not for global use.
 
 // Uncomment to Force Reset to Factory Defaults
 // This MUST be done at least once.  
@@ -39,7 +45,9 @@
 
 //************** End of USER DEFINTIONS *****************************
   
-#include "processor.h"            // auto-selects the processor type, and CAN lib, EEPROM lib etc.  
+#include "mdebugging.h"           // debugging
+#include "processor.h"            // auto-selects the processor type, EEPROM lib etc.  
+#include "processCAN.h"           // auto-selects the CAN lib from the processor type  
 #include "OpenLcbCore.h"
 #include "OpenLCBHeader.h"        // System house-keeping.
 
@@ -151,18 +159,14 @@ void produceFromInputs() {
 // userSoftReset() - include any initialization after a soft reset, ie after configuration changes.
 // USER defined
   void userSoftReset() {
-    #ifdef DEBUG  
-      Serial.print("\n In userSoftReset()"); Serial.flush(); 
-    #endif
+    dP("\n In userSoftReset()"); Serial.flush(); 
     REBOOT;  // defined in processor.h for each mpu
   }
 
 // userHardReset() - include any initialization after a hard reset, ie on boot-up.
 // USER defined
   void userHardReset() {
-    #ifdef DEBUG  
-      Serial.print("\n In userHardReset()"); Serial.flush(); 
-    #endif
+    dP("\n In userHardReset()"); Serial.flush(); 
     REBOOT;  // defined in processor.h for each mpu
   }
 
@@ -175,43 +179,31 @@ void produceFromInputs() {
 // 
 // USER defined
   void userConfigWritten(unsigned int address, unsigned int length, unsigned int func) {
-    #ifdef DEBUG 
-      Serial.print("\nuserConfigWritten "); Serial.print(address,HEX);
-      Serial.print(" length="); Serial.print(length,HEX);
-      Serial.print(" func="); Serial.print(func,HEX);
+      dP("\nuserConfigWritten "); dPH(address);
+      dP(" length="); dPH(length);
+      dP(" func="); dPH(func);
       for(uint8_t i=0; i<length; i++) {
-        Serial.print(" ");Serial.print(NODECONFIG.read(address));
+        dP(" ");dP(NODECONFIG.read(address));
       }
-    #endif
   }
 
-#include "OpenLCBMid.h"           // System house-keeping
+#include "OpenLCBMid.h"           // System house-keeping, do not delete!
 
 // ==== Setup does initial configuration =============================
   void setup() {
+
     #ifdef DEBUG
       // set up serial comm; may not be space for this!
       delay(1000);
       Serial.begin(115200);
       delay(1000);
-      Serial.print(F("\nOlcbBlankNode\n"));
+      dP("\nOlcbBlankNode\n");
       delay(1000);
     #endif
-  
-    #ifdef NEW_NODEID
-      NodeID newNodeID(NEW_NODEID);
-      nm.changeNodeID(&newNodeID);
-    #endif
-  
-    #ifdef RESET_TO_FACTORY_DEFAULTS
-      Olcb_init(1);
-    #else
-      Olcb_init(0);
-    #endif
-  
-    #ifdef DEBUG
-    nm.print();
-    #endif
+
+    NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
+    Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
+
   }
 
 // ==== MAIN LOOP ===========================================
@@ -219,29 +211,25 @@ void produceFromInputs() {
   void loop() {
     
     bool activity = Olcb_process();     // System processing happens here, with callbacks for app action.
-    #ifdef DEBUG
-      static unsigned long T = millis()+5000;
-      if(millis()>T) {
-         T+=5000;
-         Serial.print("\n.");
-      }
-    #endif
+    static long nextdot = 0;
+    if(millis()>nextdot) {
+      nextdot = millis()+2000;
+      dP("\n.");
+    }
   
     #ifndef OLCB_NO_BLUE_GOLD
       if (activity) {
-        // blink blue to show that the frame was received
-        //Serial.print("\nrcv");
-        blue.blink(0x1);
+        blue.blink(0x1); // blink blue to show that the frame was received
       }
       if (olcbcanTx.active) { // set when a frame sent
         gold.blink(0x1);
-        //Serial.print("\nsnd");
         olcbcanTx.active = false;
       }
       // handle the status lights  
       blue.process();
       gold.process(); 
     #endif //OLCB_NO_BLUE_GOLD
+
     // process inputs
     if(produceFromInputs) produceFromInputs();
 

@@ -37,6 +37,7 @@ typedef struct
 {
 	uint16_t	nextEID;
 	uint8_t		resetControl;
+    uint8_t     dummy; // needed to ESP32
 } EVENT_SPACE_HEADER;
 
 class OpenLcbCore
@@ -144,7 +145,7 @@ public:
 	
 	void initTables();
 
-private:
+// private:
 	int static cmpfunc (const void * a, const void * b);
 	void writeNewEventIDs(Event* events, uint8_t numEvents);
 

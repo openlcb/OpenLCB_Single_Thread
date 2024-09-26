@@ -1,12 +1,16 @@
 // OpenLCB Adaptation of MCP2515 library
 // copyright DPH 2017
 
+
 #if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
     defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || \
     defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__) || \
     defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) || \
     defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || \
     defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
+
+
+//#pragma message "compiling MCP2515can.cpp"
 
 #include <Arduino.h>
 #include "MCP2515can.h"
@@ -171,7 +175,8 @@ uint8_t mcp2515_read_id(uint32_t *id) {
 //bool mcp2515_init(uint8_t bitrate)
 bool mcp2515_init()
 {
-    uint8_t bitrate = 4;
+    uint8_t bitrate = 5;  ////dph
+    Serial.print("\nmcp2515_init");
     if (bitrate >= 8)
         return false;
     SET(MCP2515_CS);
@@ -244,6 +249,7 @@ bool mcp2515_init()
         
         return true;
     }
+    Serial.print("\nmcp2515_init done");
 }
 bool mcp2515_check_free_buffer(void) {
     uint8_t status = mcp2515_read_status(SPI_READ_STATUS);
@@ -404,8 +410,11 @@ extern uint8_t can_buffers_status(void);
 #include <util/delay.h>
 uint8_t can_send_message(const tCAN *msg)
 {
-                        //Serial.print("\nIn mcp2515 can_send_message:");
-                        //Serial.print(msg->id,HEX);
+                        Serial.print("\nIn mcp2515 can_send_message:");
+                        Serial.print(msg->id,HEX);
+                //for(int i=0;i<msg->len;i++)
+                for(int i=0;i<msg->length;i++)
+                   {Serial.print(" ");Serial.print(msg->data[i],HEX);}
     // Status des MCP2515 auslesen
     uint8_t status = mcp2515_read_status(SPI_READ_STATUS);
     /* Statusbyte:
@@ -557,6 +566,11 @@ uint8_t can_get_message(tCAN *msg) {
         msg->data[i] = spi_putc(0xff);
     }
                         //Serial.print(F("\nIn mcp2515 can_get_message5")); delay(500);
+          Serial.print("\ngetmesg:");
+          Serial.print(msg->id,HEX);
+    //for(int i=0;i<msg->len;i++)
+    for(int i=0;i<msg->length;i++)
+    { Serial.print(" "); Serial.print(msg->data[i],HEX); }
     SET(MCP2515_CS);
     // clear interrupt flag
     #ifdef RXnBF_FUNKTION

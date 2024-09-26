@@ -26,7 +26,7 @@ public:
         struct {                             // special forms: DG and Streams
             uint32_t dummy2       : 3;
             uint32_t specialType  : 5;      // 1A-1D=DG, 1F=STream, else reserved
-            uint32_t dst          : 12;     // destiantion
+            uint32_t dst          : 12;     // destination
             uint32_t src          : 12;     // CAN MTI
         };
     };
@@ -36,7 +36,6 @@ public:
         int rtr                   : 1;  // Remote-Transmit-Request-Frame?
         int extended              : 1;  // extended ID?
     } flags;
-    //uint16_t getLength();
 };
 
 #endif //OlcbCan_h
