@@ -57,6 +57,7 @@ void OpenLcbCore::forceFactoryReset()
   eventConfigState |= RESET_FACTORY_DEFAULTS;
   
   header.resetControl = RESET_FACTORY_DEFAULTS_VAL;
+  header.pack = 0;
   NODECONFIG.put(0, header);
   //dP(F("\ndirty Core factoryReset()"));
 }
@@ -66,6 +67,7 @@ void OpenLcbCore::forceNewEventIDs() {
   eventConfigState |= RESET_NEW_EVENTS;
 
   header.resetControl = RESET_NEW_EVENTS_VAL;
+  header.pack = 1;
   NODECONFIG.put(0, header);
 }
 

@@ -7,6 +7,7 @@
 #define processor_h
 
 // Uncomment the next line to enable #pragma messages
+
 // #define ENABLE_MESSAGE_PRAGMAS
 #ifdef ENABLE_MESSAGE_PRAGMAS
     #pragma message("!!! compiling processor_h")
@@ -167,6 +168,7 @@
 
 // ESP32
 #elif defined ARDUINO_ARCH_ESP32
+
     #ifdef ENABLE_MESSAGE_PRAGMAS
         #pragma message("ARDUINO_ARCH_ESP32 selected ")
     #endif
@@ -184,9 +186,9 @@
 
 // PICO
 #elif defined(TARGET_RP2040) || defined(ARDUINO_ARCH_RP2040)
-  #ifdef ENABLE_MESSAGE_PRAGMAS
-    #pragma message("!!! TARGET_RP2040 selected ok")
-  #endif
+    #ifdef ENABLE_MESSAGE_PRAGMAS
+      #pragma message("!!! TARGET_RP2040 selected ok")
+    #endif
     #define PICONOCAN
     #define PICO
     //#ifndef PICONOCAN
@@ -202,16 +204,36 @@
     #define EEPROMcommit EEPROM.commit()
 
 #elif defined ARDUINO_SAM_DUE
-  #ifdef ENABLE_MESSAGE_PRAGMAS 
-    #pragma message("ARDUINO_DUE selected ")
-  #endif
+    #ifdef ENABLE_MESSAGE_PRAGMAS 
+      #pragma message("ARDUINO_DUE selected ")
+    #endif
     #define DUE
     //#include "DUE/DUEcan.h"
     #define ESTRING(s) s          // default conversion - nil
     #include <DueFlashStorage.h>  // use Due eeprom emulation library, will overwrite every time program is uploaded !
     extern "C" char* sbrk(int incr);
     #define RAMEND 0x7FFFF
-	#define REBOOT
+	  #define REBOOT
+
+#elif defined __SAM3X8E__
+    #ifdef ENABLE_MESSAGE_PRAGMAS 
+      #pragma message("ARDUINO_DUE selected ")
+    #endif
+    #define DUE
+	  #define E2END 0x3FF // 1K byte for DueFlashStorage
+    #include "DUE/DUEcan.h"
+	  #define ESTRING(s) s          // default conversion - nil
+    //#include <DueFlashStorage.h>  // use Due eeprom emulation library, will overwrite every time program is uploaded !
+    //extern "C" char* sbrk(int incr);
+	  // These need to be checked.
+    #define RAMEND 0x7FFFF // This looks O.K.
+    // Implemented in DUEcan.cpp. Not yet tested.
+    // https://forum/arduino.cc/t/due-software-reset/332764/9 
+    //void due_restart() {
+    //	RSTC->RSTC_CR = 0xA5000005; // Reset processor and internal peripherals.
+    //}
+	  #define REBOOT due_restart()
+
 #else
     #define reboot
     #define EEPROMbegin

@@ -93,8 +93,9 @@ void NodeMemory::changeNodeID(NodeID newNodeId)
 		checkSum ^= *pByte++;
 	
 	nodeIdCache.CheckSum = checkSum;
+
     //dP(F("nodeIdCache.CheckSum = ")); dP(checkSum);
-    //dP(F("\neeprombase= ")); dP(eepromBase);
+
 	EEPROM.put(eepromBase, nodeIdCache);
     setEepromDirty();
     //dP(F("\nNM changeNodeID()"));
