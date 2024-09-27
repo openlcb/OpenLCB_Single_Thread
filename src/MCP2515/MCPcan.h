@@ -1,16 +1,19 @@
 #ifndef MCPCAN_H
 #define MCPCAN_H
 
-//#pragma message("!!! compiling MCPcan.h ")
+#ifndef NO_CAN
+
+//#if SUPPORT_MCP2525 == 1
+
+#pragma message("!!! compiling MCPcan.h ")
 
 #include "OlcbCan.h"
 
-#define SUPPORT_MCP2515 1
-
 #include "MCP2515/MCP2515can.h"
 
-class Can : public OlcbCan {
+class McpCan : public OlcbCan {
   public:
+    McpCan(){}
     void init();                    // initialization
     uint8_t avail();                // read rxbuffer available
     uint8_t read();                 // read a buffer
@@ -21,6 +24,6 @@ class Can : public OlcbCan {
 };
 
 
-
+#endif // SUPPORT_MCP2515
 
 #endif // MCPCAN_H

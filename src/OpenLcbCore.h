@@ -145,7 +145,7 @@ public:
 	
 	void initTables();
 
-private:
+// private:
 	int static cmpfunc (const void * a, const void * b);
 	void writeNewEventIDs(Event* events, uint8_t numEvents);
 

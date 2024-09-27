@@ -2,23 +2,33 @@
 //==============================================================
 // Olcb328_8ConsumerNode
 //   A prototype of an 8-channel Output OpenLCB board
-// 
+//
 //   David Harris 2019, adapted from
 //   Bob Jacobsen 2010, 2012
 //      based on examples by Alex Shepherd and David Harris
+//   Updated 2024.09 DPH
 //==============================================================
 
-#define DEBUG    // comment out, if not wanted
+// Debugging -- uncomment to activate debugging statements:
+    // dP(x) prints x, dPH(x) prints x in hex,
+    // dPS(string,x) prints string and x
+//#define DEBUG Serial
+
+// Allow direct to JMRI via USB, without CAN controller, comment out for CAN
+//   Note: disable debugging if this is chosen
+//#include "GCSerial.h"
+
 #define OLCB_NO_BLUE_GOLD  // don't want Blue/Gold
 
 //************ USER DEFINITIONS ************************************
 
-// Node ID --- this must come from a range controlled by the user.  
+// Node ID --- this must come from a range controlled by the user.
 // See: http://registry.openlcb.org/uniqueidranges
-// Uncomment the NEW_NODEID line below to force the NodeID to be written to the board 
-#define NEW_NODEID 2,1,13,0,0,0xF1   // DIY range example, not for global use.
+// To set a new NODEID edit the line below.
+#define NODE_ADDRESS 2,1,13,0,0,0xF1   // DIY range example, not for global use.
 
-// Uncomment to Force Reset to Factory Defaults
+// Set to 1 to Force Reset to Factory Defaults, else 0.
+// Must be done at least once for each new board.
 #define RESET_TO_FACTORY_DEFAULTS 1
 
 // Board definitions
@@ -28,32 +38,36 @@
 #define SWVERSION "0.1"          // Software version
 
 // Application definitions:
-// For this example, set the number of channels implemented.  
+// For this example, set the number of channels implemented.
 // Each corresponds to an input or output pin.
 #define NUM_CHANNEL 8
-// Total number of eventids, in this case there are two per channel, 
+// Total number of eventids, in this case there are two per channel,
 //  a set and unset.
 #define NUM_EVENT 2*NUM_CHANNEL
 
 //************** End of USER DEFINTIONS *****************************
   
-#include "processor.h"            // auto-selects the processor type, and CAN lib, EEPROM lib etc.  
+#include "mdebugging.h"           // debugging
+#include "processCAN.h"           // Auto-select CAN library
+#include "processor.h"            // auto-selects the processor type, and CAN lib, EEPROM lib etc.
 #include "OpenLcbCore.h"
 #include "OpenLCBHeader.h"        // System house-keeping.
 
 extern "C" {                      // the following are defined as external
-
+  #define N(x) xN(x)     // allows the insertion of value (x)
+  #define xN(x) #x       // .. into the CDI string.
 // ===== CDI =====
 //   Configuration Description Information in xml, **must match MemStruct below**
 //   See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
-//   CDIheader and CDIFooter contain system-parts, and includes user changable node name and description fields. 
-     const char configDefInfo[] PROGMEM = 
-       // ===== Enter User definitions below CDIheader line =====
+//   CDIheader and CDIFooter contain system-parts, and includes user changable node name and description fields.
+     const char configDefInfo[] PROGMEM =
+       // vvvvv Enter User definitions below CDIheader line vvvvv
+       //       It must match the Memstruct struct{} below
        CDIheader R"(
           <group>
             <name>Output</name>
             <description>Define events associated with Output Pins</description>
-            <group replication='8'>
+            <group replication=')" N(NUM_CHANNEL) R"('>
                 <name>Digital Output Pins</name>
                 <repname>Output</repname>
                 <string size='16'><name>Description</name></string>
@@ -62,39 +76,40 @@ extern "C" {                      // the following are defined as external
             </group>
           </group>
        )" CDIfooter;
-       // ===== Enter User definitions above CDIfooter line =====
+       // ^^^^^ Enter User definitions above CDIfooter line ^^^^^
 }
 
 // ===== MemStruct =====
 //   Memory structure of EEPROM, **must match CDI above**
 //     -- nodeVar has system-info, and includes the node name and description fields
-    typedef struct { 
-          EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!  
+    typedef struct {
+          EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
           char nodeName[20];  // optional node-name, used by ACDI
           char nodeDesc[24];  // optional node-description, used by ACDI
-      // ===== Enter User definitions below =====
+      // vvvvv Enter User definitions below vvvvv
           struct {
             char desc[16];        // description of this output
             EventID setLow;       // Consumed eventID which sets this output-pin
             EventID setHigh;      // Consumed eventID which resets this output-pin
           } outputs[NUM_CHANNEL];
-      // ===== Enter User definitions above =====
-    } MemStruct;                 // type definition
+      // ^^^^^ Enter User definitions above ^^^^^
+    } MemStruct;                 // EEPROM memory structure, must match the CDI above
 
 extern "C" {
   
   // ===== eventid Table =====
   //  Array of the offsets to every eventID in MemStruct/EEPROM/mem, and P/C flags
-  //    -- each eventid needs to be identified as a consumer, a producer or both.  
+  //    -- each eventid needs to be identified as a consumer, a producer or both.
   //    -- PEID = Producer-EID, CEID = Consumer, and PCEID = Producer/Consumer
-  //    -- note matching references to MemStruct.  
-    #define REG_OUTPUT(s) CEID(outputs[s].setLow), CEID(outputs[s].setHigh) 
+  //    -- note matching references to MemStruct.
+  // This line defines a useful macro to make filling the table easier
+    #define REG_OUTPUT(s) CEID(outputs[s].setLow), CEID(outputs[s].setHigh)
     const EIDTab eidtab[NUM_EVENT] PROGMEM = {
-      REG_OUTPUT(0), REG_OUTPUT(1), REG_OUTPUT(2), REG_OUTPUT(3), 
-      REG_OUTPUT(4), REG_OUTPUT(5), REG_OUTPUT(6), REG_OUTPUT(7) 
+      REG_OUTPUT(0), REG_OUTPUT(1), REG_OUTPUT(2), REG_OUTPUT(3),
+      REG_OUTPUT(4), REG_OUTPUT(5), REG_OUTPUT(6), REG_OUTPUT(7)
     };
  
-  // SNIP Short node description for use by the Simple Node Information Protocol 
+  // SNIP Short node description for use by the Simple Node Information Protocol
   // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.3-SimpleNodeInformation-2016-02-06.pdf
     extern const char SNII_const_data[] PROGMEM = "\001" MANU "\000" MODEL "\000" HWVERSION "\000" OlcbCommonVersion ; // last zero in double-quote
     //extern const char SNII_const_data[] PROGMEM = "\001RailStars\000Io 8-Out 32-InOut 16-Servo\0001.0\0002.0" ; // last zero in double-quote
@@ -131,7 +146,7 @@ uint8_t protocolIdentValue[6] = {     // 0xD7,0x58,0x00,0,0,0};
     };
   //ButtonLed pA(14, LOW);
   // An array of buttons/leds.
-    ButtonLed* buttons[NUM_EVENT] = {  
+    ButtonLed* buttons[NUM_EVENT] = {
        // One for each event; each channel is a pair
        &pA
     };
@@ -144,30 +159,31 @@ uint8_t protocolIdentValue[6] = {     // 0xD7,0x58,0x00,0,0,0};
 //       (MISO)12 Used by CAN
 // Reset (MOSI)11 Used by CAN
 // 3.3V    (SS)10 Used by CAN
-// 5V           9   
+// 5V           9
 // Gnd     (ICP)8 Potentially used by LN In
 // Gnd
 // Vin          7 Potentially used by LN Out
-//        (OC0A)6 
-// 14(A0)   (T1)5 
-// 15(A1)   (T0)4 
+//        (OC0A)6
+// 14(A0)   (T1)5
+// 15(A1)   (T0)4
 // 16(A2) (Int1)3 Potentially used by CAN interrupt
-// 17(A3) (Int0)2 
+// 17(A3) (Int0)2
 // 18(A4)   (Tx)1 Used by Serial
 // 19(A5)   (Rx)0 Used by Serial
 
 // Choose wisely:
-int pins[] = { 4,5,14,15,16,17,18,19 };  // 8 outputs
+// LED_BUILTIN substituted for 4, to allow testing without extra hardware
+int pins[] = { LED_BUILTIN,5,14,15,16,17,18,19 };  // 8 outputs
 // ===== Process Consumer-eventIDs =====
 // USER defined
 void pceCallback(unsigned int index) {
   // Invoked when an event is consumed; drive pins as needed
-  // from index of all events.  
+  // from index of all events.
   int ch = index / 2;  // two events per channel
   int ev = index % 2;
   Serial.print("\n pceCallback: "); Serial.print(index);
   Serial.print("\n pin: "); Serial.print(pins[ch]);
-  if(ev) Serial.print(" set HIGH"); 
+  if(ev) Serial.print(" set HIGH");
   else   Serial.print(" set LOW");
   digitalWrite( pins[ch], (ev?HIGH:LOW) ); // if even index set low, else high
 }
@@ -178,40 +194,36 @@ void pceCallback(unsigned int index) {
 // USER defined
 void produceFromInputs() {}  // no inputs, so ignore
 
-/* Config tool: 
+/* Config tool:
  *  More: Reset/Reboot -- causes a reboot --> reads nid, and reads and sorts eids --> userInit();
  *  More: Update Complete -- no reboot --> reads and sorts eids --> userInit();
  *  Reset segment: Usr clear -- new set of new set of eids and blank strings (in system code), doesn't have to reboot --> userClear();
  *  Reset segment: Mfr clear -- original set of eids, blank strings --> userMfrClear().
- *  
+ *
  */
 
 // userInitAll() -- include any initialization after Factory reset "Mfg clear" or "User clear"
-//  -- clear or pre-define text variables.  
+//  -- clear or pre-define text variables.
 // USER defined
 void userInitAll() {
     NODECONFIG.put(EEADDR(nodeName), ESTRING("328_8OutputNode"));
     NODECONFIG.put(EEADDR(nodeDesc), ESTRING("Testing"));
     for(int i=0; i<NUM_CHANNEL; i++) {
-      NODECONFIG.put(EEADDR(outputs[i].desc), ESTRING("Output"));      
+      NODECONFIG.put(EEADDR(outputs[i].desc), ESTRING("Output"));
     }
 }
 
 // userSoftReset() - include any initialization after a soft reset, ie after configuration changes.
 // USER defined
 void userSoftReset() {
-  #ifdef DEBUG  
-    Serial.print("\n In userSoftReset()"); Serial.flush(); 
-  #endif
+  dP("\n In userSoftReset()"); Serial.flush();
   REBOOT;  // defined in processor.h for each mpu
 }
 
 // userHardReset() - include any initialization after a hard reset, ie on boot-up.
 // USER defined
 void userHardReset() {
-  #ifdef DEBUG  
-    Serial.print("\n In userHardReset()"); Serial.flush(); 
-  #endif
+  dP("\n In userHardReset()"); Serial.flush();
   REBOOT;  // defined in processor.h for each mpu
 }
 
@@ -221,10 +233,10 @@ void userHardReset() {
 // param address - address in space of change
 // param length  - length of change
 // NB: if address=0 and length==0xffff, then user indicated UPDATE_COMPLETE
-// 
+//
 // USER defined
 void userConfigWritten(unsigned int address, unsigned int length, unsigned int func) {
-  #ifdef DEBUG 
+  #ifdef DEBUG
       Serial.print("\nuserConfigWritten "); Serial.print(address,HEX);
       Serial.print(" length="); Serial.print(length,HEX);
       Serial.print(" func="); Serial.print(func,HEX);
@@ -235,7 +247,7 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
         if(v<16) Serial.print(0);
         Serial.print(v, HEX);
       }
-      Serial.print(']:');
+      Serial.print("]:");
       for(uint8_t i=0; i<length; i++) {
         char c = NODECONFIG.read(address+i);
         if(c<' ' || c==0x8F) Serial.print('.');
@@ -253,25 +265,15 @@ void setup() {
   #ifdef DEBUG
     // set up serial comm; may not be space for this!
     delay(1000);
-    Serial.begin(115200); 
-    delay(1000); 
+    Serial.begin(115200);
+    delay(1000);
     Serial.print("\n8OutputNode\n");
   #endif
 
-  #ifdef NEW_NODEID
-    NodeID newNodeID(NEW_NODEID);
-    nm.changeNodeID(&newNodeID);
-  #endif
+  dP(F("This is a test of flash strings"));
 
-  #ifdef RESET_TO_FACTORY_DEFAULTS
-    Olcb_init(1);
-  #else
-    Olcb_init(0);
-  #endif
-
-  #ifdef DEBUG
-    nm.print();
-  #endif
+  NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
+  Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   // set pins to outputs
   for(int i=0; i<NUM_CHANNEL; i++) {
@@ -339,12 +341,12 @@ void loop() {
       //Serial.print("\nsnd");
       olcbcanTx.active = false;
     }
-    // handle the status lights  
+    // handle the status lights
     blue.process();
     gold.process();
   #endif //OLCB_NO_BLUE_GOLD
 
   // process inputs
-  //if(produceFromInputs) produceFromInputs();  // no inputs
+  //if(produceFromInputs) produceFromInputs();  // not needed as no inputs
 
 }

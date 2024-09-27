@@ -5,7 +5,8 @@
 #include "LinkControl.h"
 #include "OlcbCanInterface.h"
 #include "OpenLcbCan.h"
-#include "lib_debug_print_common.h"
+
+#include "debugging.h"
 
 static LinkControl* clink;
 static OlcbCanInterface* buffer;
@@ -42,7 +43,7 @@ void PIP_setup(OlcbCanInterface* b, LinkControl* li) {
     
   bool PIP_receivedFrame(OlcbCanInterface* rcv) {
     if ( rcv->isOpenLcbMTI(MTI_PIP_REQUEST) )  {
-                    //LDEBUG("\n PIP_receivedFrame");
+        //dP(F("\n PIP_receivedFrame"));
         // previously checked for this node
         // check to start bit set active, ignore if not
         if ( ((rcv->net->data[0]) & 0x20) != 0) return true;

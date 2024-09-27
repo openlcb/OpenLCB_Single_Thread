@@ -15,3 +15,6 @@ It demonstrates:
 * setting flags to refect whether eveentids are used as consumers, producers, or both, see: **const EIDTab eidtab[NUM_EVENT] PROGMEM**
 * Initialization routine to initialize the EEPROM, see: **userInitAll()**
 * Eventid processing to set a servo's position, see: **pceCallback(unsigned int index)**
+
+This sketch will run on the AVR Mega, ESP32, Pico, and Tiva processor boards.  These all have more memory and the sketches capabilities could be extended.  In addition, direct via USB using GCSerial or connection via Wifi are possible on a ESP32 or Pico-W.  
+

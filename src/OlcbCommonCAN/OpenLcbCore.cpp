@@ -6,14 +6,16 @@
 #include "NodeID.h"
 #include "Event.h"
 #include "LinkControl.h"
-#include "lib_debug_print_common.h"
+
+#include "debugging.h"
+
 
 extern "C" {
 	uint16_t getOffset(uint16_t index);
 	uint16_t getFlags(unsigned index);
 	extern void writeEID(int index, EventID eid);
 }
-
+extern void setEepromDirty();
 extern void userInitAll();
 extern void pceCallback(unsigned int index)  __attribute__((weak));
 
@@ -51,18 +53,17 @@ uint16_t OpenLcbCore::getFlags(uint16_t index)
 
 void OpenLcbCore::forceFactoryReset()
 {
-  LDEBUG("\nNodeMemory::forceFactoryReset()");
-
+  //dP(F("\n >>>>OpenLcbCore::forceFactoryReset()"));
   eventConfigState |= RESET_FACTORY_DEFAULTS;
   
   header.resetControl = RESET_FACTORY_DEFAULTS_VAL;
   header.pack = 0;
   NODECONFIG.put(0, header);
+  //dP(F("\ndirty Core factoryReset()"));
 }
 
 void OpenLcbCore::forceNewEventIDs() {
-  LDEBUG("\nNodeMemory::forceNewEventIDs()");
-
+  dP(F("\n >>>>NodeMemory::forceNewEventIDs()"));
   eventConfigState |= RESET_NEW_EVENTS;
 
   header.resetControl = RESET_NEW_EVENTS_VAL;
@@ -73,55 +74,73 @@ void OpenLcbCore::forceNewEventIDs() {
 
 void OpenLcbCore::init()
 {
-    LDEBUG("\nNodeMemory::forceNewEventIDs()  State: "); LDEBUG2(eventConfigState, HEX); LDEBUGL();
+    //dP(F("\n >>>>OpenLcbCore::init()  State: "));
+    //dPH(eventConfigState);
+    NODECONFIG.get(0, header);
 
-	if(header.resetControl == RESET_NORMAL_VAL)
-		eventConfigState |= RESET_NORMAL;
+    //dP(F"\n header.resetControl = "); dPH(header.resetControl);
+
+    if(header.resetControl == RESET_NORMAL_VAL) {
+        eventConfigState |= RESET_NORMAL;
+        //dP(F("\nRESET_NORMAL"));
+    }
 		
-	else if(header.resetControl == RESET_NEW_EVENTS_VAL) 
-		eventConfigState |= RESET_NEW_EVENTS;
+    else if(header.resetControl == RESET_NEW_EVENTS_VAL) {
+        eventConfigState |= RESET_NEW_EVENTS;
+        //dP(F("\nRESET_NEW_EVENTS"));
+    }
 		
-	else 
-		eventConfigState |= RESET_FACTORY_DEFAULTS;
-		
+    else {
+        eventConfigState |= RESET_FACTORY_DEFAULTS;
+        //dP(F("\nRESET_FACTORY_DEFAULTS"));
+    }
+    
 	if(eventConfigState & RESET_NORMAL)
 	{
-	  LDEBUGL("NodeMemory: Reset Normal, Exiting ");
-
+        //dP(F("\n OpenLcbCore::init: Reset Normal, Exiting "));
 		return; // Nothing to do
 	}
-	
+    
 	else if(eventConfigState & RESET_NEW_EVENTS)
 	{
-	  LDEBUGL("NodeMemory: Reset New Events");
+        //dP(F("\nOpenLcbCore::init: Reset New Events"));
+        //dP(F("\nwriteNewEventIDs(events, numEvents)"));
+        writeNewEventIDs(events, numEvents);
+        dP(F("\nuserInitAll()"));
 
-		writeNewEventIDs(events, numEvents);
-		userInitAll();
+        userInitAll();
 
 		header.resetControl = RESET_NORMAL_VAL;
-		NODECONFIG.put(0, header);
-	}
+        //dP(F("\nNODECONFIG.put(0, header)"));
 
+        NODECONFIG.put(0, header);
+        setEepromDirty();
+	}
 	else if (eventConfigState & RESET_FACTORY_DEFAULTS)
-	{	//clear EEPROM
-	  LDEBUGL("NodeMemory: Reset Factory Defaults");
-
-		header.nextEID = 0;
-		nm.eraseAll();			
-		// handle the rest
-		writeNewEventIDs(events, numEvents);
-		userInitAll();
-		
-		header.resetControl = RESET_NORMAL_VAL;
-		NODECONFIG.put(0, header);
-	}
+    {	//clear EEPROM
+        //dP(F("\nOpenLcbCore::init: Reset Factory Defaults"));
+        //dP(F("\nnextEID=0"));
+        header.nextEID = 0;
+        //dP(F("\nnm.eraseAll"));
+        nm.eraseAll();
+        // handle the rest
+        //dP(F("\nwriteNewEventIDs(events, numEvents)"));
+        writeNewEventIDs(events, numEvents);
+        //dP(F("\nuserInitAll()"));
+        userInitAll();
+        
+        header.resetControl = RESET_NORMAL_VAL;
+        //dP(F("\nNODECONFIG.put(0, header)"));
+        NODECONFIG.put(0, header);
+        setEepromDirty();
+    }
 }
 
 
 // write to EEPROM new set of eventIDs and then magic, nextEID and nodeID
 void OpenLcbCore::writeNewEventIDs(Event* events, uint8_t numEvents)
 {
-  //LDEBUGL("\nNodeMemory::writeNewEventIDs()");
+    //dP(F("\nOpenLcbCore::init::writeNewEventIDs())"));
 	EventID newEventId;
 	
 	NodeID myNodeId;
@@ -131,73 +150,68 @@ void OpenLcbCore::writeNewEventIDs(Event* events, uint8_t numEvents)
 
 	for(uint16_t e = 0; e < numEvents; e++)
 	{
+        //dP(F("\n eid")); dPH(header.nextEID);
 		newEventId.setEventIdSuffix(header.nextEID++);
 		
 		NODECONFIG.put(getOffset(e), newEventId);
 	}
 	// Save the latest value of nextEID
 	NODECONFIG.put(0, header);
+    setEepromDirty();
 }
-
-
 
 void OpenLcbCore::processEvent(unsigned int eventIndex)
 {
-	LDEBUG(F("\nOpenLcbCore::processEvent: Index")); LDEBUGL(eventIndex);
-	if(pceCallback)
-		pceCallback(eventIndex);
+    //dP(F("\nOpenLcbCore::processEvent: Index")); dP((uint16_t)eventIndex);
+    if(pceCallback) {
+        pceCallback(eventIndex);
+    }
 }
 
 void OpenLcbCore::printEventIndexes()
 {
-	LDEBUG(F("\nprintEventIndex\n"));
+    dP(F("\nprintEventIndex\n"));
 	for(int i = 0; i < numEvents; i++)
 	{
-		LDEBUG2(eventsIndex[i],HEX); LDEBUG(F(", "));
+        dPH(eventsIndex[i]); dP(", \n");
 	}
 }
 
 void OpenLcbCore::printEvents()
 {
-	LDEBUG(F("\nprintEvents "));
-	LDEBUG(F("\n#  flags  EventID"));
-	for(int i = 0; i < numEvents; i++)
+    dP(F("\nprintEvents "));
+    dP(F("\n#  flags  EventID"));
+	for(uint16_t i = 0; i < numEvents; i++)
 	{
-		LDEBUG("\n"); LDEBUG(i);
-		LDEBUG(":"); LDEBUG2(getOffset(i),HEX);
-		LDEBUG(F(" : ")); LDEBUG2(events[i].flags,HEX);
-		LDEBUG(F(" : ")); events[i].eid.print();
+        dP("\n"); dP(i);
+        dP(":"); dPH(getOffset(i));
+        dP(" : "); dPH(events[i].flags);
+        dP(" : "); events[i].eid.print();
 	}
-
-	LDEBUGL();
 }
     
 void OpenLcbCore::printEventids()
 {
-	LDEBUG("\neventids:");
-	for(int e = 0; e < numEvents; e++)
+    dP(F("\neventids:"));
+	for(uint16_t e = 0; e < numEvents; e++)
 	{
-		LDEBUG("\n[");
+        dP("\n[");
 		for(int i = 0; i < 8; i++)
-			LDEBUG2(events[e].eid.val[i],HEX); LDEBUG(", ");
+            dPH(events[e].eid.val[i]); dP(", ");
 	}
-
-	LDEBUGL();
 }
 
 void OpenLcbCore::printSortedEvents()
 {
-	LDEBUG("\nSorted events");
-	for(int i = 0; i < numEvents; i++)
+    dP(F("\nSorted events"));
+	for(uint16_t i = 0; i < numEvents; i++)
 	{
-		int e = eventsIndex[i];
-		LDEBUG("\nEvent Index: "); LDEBUG(i);
-		LDEBUG("  EventNum: ");    LDEBUG(e);
-		LDEBUG("  EventID:"); 		 events[e].eid.print();
-		LDEBUG("  Flags: ");       LDEBUG2(events[e].flags,HEX);
+		uint16_t e = eventsIndex[i];
+        dP(F("\nEvent Index: ")); dP(i);
+        dP(F("  EventNum: "));    dP(e);
+        dP(F("  EventID:"));          events[e].eid.print();
+        dP(F("  Flags: "));       dPH(events[e].flags);
 	}
-
-	LDEBUGL();
 }
 
 // Compare function to compare two Event Index entries by comparing the EventIDs they point to
@@ -209,26 +223,24 @@ int OpenLcbCore::cmpfunc (const void * a, const void * b)
 	Event * pEventB = &OpenLcb.events[indexB];
 	int cmp = pEventB->eid.compare(&pEventA->eid);
 	
-// 	LDEBUG("\nCompare A: "); pEventA->eid.print();
-// 	LDEBUG(" Compare B: ");  pEventB->eid.print();
-// 	LDEBUG(" Result: ");
-// 	LDEBUG(cmp);
-	
+    //dP("\nCompare A: "); pEventA->eid.print();
+    //dP(" Compare B: ");  pEventB->eid.print();
+    //dP(" Result: ");
+    //dP(cmp);
+
 	return cmp;
 }
 
 void OpenLcbCore::initTables()
 {
+    //dP(F("\nOpenLcbCore::initTables()"));
 	for(unsigned int e = 0; e < numEvents; e++)
 	{
 		eventsIndex[e] = e;
 		NODECONFIG.get(getOffset(e), events[e].eid);
 		events[e].flags |= getFlags(e);
 	}
-    //LDEBUG("\nSort eventIndex");
 	qsort(eventsIndex, numEvents, sizeof(uint16_t), cmpfunc);
-    //LDEBUG("\nSorted\n");
-	//Serial.flush();
 }
 
 // avr-libc bsearch source code 
@@ -254,49 +266,64 @@ void OpenLcbCore::initTables()
 // 	return (NULL);
 // }
 
+// Alternate, slightly more efficient algorithm.
+// For explanation see https://en.wikipedia.org/wiki/Binary_search
+// function binary_search_alternative(A, n, T) is
+//    L := 0
+//    R := n − 1
+//    while L != R do
+//        m := ceil((L + R) / 2)
+//        if A[m] > T then  <<== Note, no == comparison, until the end!
+//            R := m − 1
+//        else:
+//            L := m
+//    if A[L] = T then
+//        return L
+//    return unsuccessful
+
 // implement findIndexOfEventID based on avr-libc bsearch() code above
  
 int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 {
-	register int16_t base = 0;
-	register int16_t lim;
-	register int16_t p;
-	register int16_t eventIndex;
-	register int cmp;
+	 int16_t base = 0;
+	 int16_t lim;
+	 int16_t p;
+	 int16_t eventIndex;
+	 int cmp;
 	
 		// First time called startIndex == -1
 	if(startIndex == -1)
 	{
-// 		LDEBUG("\nfindIndexOfEventID: Begin")
+//      dP(F"\nfindIndexOfEventID: Begin"))
 		for (lim = numEvents; lim != 0; lim >>= 1)
 		{
 			p = base + (lim >> 1);
 			eventIndex = eventsIndex[p];
 			cmp = events[eventIndex].eid.compare(key);
-// 			LDEBUG("\nCompare: p: "); LDEBUG(p); LDEBUG(" Key: "); key->print(); LDEBUG(" Event: "); events[eventIndex].eid.print(); LDEBUG(" cmp: "); LDEBUG(cmp);
+//          dP(F("\nCompare: p: ")); dP(p); dP(F(" Key: ")); key->print(); dP(F(" Event: ")); events[eventIndex].eid.print(); dP(F(" cmp: ")); dP(cmp);
 			if (cmp == 0)
 			{
 				if(p == 0)
 				{
-// 					LDEBUG("\nMatch at beginning of list");
+//                  dP(F("\nMatch at beginning of list"));
 					return p;
 				}	
 				else
 				{
 						// Ok we have a match but step down the list checking for duplicates to find the lowest match
-// 					LDEBUG("\nMatch. Step Down List Checking for Duplicates");
+//                  dP(F("\nMatch. Step Down List Checking for Duplicates"));
 					while(p > 0)
 					{
 						eventIndex = eventsIndex[p - 1];
 						uint8_t equal = events[eventIndex].eid.equals(key);
-// 						LDEBUG("\nEqual: p - 1: "); LDEBUG(p - 1); LDEBUG(" Key: "); key->print(); LDEBUG(" Event: "); events[eventIndex].eid.print(); LDEBUG(" cmp: "); LDEBUG(equal);
+//                         dP(F("\nEqual: p - 1: ")); dP(p - 1); dP(F(" Key: ")); key->print(); dP(F(" Event: ")); events[eventIndex].eid.print(); dP(F(" cmp: ")); dP(equal);
 
-							// if not equal then we already had the first match to return p
+                        // if not equal then we already had the first match to return p
 						if(!equal)
 							return p ;
 
 						p--;
-// 						LDEBUG("\nCompare: Equal Step Down p: "); LDEBUGL(p);
+//                      dP(F("\nCompare: Equal Step Down p: ")); dP(p);
 					}
 					
 						// If we get here we're at the beginning of the list so return p 
@@ -310,6 +337,7 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 				lim--;
 			}
 		}
+        // return -p;
 		return -1;
 	}
 	
@@ -336,33 +364,32 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 
   void OpenLcbCore::check() {
      // see in any replies are waiting to send
-                //LDEBUG(F("\nIn OpenLcbCore::check()"));
-                //LDEBUG("\nEvent::CAN_PRODUCE_FLAG");
-                //LDEBUG2(Event::CAN_PRODUCE_FLAG,HEX);
-                //LDEBUG("\nEvent::CAN_CONSUME_FLAG");
-                //LDEBUG2(Event::CAN_CONSUME_FLAG,HEX);
-      
      while (sendEvent < numEvents) {
+         
+         // Throttling
+         static long nextcheck = 0;
+         if( (millis()-nextcheck) <0 ) return;
+         nextcheck = millis() + 50;
+         
          // OK to send, see if marked for some cause
          // ToDo: This only sends _either_ producer ID'd or consumer ID'd, not both
          EventID ev = events[sendEvent].eid;
-         
-                //LDEBUG("\nOpenLcbCore::check "); LDEBUG(ev.val[7]);
-                //LDEBUG(" I:"); LDEBUG(0!=(events[sendEvent].flags & Event::IDENT_FLAG));
-                //LDEBUG(" cP:"); LDEBUG(0!=(events[sendEvent].flags & Event::CAN_PRODUCE_FLAG));
-                //LDEBUG(" cC:"); LDEBUG(0!=(events[sendEvent].flags & Event::CAN_CONSUME_FLAG));
-                //LDEBUG(" P:"); LDEBUG(0!=(events[sendEvent].flags & PRODUCE_FLAG));
-                //LDEBUG(" E:"); LDEBUG(0!=(events[sendEvent].flags & EMPTY_FLAG));
+                //dP("\nOpenLcbCore::check "); dP(ev.val[7]);
+                //dP(" I:"); dP(0!=(events[sendEvent].flags & Event::IDENT_FLAG));
+                //dP(" cP:"); dP(0!=(events[sendEvent].flags & Event::CAN_PRODUCE_FLAG));
+                //dP(" cC:"); dP(0!=(events[sendEvent].flags & Event::CAN_CONSUME_FLAG));
+                //dP(" P:"); dP(0!=(events[sendEvent].flags & PRODUCE_FLAG));
+                //dP(" E:"); dP(0!=(events[sendEvent].flags & EMPTY_FLAG));
          if ( (events[sendEvent].flags & (Event::IDENT_FLAG | Event::CAN_PRODUCE_FLAG)) == (Event::IDENT_FLAG | Event::CAN_PRODUCE_FLAG)) {
-                    //LDEBUG(F("\nOpenLcbCore::check() produceIdent"));
+                //dP(F("\nOpenLcbCore::check() produceIdent"));
            events[sendEvent].flags &= ~Event::IDENT_FLAG;    // reset flag
            buffer->setProducerIdentified(&ev);
            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
            buffer->net->write(200);  // wait until buffer queued, but OK due to earlier check
-                    //LDEBUG(F("\nOpenLcbCore::check() produceident2"));
+             //dP(F("\nOpenLcbCore::check() produceident2"));
            break; // only send one from this loop
          } else if ( (events[sendEvent].flags & (Event::IDENT_FLAG | Event::CAN_CONSUME_FLAG)) == (Event::IDENT_FLAG | Event::CAN_CONSUME_FLAG)) {
-                    //LDEBUG(F("\nOpenLcbCore::check() consumeident"));
+             //dP(F("\nOpenLcbCore::check() consumeident"));
            events[sendEvent].flags &= ~Event::IDENT_FLAG;    // reset flag
            buffer->setConsumerIdentified(&ev);
            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
@@ -386,18 +413,18 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
            // just skip
            sendEvent++;
          }
-                    //LDEBUG(F("\nIn OpenLcbCore::checkLoop")); //while(0==0){}
+         //dP(F("\nIn OpenLcbCore::checkLoop")); //while(1);
      }
-                    //LDEBUG(F("\nLeaving OpenLcbCore::check()")); //while(0==0){}
+     //dP(F("\nLeaving OpenLcbCore::check()")); //while(1);
   }
 
   void OpenLcbCore::newEvent(int index, bool p, bool c) {
-      //LDEBUG("\nnewEvent i=");
+      //dP("\nnewEvent i=");
     events[index].flags |= Event::IDENT_FLAG;
     sendEvent = sendEvent < index ? sendEvent : index;
     if (p) events[index].flags |= Event::CAN_PRODUCE_FLAG;
     if (c) events[index].flags |= Event::CAN_CONSUME_FLAG;
-      //LDEBUG(index); LDEBUG(" ");LDEBUG2(events[index].flags,HEX);
+    setEepromDirty();
   }
   
   void OpenLcbCore::markToLearn(int index, bool mark) {
@@ -425,8 +452,8 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
   }
   
   bool OpenLcbCore::receivedFrame(OlcbCanInterface* rcv) {
-                //LDEBUG("\nIn receivedFrame");
-                //LDEBUG("\nIn OpenLcbCore::receivedFrame()");
+      //dP("\nIn receivedFrame");
+      //dP("\nIn OpenLcbCore::receivedFrame()");
     EventID eventid;
     if (rcv->isIdentifyConsumers()) {
         // see if we consume the listed event
@@ -471,7 +498,6 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
         sendEvent = 0;  
     } else if (rcv->isPCEventReport()) {
         // found a PC Event Report, see if we consume it
-                        //LDEBUG("\nrcv->isPCEventReport!");
         handlePCEventReport(rcv);
     } else if (rcv->isLearnEvent()) {
         // found a teaching frame, apply to selected
@@ -481,22 +507,23 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
   }
 
   void OpenLcbCore::handlePCEventReport(OlcbCanInterface* rcv) {
-//                 LDEBUG("\nIn handlePCEventReport");
+//                 dP("\nIn handlePCEventReport");
       EventID eventid;
       rcv->getEventID(&eventid);
-//                 LDEBUG("\nIn handlePCEventReport: ");eventid.print();
+//                 dP("\nIn handlePCEventReport: ");eventid.print();
+
       // find matching eventID
       int index = -1;
       while((index = findIndexOfEventID(&eventid, index)) != -1)
       {
         uint16_t eindex = eventsIndex[index];
-//                 LDEBUG("\nhandlePCRep index: "); LDEBUG(index);
-//                 LDEBUG("\nhandlePCRep eindex: "); LDEBUG(eindex);
-//                 LDEBUG("\numEvents[index].flags: "); LDEBUG2(events[index].flags,HEX);
-        if (events[eindex].flags & Event::CAN_CONSUME_FLAG)
+//                 dP("\nhandlePCRep index: "); dP(index);
+//                 dP("\nhandlePCRep eindex: "); dP(eindex);
+//                 dP("\numEvents[index].flags: "); dPH(events[index].flags);
+          if (events[eindex].flags & Event::CAN_CONSUME_FLAG)
         {
-//           LDEBUG("\nFound Consumer: Index: ");LDEBUG(index);
-//           LDEBUG(", EIndex: ");LDEBUG(eindex);
+//           dP("\nFound Consumer: Index: ");dP(index);
+//           dP(", EIndex: ");dP(eindex);
           processEvent(eindex);
         }
         index++;
@@ -505,22 +532,21 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
   }
 
   void OpenLcbCore::handleLearnEvent(OlcbCanInterface* rcv) {
-                //LDEBUG("\nIn OpenLcbCore::handleLearnEvent");
-                //LDEBUG("\n rcv=");
-                //for(int i=0;i<14;i++) { LDEBUG2( ((uint8_t*)rcv)[i],HEX ); LDEBUG(" "); }
+            //dP("\nIn OpenLcbCore::handleLearnEvent");
+            //dP("\n rcv=");
+            //for(int i=0;i<14;i++) { dPH( ((uint8_t*)rcv)[i] ); dP(" "); }
         //bool save = false;
         EventID eid;
         rcv->getEventID(&eid);
-                //LDEBUG("\neid:"); eid.print();
-                //LDEBUG("\nEvent::LEARN_FLAG:"); LDEBUG2(Event::LEARN_FLAG,HEX);
+            //dP("\neid:"); eid.print();
+            //dP("\nEvent::LEARN_FLAG:"); dPH(Event::LEARN_FLAG);
         for (int i=0; i<numEvents; i++) {
-                //LDEBUG("\ni:"); LDEBUG(i);
-                //LDEBUG("\numEvents[i].flags:"); LDEBUG2(events[i].flags,HEX);
+                //dP("\ni:"); dP(i);
+                //dP("\numEvents[i].flags:"); dPH(events[i].flags);
             if ( (events[i].flags & Event::LEARN_FLAG ) != 0 ) {
                 //rcv->getEventID(events+i);
-                //LDEBUG("\ni:"); LDEBUG(i);
-                //LDEBUG("\neid.writeEID(i):");
-                //LDEBUG2(i,HEX);
+                //dP("\ni:"); dP(i);
+                //dP("\neid.writeEID(i):"); dPH(i);
                 writeEID(i, eid);
                 events[i].flags |= Event::IDENT_FLAG; // notify new eventID
                 events[i].flags &= ~Event::LEARN_FLAG; // enough learning
@@ -528,7 +554,6 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
                 //save = true;
             }
         }
-        // eeprom flagged dirty in writeEID()  ????
   }
 
 

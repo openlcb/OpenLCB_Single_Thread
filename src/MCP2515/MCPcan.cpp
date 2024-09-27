@@ -1,5 +1,6 @@
-// OpenLCB Adaptation of FlexCAN library
+// OpenLCB Adaptation of MCP2515 library
 // copyright DPH 2017
+
 
 #if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
     defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || \
@@ -8,7 +9,9 @@
     defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || \
     defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
 
-
+//#ifndef NO_CAN_PROCESSOR
+//#if SUPPORT_MCP2515==1
+#pragma message("!!! compiling MCPcan.cpp ")
 #include "Arduino.h"
 
 #include "OlcbCan.h"
@@ -30,22 +33,23 @@ tCAN* canbus;
 #define	BITRATE_1_MBPS	7
 */
 
-void Can::init()  {
-                    //Serial.print("\nIn AT90Can::init()");
+void McpCan::init()  {
+                    //#pragma message "McpCan::init() compiled"
+                    //Serial.print("\nIn MCPMcpCan::init()");
     //canbus->init();
     if(!can_init()) Serial.print("\n SPI ERROR!!!");
-    return true;
+    return;
 }
-uint8_t Can::avail()  {
+uint8_t McpCan::avail()  {
     bool r = can_check_message();
                     //if(r) Serial.print("\nMCPavail!");
     return r;
     //return can_check_message();
 }
-uint8_t Can::read()  {
+uint8_t McpCan::read()  {
     tCAN m;
     if(avail()) {
-                    //Serial.print("\nIn MCPCan::read(): ");
+                    //Serial.print("\nIn MCPMcpCan::read(): ");
         //canbus->get_buffered_message(&m);
         can_get_message(&m);
                     //Serial.print("[");
@@ -61,14 +65,14 @@ uint8_t Can::read()  {
     }
     return false;
 }
-uint8_t Can::txReady()  {
-                    //Serial.print("\nIn AT90Can::txReady(): ");
+uint8_t McpCan::txReady()  {
+                    //Serial.print("\nIn MCPMcpCan::txReady(): ");
                     //Serial.print("check_free_buffer="); Serial.print(((CanBus*)this)->check_free_buffer());
     //return ((CanBus*)this)->check_free_buffer();
     return can_check_free_buffer();
 }
-uint8_t Can::write(long timeout)  {
-                    //Serial.print("\nIn MCPCan::write(): [");
+uint8_t McpCan::write(long timeout)  {
+                    //Serial.print("\nIn MCPMcpCan::write(): [");
     tCAN m;
     m.id = this->id;
     m.length = this->length;
@@ -95,8 +99,9 @@ uint8_t Can::write(long timeout)  {
     }
     return false;
 }
-uint8_t Can::write() { return this->write(0); }
-void Can::setL(uint16_t l) { length = l; }
+uint8_t McpCan::write() { return this->write(0); }
+void McpCan::setL(uint16_t l) { length = l; }
 
-#endif // AVR
+//#endif // NO_CAN_PROCESSOR
+#endif // avr
 

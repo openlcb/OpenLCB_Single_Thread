@@ -4,7 +4,7 @@
 #include "NodeID.h"
 
 class EventID {
-  public: 
+  public:
     uint8_t val[8];
     
     EventID();

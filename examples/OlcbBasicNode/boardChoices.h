@@ -9,7 +9,7 @@
 //#define Teensy
 //#define ESP32
 
-#if defined(ARDUINO_AVR_DUEMILANOVE) || defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO)
+#if defined(ARDUINO_AVR_DUEMILANOVE) || defined(ARDUINO_AVR_NANO)
 #define BLUE 18   // BLUE is 18 LEDuino; others defined by board (48 IO, 14 IOuino)
 #define GOLD 19   // GOLD is 19 LEDuino; others defined by board (49 IO, 15 IOuino)
 //#pragma message("LEDuino i/o")
@@ -17,7 +17,7 @@ ButtonLed blue(BLUE, LOW);  // else will trigger reset.
 ButtonLed gold(GOLD, LOW);
 ButtonLed pA(14, LOW);
 ButtonLed pB(15, LOW);
-ButtonLed pC(16, LOW);
+ButtonLed pC(LED_BUILTIN, HIGH);  // builtin led for testing without using extra hardware
 ButtonLed pD(17, LOW);
 #elif defined(ARDUINO_AVR_RS_IO)
 #pragma message("Io i/o")
@@ -33,7 +33,7 @@ ButtonLed pD(1, LOW);  // cons1
 #pragma message("TCH i/o")
 #define BLUE 42
 #define GOLD 43
-ButtonLed blue(BLUE, LOW);  
+ButtonLed blue(BLUE, LOW);
 ButtonLed gold(GOLD, LOW);
 ButtonLed pA(2, LOW);  // prod0
 ButtonLed pB(3, LOW);  // prod1

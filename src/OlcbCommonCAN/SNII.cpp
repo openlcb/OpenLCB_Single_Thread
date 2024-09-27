@@ -5,7 +5,7 @@
 #include "LinkControl.h"
 #include "OpenLcbCan.h"
 
-#include "lib_debug_print_common.h"
+#include "debugging.h"
 
 static OlcbCanInterface* buffer;
 static uint8_t const_count;
@@ -42,8 +42,8 @@ void SNII_setup(uint8_t count, uint8_t offset, OlcbCanInterface* b, LinkControl*
       buffer = b;
       clink = li;
       state = STATE_DONE;
-      //LDEBUG("\nSNII_setup  buffer->net->id=");
-      //LDEBUG2(buffer->net->id,HEX);
+            //dP(F("\nSNII_setup  buffer->net->id="));
+            //dPH(buffer->net->id);
   }
   
 const uint8_t SNII_nextByte() { 
@@ -76,8 +76,8 @@ const uint8_t SNII_nextByte() {
 void SNII_check() {
     if ( state != STATE_DONE ) {
         if (buffer->net->txReady()) {
-                    //LDEBUG("\nSNII_check  buffer->net->id=");
-                    //LDEBUG2(buffer->net->id,HEX);
+                //dP("\nSNII_check  buffer->net->id=");
+                // dPH(buffer->net->id);
             buffer->setOpenLcbMTI(MTI_SNII_REPLY);
             buffer->setDestAlias(dest);
             uint8_t i;
@@ -88,8 +88,8 @@ void SNII_check() {
                     break;
                 }
             }
-                    //LDEBUG("   buffer->net->id=");
-                    //LDEBUG2(buffer->net->id,HEX);
+                //dP("   buffer->net->id=");
+                // dPH(buffer->net->id);
             buffer->net->length = i;
             buffer->net->write(200); // checked previously
         }
@@ -100,7 +100,7 @@ void SNII_check() {
 
 bool SNII_receivedFrame(OlcbCanInterface* rcv) {
     if ( rcv->isOpenLcbMTI(MTI_SNII_REQUEST) )  {
-        //LDEBUG("\nIn SNII_receivedFrame");
+        //dP("\nIn SNII_receivedFrame");
         // check if available to send
         if (state == STATE_DONE) {
             // OK, start process

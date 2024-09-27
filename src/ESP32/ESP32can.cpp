@@ -5,8 +5,9 @@
 
 //#pragma message("!!! compiling ESP32can.cpp ")
 
-
-#include "esp_intr.h"
+#include <rom/gpio.h>
+//#include "esp_intr.h"
+#include "esp_intr_alloc.h"
 #include "soc/dport_reg.h"
 #include "driver/gpio.h"
 
