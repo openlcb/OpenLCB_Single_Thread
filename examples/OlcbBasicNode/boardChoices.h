@@ -9,7 +9,8 @@
 //#define Teensy
 //#define ESP32
 
-#if defined(ARDUINO_AVR_DUEMILANOVE) || defined(ARDUINO_AVR_NANO)
+#ifdef ARDUINO_ARCH_AVR
+//#if defined(ARDUINO_AVR_DUEMILANOVE) || defined(ARDUINO_AVR_NANO) || defined(ARDUINO_AVR_UNO)
 #define BLUE 18   // BLUE is 18 LEDuino; others defined by board (48 IO, 14 IOuino)
 #define GOLD 19   // GOLD is 19 LEDuino; others defined by board (49 IO, 15 IOuino)
 //#pragma message("LEDuino i/o")
@@ -61,6 +62,16 @@ ButtonLed pC(A4, HIGH);       // arbitrary
 ButtonLed pD(A5, HIGH);       // arbitrary
 #elif defined(ESP32)
 #pragma message("ESP32 i/o")
+#define BLUE A0               // arbitrarily chosen
+#define GOLD A1               // arbitrarily chosen
+ButtonLed blue(34, HIGH);
+ButtonLed gold(35, HIGH);
+ButtonLed pA(36, LOW);        // arbitrary
+ButtonLed pB(39, LOW);        // arbitrary
+ButtonLed pC(32, HIGH);       // arbitrary
+ButtonLed pD(33, HIGH);       // arbitrary
+#elif defined(ARDUINO_SAM_DUE)
+#pragma message("DUE i/o")
 #define BLUE A0               // arbitrarily chosen
 #define GOLD A1               // arbitrarily chosen
 ButtonLed blue(34, HIGH);

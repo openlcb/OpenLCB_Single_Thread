@@ -8,8 +8,6 @@
 
 #pragma message("!!! compiling DUEcan.h ")
 
-namespace ABC {
-
 #include <SPI.h>
 
 #include "OlcbCan.h"
@@ -29,7 +27,8 @@ void due_restart();
 //	RSTC->RSTC_CR = 0xA5000005; // Reset processor and internal peripherals.
 //}
 
-class OlcbCanClass : public OlcbCan {
+//class OlcbCanClass : public OlcbCan {
+class CanX : public OlcbCan {
 public:
     void init();                    // initialization
     uint8_t avail();                // read rxbuffer available
@@ -201,18 +200,7 @@ void CanX::setControllerInstance(byte instance) {
 
 void CanX::setL(uint16_t l) { length = l; }
 
-
 //#endif // __SAM3X8E__
-
-
-//////////////////////////////////////
-
-
-
-} // ABC
-
-//class Can : public ABC::Canx {};
-#define Can ABC::CanX
 
 #endif // NOCAN
 

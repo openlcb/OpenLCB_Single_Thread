@@ -192,7 +192,7 @@
         #define DUE
         #ifndef NOCAN
             #include "DUE/DUEcan.h"
-            //#define OlcbCanClass CanX
+            #define OlcbCanClass CanX
         #endif // NOCAN
 
     #else

@@ -1,5 +1,4 @@
 // DUEEEPROMconfig.h
-
 #ifdef __SAM3X8E__
 
 #ifdef USE_EXTERNAL_EEPROM
@@ -8,7 +7,7 @@
 #define DUEEEPROMCONFIG_H
 // This code is being selected from CBUSconfig.h for use when it is not used.
 // This is for the EEPROM_EXTERNAL case only.
-
+#pragma message "compiling DUEEEPROMconfig.h"
 #include <Arduino.h>                // for definition of byte datatype
 #include <Wire.h>
 

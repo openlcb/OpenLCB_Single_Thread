@@ -210,14 +210,17 @@
     #define DUE
     //#include "DUE/DUEcan.h"
     #define ESTRING(s) s          // default conversion - nil
-    #include <DueFlashStorage.h>  // use Due eeprom emulation library, will overwrite every time program is uploaded !
+    //#include <DueFlashStorage.h>  // use Due eeprom emulation library, will overwrite every time program is uploaded !
+    //#include "DUE/DUEEEPROMconfig.h"
     extern "C" char* sbrk(int incr);
     #define RAMEND 0x7FFFF
-    #define E2END RAMEND
+    #define E2END 0x1FFF
     #define REBOOT
-    #define EEPROMbegin 
+    //#define EEPROM DueFlashStorage
+    #define EEPROMbegin
     #define EEPROMupdate(a,x) EEPROM.write(a,x)
     #define EEPROMcommit
+    #include "DUE/DUEcanImpl.h"
 /*
 #elif defined __SAM3X8E__
     #ifdef ENABLE_MESSAGE_PRAGMAS 

@@ -4,14 +4,12 @@
 // At the moment it uses flash memory to simulate EEPROM.
 // This will have an option added to use external EEPROM.
 
-
 #ifdef __SAM3X8E__
-
 
 #ifndef DUECANIMPL_H
 #define DUECANIMPL_H
 
-#pragma message("!!! compiling DUEcanImpl.h ")
+//#pragma message("!!! compiling DUEcanImpl.h ")
 #include <SPI.h>
 #include <processor.h>        // to get E2END
 #include <due_can.h>          // Due CAN library header file

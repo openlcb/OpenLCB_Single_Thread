@@ -26,10 +26,12 @@ DueEEPROMflash EEPROM;
 // These functions are implemented here as they depend on the instance of DueFlashStorage.
 
 uint8_t DueEERef::operator*() const        //   
-{ return dueFlashstorage.read( (uint8_t*) index ); }
+//{ return dueFlashstorage.read( (uint8_t*) index ); }
+{ return dueFlashstorage.read( index ); }
 
 DueEERef &DueEERef::operator=( uint8_t in )   //    
-{ return *this = dueFlashstorage.write( (uint8_t*) index, in ); }
+//{ return *this = dueFlashstorage.write( (uint8_t*) index, in ); }
+{ return *this = dueFlashstorage.write( index, in ); }
 
 
 #endif
