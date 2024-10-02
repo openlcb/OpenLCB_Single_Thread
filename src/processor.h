@@ -213,8 +213,12 @@
     #include <DueFlashStorage.h>  // use Due eeprom emulation library, will overwrite every time program is uploaded !
     extern "C" char* sbrk(int incr);
     #define RAMEND 0x7FFFF
-	  #define REBOOT
-
+    #define E2END RAMEND
+    #define REBOOT
+    #define EEPROMbegin 
+    #define EEPROMupdate(a,x) EEPROM.write(a,x)
+    #define EEPROMcommit
+/*
 #elif defined __SAM3X8E__
     #ifdef ENABLE_MESSAGE_PRAGMAS 
       #pragma message("ARDUINO_DUE selected ")
@@ -233,7 +237,7 @@
     //	RSTC->RSTC_CR = 0xA5000005; // Reset processor and internal peripherals.
     //}
 	  #define REBOOT due_restart()
-
+*/
 #else
     #define reboot
     #define EEPROMbegin

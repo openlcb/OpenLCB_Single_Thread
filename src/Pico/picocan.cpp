@@ -51,7 +51,7 @@ void PIOx_IRQHandler(void)
     can2040_pio_irq_handler(&rcan);
 }
 
-void Can::init() {
+void OlcbCanClass::init() {
     //Serial.print("\n picocan::init");
     uint32_t pio_num = 0;
     uint32_t sys_clock = 125000000, bitrate = 125000;
@@ -75,12 +75,12 @@ void Can::init() {
     return;
 }
 
-uint8_t Can::avail() {
+uint8_t OlcbCanClass::avail() {
     if(rmsg.isEmpty()) return 0;
     return 1;
 }
 
-uint8_t Can::read() {
+uint8_t OlcbCanClass::read() {
     //Serial.print("\nIn picocan::read()");
     struct can2040_msg msg;
     if(rmsg.isEmpty()) return 0;
@@ -99,12 +99,12 @@ uint8_t Can::read() {
     return 1;
 }
 
-uint8_t Can::txReady() {
+uint8_t OlcbCanClass::txReady() {
     //Serial.print("\n picocan::txReady()");
     return (uint8_t) can2040_check_transmit(&rcan);
 }
 
-uint8_t Can::write(long timeout) {
+uint8_t OlcbCanClass::write(long timeout) {
     //Serial.print("\n picocan::write(long timeout)");
     struct can2040_msg rmsg;
     rmsg.id = id;
@@ -117,7 +117,7 @@ uint8_t Can::write(long timeout) {
     return 1;
 }
 
-uint8_t Can::write() {
+uint8_t OlcbCanClass::write() {
     Serial.print("\n picocan::write()");
     return this->write(0);
 }

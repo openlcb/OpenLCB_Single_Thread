@@ -46,8 +46,8 @@ NodeID nodeId;
 void setEepromDirty();
 
 //class Can;
-Can olcbcanRx;
-Can olcbcanTx;
+OlcbCanClass olcbcanRx;
+OlcbCanClass olcbcanTx;
 OlcbCanInterface     rxBuffer(&olcbcanRx);  // CAN receive buffer
 OlcbCanInterface     txBuffer(&olcbcanTx);  // CAN send buffer
 
@@ -214,7 +214,7 @@ void Olcb_init(NodeID nid, uint8_t forceFactoryReset) {
     nm.getNodeID(&nodeId);
     
     //dP((String)"\n    Stored nid="); nodeId.print();
-	//nm.print(1000);
+	//nm.print(sizeof(MemStruct));
     //dP((String)"\n    New nid=")); nid.print();
     
     if( !nodeId.equals(&nid) ) {
@@ -224,7 +224,9 @@ void Olcb_init(NodeID nid, uint8_t forceFactoryReset) {
 
     OpenLcb.init();
     OpenLcb.initTables();
-	//OpenLcb.printSortedEvents();
+    OpenLcb.printEvents();
+	OpenLcb.printSortedEvents();
+    nm.print(sizeof(MemStruct));
 
     PIP_setup(&txBuffer, &clink);
     SNII_setup((uint8_t)sizeof(SNII_const_data), SNII_var_offset, &txBuffer, &clink);

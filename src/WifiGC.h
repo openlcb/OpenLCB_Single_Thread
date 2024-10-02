@@ -35,10 +35,9 @@
 #include <ESPmDNS.h>
 WiFiClient client;
 
-class Can : public OlcbCan {
-//class WifiGC : public Can {
+class OlcbCanClass : public OlcbCan {
  public:
-  Can(){}
+    OlcbCanClass(){}
   void init();
   uint8_t  avail();
   uint8_t  read();
@@ -129,7 +128,7 @@ int readHex(char* b) {
   else return -1;
   return t;
 }
-int fromGC(Can *m, char* b) {
+int fromGC(OlcbCanClass *m, char* b) {
   int x;
   int p=0;
   while(b[p]!=':') { p++; }
@@ -156,7 +155,7 @@ int fromGC(Can *m, char* b) {
   return 1;
 }
 
-int wifigc_read(Can *m) {
+int wifigc_read(OlcbCanClass *m) {
   enum State { sIDLE, sPACKET };
   static State state = sIDLE;
   static char buff[40];
@@ -182,7 +181,7 @@ int wifigc_read(Can *m) {
 #define GP(x) client.print(x)
 #define GPH(x) client.print(x,HEX)
 #define GP8(x) { if(x<16) GP(0); GPH(x); }
-int wifigc_write(Can *m) {
+int wifigc_write(OlcbCanClass *m) {
   GP(":X");
   GP8((uint8_t)(m->id>>24));
   GP8((uint8_t)(m->id>>16));
@@ -194,15 +193,15 @@ int wifigc_write(Can *m) {
   return 1;
 }
 
-  void Can::init() { wifigc_init(); }
-  uint8_t  Can::avail() { return 1; }
-  uint8_t  Can::read() {
+  void OlcbCanClass::init() { wifigc_init(); }
+  uint8_t  OlcbCanClass::avail() { return 1; }
+  uint8_t  OlcbCanClass::read() {
     //wifigc_process();  //// dph check this out
-    return wifigc_read((Can*)this);
+    return wifigc_read((OlcbCanClass*)this);
   }
-  uint8_t  Can::txReady() { return 1; }
-  uint8_t  Can::write(long timeout) { return wifigc_write((Can*)this); }
-  uint8_t  Can::write() { return wifigc_write((Can*)this); }
-  uint8_t  Can::close() { return 1; }
+  uint8_t  OlcbCanClass::txReady() { return 1; }
+  uint8_t  OlcbCanClass::write(long timeout) { return wifigc_write((OlcbCanClass*)this); }
+  uint8_t  OlcbCanClass::write() { return wifigc_write((OlcbCanClass*)this); }
+  uint8_t  OlcbCanClass::close() { return 1; }
 
 #endif //WIFIGC_H

@@ -45,7 +45,7 @@
         #define ATMEGA
         #ifndef NO_CAN
             #include "MCP2515/MCPcan.h"
-            #define Can McpCan
+            #define OlcbCanClass McpCan
         #endif // NO_CAN
 
     // Mega 16, 32
@@ -192,6 +192,7 @@
         #define DUE
         #ifndef NOCAN
             #include "DUE/DUEcan.h"
+            //#define OlcbCanClass CanX
         #endif // NOCAN
 
     #else

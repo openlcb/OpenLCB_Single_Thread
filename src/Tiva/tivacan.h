@@ -11,7 +11,7 @@
 #include "OlcbCan.h"
 #include "TivaCANv0.h"
 
-class Can : public OlcbCan {
+class OlcbCanClass : public OlcbCan {
   public:
     //class CANClass;
     //CANClass canbus(0);

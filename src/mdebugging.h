@@ -29,6 +29,7 @@
     void dP(uint16_t x) { DEBUG.print((uint16_t)x); DEBUG.flush();}
     void dP(uint32_t x) { DEBUG.print((uint32_t)x); DEBUG.flush();}
     void dP(int x) { DEBUG.print((int)x); DEBUG.flush();}
+    void dP(long x) { DEBUG.print((long)x); DEBUG.flush();}
 
     void dPH(uint8_t x) { DEBUG.print((uint8_t)x,HEX); DEBUG.flush();}
     void dPH(uint16_t x) { DEBUG.print((uint16_t)x,HEX); DEBUG.flush();}
@@ -55,6 +56,7 @@
     void dP(uint16_t x) {  }
     void dP(uint32_t x) {  }
     void dP(int x) {  }
+    void dP(long x) { }
 
     void dPH(uint8_t x) {  }
     void dPH(uint16_t x) {  }

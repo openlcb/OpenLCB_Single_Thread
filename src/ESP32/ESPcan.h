@@ -9,7 +9,7 @@
 #include "OlcbCan.h"
 #include "ESP32can.h"
 
-class Can : public OlcbCan {
+class OlcbCanClass : public OlcbCan {
 public:
     void init();                    // initialization
     uint8_t avail();                // read rxbuffer available
@@ -25,23 +25,23 @@ public:
 class ESP32can;
 ESP32can esp32can;
 
-void Can::init() {
-    //Serial.print("\nIn ESP EspCan::init");
+void OlcbCanClass::init() {
+    //Serial.print("\nIn ESP EspOlcbCanClass::init");
     if (!esp32can.begin(125E3)) {
-        Serial.println("Starting EspCan:: failed!");
+        Serial.println("Starting EspOlcbCanClass:: failed!");
         while (1);
     }
     return;
 }
 
-uint8_t Can::avail() {
+uint8_t OlcbCanClass::avail() {
     uint8_t r = esp32can.avail();
-                //Serial.print("\n EspCan::avail()="); Serial.print(r);
+                //Serial.print("\n EspOlcbCanClass::avail()="); Serial.print(r);
     return r;
     //return esp32can.avail();
 }
 
-uint8_t Can::read() {
+uint8_t OlcbCanClass::read() {
     //Serial.print("\nIn ESPcan::read()");
     if(!esp32can.avail()) return 0;
     bool extended;
@@ -56,17 +56,17 @@ uint8_t Can::read() {
     return 1;
 }
 
-uint8_t Can::txReady() {
+uint8_t OlcbCanClass::txReady() {
             //Serial.print("\n ESPcan::txReady()");
     bool b = esp32can.txReady();
-            //Serial.print("\n esp EspCan::txReady()=");
+            //Serial.print("\n esp EspOlcbCanClass::txReady()=");
             //Serial.print(b );
     return b;
 }
 
-uint8_t Can::write(long timeout) {
+uint8_t OlcbCanClass::write(long timeout) {
     //CAN_message_t m;
-            //Serial.print("\n ESP Can::write()");
+            //Serial.print("\n ESP OlcbCanClass::write()");
     //m.id = this->id;
     //m.dlc = this->length;
     //m.eff = 1;
@@ -81,7 +81,7 @@ uint8_t Can::write(long timeout) {
         active = true;
         return esp32can.write(id, length, data);
     }
-            //Serial.print("\n     EspCan::write()#C");
+            //Serial.print("\n     EspOlcbCanClass::write()#C");
     long to = millis() + timeout;
     while(millis()<to) {
         if(this->txReady()) {
@@ -91,7 +91,7 @@ uint8_t Can::write(long timeout) {
     }
     return false;
 }
-uint8_t Can::write() { return this->write(0); }
+uint8_t OlcbCanClass::write() { return this->write(0); }
 
 #endif // NOCAN
 

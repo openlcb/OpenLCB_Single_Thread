@@ -27,6 +27,7 @@ extern void dP(uint8_t x);
 extern void dP(uint16_t x);
 extern void dP(uint32_t x);
 extern void dPH(int x);
+extern void dP(long x);
 
 extern void dPH(uint8_t x);
 extern void dPH(uint16_t x);

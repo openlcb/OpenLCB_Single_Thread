@@ -16,7 +16,7 @@
 #include "OlcbCan.h"
 #include "can2040.h"
 
-class Can : public OlcbCan {
+class OlcbCanClass : public OlcbCan {
   public:
     void init();                    // initialization
     uint8_t avail();                // read rxbuffer available

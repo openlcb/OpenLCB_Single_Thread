@@ -23,14 +23,14 @@ CanBus* canbus;
 #define	BITRATE_1_MBPS	7
 */
 
-void Can::init()  {
+void OlcbCanClass::init()  {
 //             Serial.print("\nIn AT90Can::init()");
     canbus->init();
 }
-uint8_t Can::avail()  {
+uint8_t OlcbCanClass::avail()  {
     return canbus->check_message();
 }
-uint8_t Can::read()  {
+uint8_t OlcbCanClass::read()  {
     can_t m;
     if(avail()) {
         canbus->get_buffered_message(&m);
@@ -47,12 +47,12 @@ uint8_t Can::read()  {
     }
     return false;
 }
-uint8_t Can::txReady()  {
+uint8_t OlcbCanClass::txReady()  {
                     //Serial.print("\nIn AT90Can::txReady(): ");
                     //Serial.print("check_free_buffer="); Serial.print(((CanBus*)this)->check_free_buffer());
     return ((CanBus*)this)->check_free_buffer();
 }
-uint8_t Can::write(long timeout)  {
+uint8_t OlcbCanClass::write(long timeout)  {
                     //Serial.print("\nIn AT90Can::write(): [");
     can_t m;
     m.id = this->id;
@@ -78,7 +78,7 @@ uint8_t Can::write(long timeout)  {
     }
     return false;
 }
-uint8_t Can::write() { return this->write(0); }
-void Can::setL(uint16_t l) { length = l; }
+uint8_t OlcbCanClass::write() { return this->write(0); }
+void OlcbCanClass::setL(uint16_t l) { length = l; }
 
 #endif // AT90

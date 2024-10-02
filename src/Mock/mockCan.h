@@ -15,7 +15,7 @@
 
 #include "OlcbCan.h"
 
-class Can : public OlcbCan {
+class OlcbCanClass : public OlcbCan {
   public:
     void init();                    // initialization
     uint8_t avail();                // read rxbuffer available

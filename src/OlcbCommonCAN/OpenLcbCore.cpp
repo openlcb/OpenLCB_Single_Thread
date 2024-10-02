@@ -126,9 +126,9 @@ void OpenLcbCore::init()
         // handle the rest
         //dP(F("\nwriteNewEventIDs(events, numEvents)"));
         writeNewEventIDs(events, numEvents);
-        //dP(F("\nuserInitAll()"));
+        dP(F("\nuserInitAll()"));
         userInitAll();
-        
+
         header.resetControl = RESET_NORMAL_VAL;
         //dP(F("\nNODECONFIG.put(0, header)"));
         NODECONFIG.put(0, header);
@@ -152,8 +152,7 @@ void OpenLcbCore::writeNewEventIDs(Event* events, uint8_t numEvents)
 	{
         //dP(F("\n eid")); dPH(header.nextEID);
 		newEventId.setEventIdSuffix(header.nextEID++);
-		
-		NODECONFIG.put(getOffset(e), newEventId);
+        NODECONFIG.put(getOffset(e), newEventId);
 	}
 	// Save the latest value of nextEID
 	NODECONFIG.put(0, header);
@@ -285,22 +284,22 @@ void OpenLcbCore::initTables()
  
 int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 {
-	 int16_t base = 0;
-	 int16_t lim;
-	 int16_t p;
-	 int16_t eventIndex;
-	 int cmp;
+    int16_t base = 0;
+    int16_t lim;
+    int16_t p;
+    int16_t eventIndex;
+    int cmp;
 	
-		// First time called startIndex == -1
+    // First time called startIndex == -1
 	if(startIndex == -1)
 	{
-//      dP(F"\nfindIndexOfEventID: Begin"))
+        //dP(F"\nfindIndexOfEventID: Begin"))
 		for (lim = numEvents; lim != 0; lim >>= 1)
 		{
 			p = base + (lim >> 1);
 			eventIndex = eventsIndex[p];
 			cmp = events[eventIndex].eid.compare(key);
-//          dP(F("\nCompare: p: ")); dP(p); dP(F(" Key: ")); key->print(); dP(F(" Event: ")); events[eventIndex].eid.print(); dP(F(" cmp: ")); dP(cmp);
+            //dP(F("\nCompare: p: ")); dP(p); dP(F(" Key: ")); key->print(); dP(F(" Event: ")); events[eventIndex].eid.print(); dP(F(" cmp: ")); dP(cmp);
 			if (cmp == 0)
 			{
 				if(p == 0)
@@ -310,23 +309,25 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 				}	
 				else
 				{
-						// Ok we have a match but step down the list checking for duplicates to find the lowest match
-//                  dP(F("\nMatch. Step Down List Checking for Duplicates"));
+                    // Ok we have a match but step down the list checking for duplicates to find the lowest match
+                    //dP(F("\nMatch. Step Down List Checking for Duplicates"));
 					while(p > 0)
 					{
-						eventIndex = eventsIndex[p - 1];
-						uint8_t equal = events[eventIndex].eid.equals(key);
-//                         dP(F("\nEqual: p - 1: ")); dP(p - 1); dP(F(" Key: ")); key->print(); dP(F(" Event: ")); events[eventIndex].eid.print(); dP(F(" cmp: ")); dP(equal);
+                        eventIndex = eventsIndex[p - 1];
+                        uint8_t equal = events[eventIndex].eid.equals(key);
+                        //P(F("\nEqual: p - 1: ")); dP(p - 1); dP(F(" Key: ")); key->print();
+                          dP(F(" Event: ")); events[eventIndex].eid.print();
+                          dP(F(" cmp: ")); dP(equal);
 
                         // if not equal then we already had the first match to return p
-						if(!equal)
-							return p ;
+                        if(!equal)
+                            return p ;
 
-						p--;
-//                      dP(F("\nCompare: Equal Step Down p: ")); dP(p);
+                        p--;
+                        //dP(F("\nCompare: Equal Step Down p: ")); dP(p);
 					}
 					
-						// If we get here we're at the beginning of the list so return p 
+                    // If we get here we're at the beginning of the list so return p
 					if(p == 0)
 						return p;
 				}
@@ -341,14 +342,13 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
 		return -1;
 	}
 	
-		// Already had a match so check the next entry in case there are duplicates 
+    // Already had a match so check the next entry in case there are duplicates
 	else
 	{
-			// If a duplicate match then return startIndex
+        // If a duplicate match then return startIndex
 		if(events[eventsIndex[startIndex]].eid.equals(key))
 			return startIndex;
-			
-			// Not a duplicate
+        // Not a duplicate
 		return -1;
 	}
 }

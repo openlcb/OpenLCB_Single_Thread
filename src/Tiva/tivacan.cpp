@@ -27,19 +27,19 @@ CANClass canbus(0);
  * \return	false falls das CAN Interface nicht initialisiert werden konnte,
  *			true ansonsten.
  */
-void Can::init() {
+void OlcbCanClass::init() {
     //Serial.print("\nIn tivacan can_init");
     canbus.begin();
     //return true;
     return;
 }
 
-uint8_t Can::avail() {
+uint8_t OlcbCanClass::avail() {
     //return 0!=tivaCAN.available();
     return 0!=canbus.available();
 }
 
-uint8_t Can::read() {
+uint8_t OlcbCanClass::read() {
     //Serial.print("\nIn tivacan::read()");
     //CAN_message_t m;
     CAN_message_t m;
@@ -54,7 +54,7 @@ uint8_t Can::read() {
     return 1;
 }
 
-uint8_t Can::txReady() {
+uint8_t OlcbCanClass::txReady() {
             //Serial.print("\n tivacan::txReady()#A");
     bool b = canbus.tx_idle();
             //Serial.print("\n     canbus->tx_idle()=");
@@ -62,7 +62,7 @@ uint8_t Can::txReady() {
     return b;
 }
 
-uint8_t Can::write(long timeout) {
+uint8_t OlcbCanClass::write(long timeout) {
     CAN_message_t m;
             //Serial.print("\n     TivaCan::write()#A");
     m.id = this->id;
@@ -89,7 +89,7 @@ uint8_t Can::write(long timeout) {
     }
     return false;
 }
-uint8_t Can::write() { return this->write(0); }
+uint8_t OlcbCanClass::write() { return this->write(0); }
 
 #endif // blizzard
 

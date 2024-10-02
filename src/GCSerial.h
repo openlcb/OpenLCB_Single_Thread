@@ -20,7 +20,7 @@
 //#include <Stream.h>
 #include <HardwareSerial.h>
 
-class Can : public OlcbCan {
+class OlcbCanClass : public OlcbCan {
   int charToHex(char c){
     if(c>='0' && c<='9') return c - '0';
     else if(c>='A' && c<='F') return c - 'A' + 10;
@@ -77,8 +77,7 @@ class Can : public OlcbCan {
     uint8_t p = 0;
     HardwareSerial* inf;
   public:
-    //Can() : inf(&Serial) {}
-    Can(HardwareSerial* _inf=&Serial) : inf(_inf) {}
+    OlcbCanClass(HardwareSerial* _inf=&Serial) : inf(_inf) {}
     void init() {                   // initialization
         //inf->begin(115200);while(!inf); delay(1000);
         Serial.begin(115200);while(!Serial); delay(1000);

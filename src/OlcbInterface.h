@@ -21,7 +21,7 @@
      * We're trying to localize the formating of frames to/from the node here,
      * so that only this class needs to change when/if the wire protocol changes.
      */
-class OlcbInterface { //: public OlcbNet {
+class OlcbInterface { // }: public OlcbNet {
   public:
 
     OlcbNet* net;

@@ -22,17 +22,17 @@ FlexCANv1 canbus(125000);
  #define	BITRATE_1_MBPS	7
  */
 
-void Can::init()  {
+void OlcbCanClass::init()  {
                 //Serial.print("\nIn flexcan::init()");
     canbus.begin();
                 //Serial.print("\nOut flexcan::init()");
     //return true;
 }
-uint8_t Can::avail()  {
+uint8_t OlcbCanClass::avail()  {
                     //Serial.print("\nIn flexcan::avail()");
     return canbus.available();
 }
-uint8_t Can::read()  {
+uint8_t OlcbCanClass::read()  {
     CAN_message_t m;
                     //Serial.print("\nIn flexcan::read(): ");
     if(avail()) {
@@ -50,13 +50,13 @@ uint8_t Can::read()  {
     }
     return false;
 }
-uint8_t Can::txReady()  {
+uint8_t OlcbCanClass::txReady()  {
                 //Serial.print("\nIn flexcan::txReady(): ");
     //Serial.print("check_free_buffer="); Serial.print(((CanBus*)this)->check_free_buffer());
     //return ((CanBus*)this)->check_free_buffer();
     return true; // KLUDGE
 }
-uint8_t Can::write(long timeout)  {
+uint8_t OlcbCanClass::write(long timeout)  {
                     //Serial.print("\nIn flexcan::write(): [");
     CAN_message_t m;
     m.timeout = timeout;
@@ -89,8 +89,8 @@ uint8_t Can::write(long timeout)  {
     return false;
     */
 }
-uint8_t Can::write() { return this->write(0); }
-void Can::setL(uint16_t l) { length = l; }
+uint8_t OlcbCanClass::write() { return this->write(0); }
+void OlcbCanClass::setL(uint16_t l) { length = l; }
 
 
 #endif //   defined(__MK20DX256__)
