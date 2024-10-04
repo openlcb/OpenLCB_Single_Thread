@@ -6,16 +6,13 @@
 //     Software CANbus implementation for rp2040
 //     Copyright (C) 2022  Kevin O'Connor <kevin@koconnor.net>
 //     This file may be distributed under the terms of the GNU GPLv3 license.
-
+#if 0
 #if defined(ARDUINO_ARCH_RP2040)
-#include "processor.h"
-#ifndef PICONOCAN
+#include "processCAN.h"
+#ifndef NOCAN
 #pragma message("!!! compiling picocan.cpp ")
 
 #include "Arduino.h"
-//#include "processor.h"
-
-//#include "OlcbCan.h"
 #include "can2040.h"
 #include "picocan.h"
 
@@ -24,7 +21,7 @@ struct can2040 rcan;                            // native-CAN object
 const uint8_t maxmsg = 4;                       // number of message buffers
 ArduinoQueue<struct can2040_msg> rmsg(maxmsg);  // FIFO
 
-Can msg;    // buffer
+OlcbCanClass msg;    // buffer
 bool rflag;
 int8_t errors;                     // number of errors  /////NEED TO FIGURE OUT ERRORS
 
@@ -112,7 +109,7 @@ uint8_t OlcbCanClass::write(long timeout) {
     if( flags.extended ) rmsg.id |= CAN2040_ID_EFF;
     rmsg.dlc = length;
     memcpy( rmsg.data, data, length);
-    //Serial.print("\nCan::write()");
+    //Serial.print("\OlcbCanClass::write()");
     can2040_transmit(&rcan, &rmsg);
     return 1;
 }
@@ -121,6 +118,7 @@ uint8_t OlcbCanClass::write() {
     Serial.print("\n picocan::write()");
     return this->write(0);
 }
-#endif // PICONOCAN
+#endif // NOCAN
 #endif // TARGET_RP2040
 
+#endif // 0/1

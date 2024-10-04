@@ -5,7 +5,7 @@
 
 //#if SUPPORT_MCP2525 == 1
 
-#pragma message("!!! compiling MCPcan.h ")
+//#pragma message("!!! compiling MCPcan.h ")
 
 #include "OlcbCan.h"
 

@@ -107,16 +107,18 @@ void NodeMemory::print(int n)
     dP(F("\nEEPROM: Base Offset: ")); dP(eepromBase); dP(" User Base: "); dP(userConfigBase); dP(" User Size: "); dP(userConfigSize);
     dP(F("\n    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 0123456789ABCDEF"));
 	//for(unsigned r = 0; r < (userConfigSize / 16 + 1); r++)
-    for(unsigned r = 0; r < (n / 16 + 1); r++)
+    for(int r = 0; r < (n / 16 + 1); r++)
 	{
 		int rb = r * 16;
         dP(F("\n"));
-        if(rb < 16) dP((uint8_t)0); dPH(rb); dP(" ");
+        if(rb < 16) dP((uint8_t)0);
+        dPH(rb); dP(" ");
 
 		for(int i = rb; i < (rb + 16); i++)
 		{
 			uint8_t v = EEPROM.read(i);
-            if(v < 16) dP((uint8_t)0); dPH(v); dP(" ");
+            if(v < 16) dP((uint8_t)0);
+            dPH(v); dP(" ");
 		}
 		
 		for(int i = rb; i < (rb + 16); i++)

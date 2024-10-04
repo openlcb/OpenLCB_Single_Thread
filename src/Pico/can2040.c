@@ -5,7 +5,8 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #if 0
-//#ifndef NOCAN // NOCAN
+#include "processCAN.h"
+#ifndef NOCAN // NOCAN
 #if defined(ARDUINO_ARCH_RP2040)
 #pragma message "compiling can2040.c"
 
@@ -1264,3 +1265,5 @@ can2040_shutdown(struct can2040 *cd)
 
 #endif
 #endif // NOCAN
+
+#endif // 0/1

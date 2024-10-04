@@ -2,16 +2,18 @@
 // copyright DPH 2017
 
 
-#if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
-    defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || \
+#if defined(__AVR_ATmega8__)  || \
+    defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__)     || \
+    defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__)   || \
     defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__) || \
-    defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) || \
-    defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || \
-    defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
+    defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__)     || \
+    defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__)  || \
+    defined(__AVR_ATmega2560__) || defined(__AVR_ATmega644__)  || \
+    defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)\
+    //|| defined(ARDUINO_ARCH_AVR)
 
-//#ifndef NO_CAN_PROCESSOR
 //#if SUPPORT_MCP2515==1
-#pragma message("!!! compiling MCPcan.cpp ")
+//#pragma message("!!! compiling MCPcan.cpp ")
 #include "Arduino.h"
 
 #include "OlcbCan.h"
@@ -102,6 +104,5 @@ uint8_t McpCan::write(long timeout)  {
 uint8_t McpCan::write() { return this->write(0); }
 void McpCan::setL(uint16_t l) { length = l; }
 
-//#endif // NO_CAN_PROCESSOR
 #endif // avr
 
