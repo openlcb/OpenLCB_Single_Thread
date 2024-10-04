@@ -5,7 +5,7 @@
 
 // ToDo: Implementation incomplete
 
-OlcbStream::OlcbStream(OlcbInterface* b, unsigned int (*cb)(uint8_t *tbuf, unsigned int length), LinkControl* ln) {
+OlcbStream::OlcbStream(OlcbInterface* b, uint16_t (*cb)(uint8_t *tbuf, uint16_t length), LinkControl* ln) {
 }
 
 void OlcbStream::check() {

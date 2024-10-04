@@ -5,11 +5,23 @@
 // Copyright 2019 Alex Shepherd and David Harris
 //==============================================================
 #if !defined(__LM4F120H5QR__) && !defined(__TM4C123GH6PM__)
-#error "Not a Tiva123!"
+  #error "Not a Tiva123!"
 #endif
+
+//// Debugging -- uncomment to activate debugging statements:
+    // dP(x) prints x, 
+    // dPH(x) prints x in hex, 
+    // dPS(string,x) prints string and x
+//#define DEBUG Serial
+
+//// Allow direct to JMRI via USB, without CAN controller, comment out for CAN
+//   Note: disable debugging AND WifiGC if this is chosen
+//#include "GCSerial.h"  
+
 
 #include <Wire.h>
 #include "Tiva123_Adafruit_PWMServoDriver.h"
+#include "mdebugging.h"
 
 // Board definitions
 #define MANU "Tiva123"  // The manufacturer of node
@@ -17,11 +29,13 @@
 #define HWVERSION "1.0"   // Hardware version
 #define SWVERSION "2.0"   // Software version
 
-// To Reset the Tiva123 Node Number, Uncomment and edit the next line
-//#define INITIALIZE_TO_NODE_ADDRESS  2,1,13,0,0,1
+// To Reset the Node Number, Uncomment and edit the next line
+// Need to do this at least once.  
+#define NODE_ADDRESS  2,1,13,0,0,1
 
-// Uncomment to Force Reset EEPROM to Factory Defaults 
-//#define RESET_TO_FACTORY_DEFAULTS
+// Set to 1 to Force Reset EEPROM to Factory Defaults 
+// Need to do this at least once.  
+#define RESET_TO_FACTORY_DEFAULTS 1
 
 // User defs
 #define NUM_OUTPUTS     8
@@ -37,19 +51,6 @@
 #define NUM_EVENT  ((NUM_OUTPUTS*2) + (NUM_INPUTS * 2) + (NUM_BOD_INPUTS * 2) + (NUM_SERVOS * 2))
 
 #include "OpenLCBHeader.h"
-
-#define ENABLE_DEBUG_PRINT
-#ifdef ENABLE_DEBUG_PRINT
-  #define DEBUG_BAUD_RATE 115200
-  
-  #define DEBUG(x) Serial.print(x)
-  #define DEBUGL(x) Serial.println(x);
-  #define DEBUGHEX(x,y) Serial.print(x,y);
-#else
-  #define DEBUG(x)
-  #define DEBUGL(x)
-  #define DEBUGHEX(x,y)
-#endif
 
 #define SERVO_PWM_DEG_0    120 // this is the 'minimum' pulse length count (out of 4096)
 #define SERVO_PWM_DEG_180  590 // this is the 'maximum' pulse length count (out of 4096)
@@ -257,19 +258,19 @@ uint16_t servoPwmMin = SERVO_PWM_DEG_0;
 uint16_t servoPwmMax = SERVO_PWM_DEG_180;
 
 // ===== Process Consumer-eventIDs =====
-void pceCallback(unsigned int index) {
+void pceCallback(uint16_t index) {
 // Invoked when an event is consumed; drive pins as needed
 // from index of all events.
 // Sample code uses inverse of low bit of pattern to drive pin all on or all off.
 // The pattern is mostly one way, blinking the other, hence inverse.
 //
-  DEBUG(F("\npceCallback: Event Index: ")); DEBUGL(index);
+  dP(F("\npceCallback: Event Index: ")); dP(index);
   
   if(index < FIRST_INPUT_EVENT_INDEX)
   {
     uint8_t outputIndex = index / 2;
     uint8_t outputState = index % 2;
-    DEBUG(F("Write Output: ")); DEBUG(outputIndex); DEBUG(F(" State: ")); DEBUGL(outputState);
+    dP(F("Write Output: ")); dP(outputIndex); dP(F(" State: ")); dP(outputState);
     digitalWrite(outputPinNums[outputIndex], outputState);
   }
   
@@ -288,7 +289,7 @@ void servoSet(uint8_t outputIndex, uint8_t outputState)
 {
   uint8_t servoPosDegrees = outputState ? NODECONFIG.read(EEADDR(servoOutputs[outputIndex].closedPos)) : NODECONFIG.read(EEADDR(servoOutputs[outputIndex].thrownPos)); 
   uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
-  DEBUG(F("Write Servo: ")); DEBUG(outputIndex); DEBUG(F(" Pos: ")); DEBUG(servoPosDegrees); DEBUG(F(" PWM: ")); DEBUGL(servoPosPWM);
+  dP(F("Write Servo: ")); dP(outputIndex); dP(F(" Pos: ")); dP(servoPosDegrees); dP(F(" PWM: ")); dP(servoPosPWM);
   servoPWM.setPWM(outputIndex, 0, servoPosPWM);
 }
 
@@ -311,7 +312,7 @@ static uint8_t bodScanIndex = 0;
   for (int i = 0; i<(MAX_INPUT_SCAN); i++)
   {
 
-//    DEBUG("produceFromInputs: "); DEBUG(inputsScanIndex); DEBUG(" - "); DEBUGL(bodScanIndex);
+//    dP("produceFromInputs: "); dP(inputsScanIndex); dP(" - "); dP(bodScanIndex);
 
     if(inputsScanIndex < NUM_INPUTS)
     {
@@ -319,7 +320,7 @@ static uint8_t bodScanIndex = 0;
       if(inputStates[inputsScanIndex] != inputVal)
       {
         inputStates[inputsScanIndex] = inputVal;
-        DEBUG("produceFromInputs: Input: "); DEBUG(inputsScanIndex); DEBUG(" NewValue: "); DEBUGL(inputVal);
+        dP("produceFromInputs: Input: "); dP(inputsScanIndex); dP(" NewValue: "); dP(inputVal);
 
         if(inputVal)
           OpenLcb.produce(FIRST_INPUT_EVENT_INDEX + (inputsScanIndex * 2));
@@ -335,7 +336,7 @@ static uint8_t bodScanIndex = 0;
       if(boDStates[bodScanIndex] != inputVal)
       {
         boDStates[bodScanIndex] = inputVal;
-        DEBUG("produceFromInputs: BODInput: "); DEBUG(bodScanIndex); DEBUG(" NewValue: "); DEBUGL(inputVal);
+        dP("produceFromInputs: BODInput: "); dP(bodScanIndex); dP(" NewValue: "); dP(inputVal);
 
         if(inputVal)
           OpenLcb.produce(FIRST_BOD_EVENT_INDEX + (bodScanIndex * 2));
@@ -362,24 +363,24 @@ void userHardReset() {}
 // This may be useful to take immediate action on a change.
 // 
 
-void userConfigWritten(unsigned int address, unsigned int length, unsigned int func)
+void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
 {
-  DEBUG("\nuserConfigWritten: Addr: "); DEBUG(address); DEBUG("  Len: "); DEBUG(length); DEBUG("  Func: "); DEBUGL(func);
+  dP("\nuserConfigWritten: Addr: "); dP(address); dP("  Len: "); dP(length); dP("  Func: "); dP(func);
   if(address == offsetof(MemStruct, ServoPwmMin) && (length >= sizeof(uint16_t)))
   {
     servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
-    DEBUG("Changed: ServoPwmMin: "); DEBUGL(servoPwmMin); 
+    dP("Changed: ServoPwmMin: "); dP(servoPwmMin); 
   }
   
   else if(address == offsetof(MemStruct, ServoPwmMax) && (length >= sizeof(uint16_t)))
   {
     servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
-    DEBUG("Changed: ServoPwmMax: "); DEBUGL(servoPwmMax);
+    dP("Changed: ServoPwmMax: "); dP(servoPwmMax);
   }
 
   else if(address >= offsetof(MemStruct, servoOutputs))
   {
-    DEBUGL("Changed: Servo Data");
+    dP("Changed: Servo Data");
 
     for(uint8_t i = 0; i < NUM_SERVOS; i++)
       servoSet(i, servoStates[i]);
@@ -389,9 +390,11 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
 // ==== Setup does initial configuration ======================
 void setup()
 {   
-  #ifdef DEBUG_BAUD_RATE
-    Serial.begin(DEBUG_BAUD_RATE);DEBUGL(F("\n Tiva123 Io 8-Out 8-In 24-BoD 16-Servo"));
-    setDebugStream(&Serial);
+  #ifdef DEBUG
+    Serial.begin(115200);
+    while(!Serial);
+    delay(500);
+    dP("\n Pico-8ServoWifiGC");
   #endif  
 
   // Setup Output Pins
@@ -406,16 +409,8 @@ void setup()
   for(uint8_t i = 0; i < NUM_BOD_INPUTS; i++)
     pinMode(bodPinNums[i], INPUT_PULLUP);
 
-  #ifdef INITIALIZE_TO_NODE_ADDRESS
-    NodeID newNodeID(INITIALIZE_TO_NODE_ADDRESS);
-    nm.changeNodeID(&newNodeID);
-  #endif
-
-  #ifdef RESET_TO_FACTORY_DEFAULTS  
-    Olcb_init(1);
-  #else
-    Olcb_init(0);
-  #endif
+  NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
+  Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   servoPWM.begin();
   servoPWM.setPWMFreq(60);
@@ -433,10 +428,7 @@ void setup()
   blue.on (~0x55000000L); // blink blue
   green.on(~0x00550000L); // blink green
   red.on  (~0x00005500L); // blink red
-  #ifdef DEBUG
-    Serial.print("\n NUM_EVENT="); Serial.print(NUM_EVENT);
-    nm.print();
-  #endif
+
 }
 
 // ==== Loop ==========================

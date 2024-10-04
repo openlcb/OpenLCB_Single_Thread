@@ -45,7 +45,7 @@ class Datagram {
   /**
    * Send the filled transmit buffer.
    */
-  void sendTransmitBuffer(int length, unsigned int destID);
+  void sendTransmitBuffer(int length, uint16_t destID);
   
   /**
    * Handle any routine processing that needs to be done.
@@ -61,7 +61,7 @@ class Datagram {
   //bool receivedFrame(OpenLcbCanBuffer* rcv);
   bool receivedFrame(OlcbCanInterface* rcv);
   
-  Datagram(OlcbCanInterface* b, unsigned int (*callback)(uint8_t tbuf[DATAGRAM_LENGTH], unsigned int length, unsigned int from), LinkControl* link);
+  Datagram(OlcbCanInterface* b, uint16_t (*callback)(uint8_t tbuf[DATAGRAM_LENGTH], uint16_t length, uint16_t from), LinkControl* link);
   
   private:
   OlcbCanInterface* buffer;
@@ -70,13 +70,13 @@ class Datagram {
   uint8_t tbuf[DATAGRAM_LENGTH];
   int sendcount;
   int resendcount;
-  unsigned int dest;
+  uint16_t dest;
   uint8_t* tptr;
   bool first;
   bool reservedXmt;  // buffer reserved for transmission
   bool receiving; 
   
-  unsigned int fromAlias;
+  uint16_t fromAlias;
   
   uint8_t rbuf[DATAGRAM_LENGTH];
   uint8_t* rptr;
@@ -86,7 +86,7 @@ class Datagram {
   void setDatagramNak(uint16_t srcAlias, uint16_t dstAlias, uint16_t code);
   
   // returns 0 for used, OK; > 0 for specific error message
-  unsigned int (*callback)(uint8_t tbuf[DATAGRAM_LENGTH], unsigned int length, unsigned int from);   // void callback(int index) pointer
+    uint16_t (*callback)(uint8_t tbuf[DATAGRAM_LENGTH], uint16_t length, uint16_t from);   // void callback(int index) pointer
 };
 
 #endif

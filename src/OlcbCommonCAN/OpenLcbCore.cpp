@@ -12,12 +12,12 @@
 
 extern "C" {
 	uint16_t getOffset(uint16_t index);
-	uint16_t getFlags(unsigned index);
+	uint16_t getFlags(uint16_t index);
 	extern void writeEID(int index, EventID eid);
 }
 extern void setEepromDirty();
 extern void userInitAll();
-extern void pceCallback(unsigned int index)  __attribute__((weak));
+extern void pceCallback(uint16_t index)  __attribute__((weak));
 
 OpenLcbCore::OpenLcbCore(Event* events, uint16_t numEvents, uint16_t* eIndex, const EIDTab* eidTab, OlcbCanInterface* b, LinkControl* li)
 {
@@ -159,7 +159,7 @@ void OpenLcbCore::writeNewEventIDs(Event* events, uint8_t numEvents)
     setEepromDirty();
 }
 
-void OpenLcbCore::processEvent(unsigned int eventIndex)
+void OpenLcbCore::processEvent(uint16_t eventIndex)
 {
     //dP(F("\nOpenLcbCore::processEvent: Index")); dP((uint16_t)eventIndex);
     if(pceCallback) {

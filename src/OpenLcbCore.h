@@ -99,7 +99,7 @@ public:
 	void sendTeach(EventID e);
 	bool isMarkedToLearn(int index);
 
-	void processEvent(unsigned int eventIndex); 
+	void processEvent(uint16_t eventIndex); 
 
 	uint16_t getOffset(uint16_t index);
 	uint16_t getFlags(uint16_t index);

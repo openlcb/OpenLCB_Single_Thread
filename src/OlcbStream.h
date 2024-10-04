@@ -20,14 +20,14 @@ class LinkControl;
 class OlcbStream {
   public:
   
-  OlcbStream(OlcbInterface* b, unsigned int (*rcvData)(uint8_t *tbuf, unsigned int length), LinkControl* link);
+  OlcbStream(OlcbInterface* b, uint16_t (*rcvData)(uint8_t *tbuf, uint16_t length), LinkControl* link);
   
   void check(); 
   bool receivedFrame(OlcbInterface* rcv);
   
   private:
   OlcbInterface* buffer;
-  unsigned int (*callback)(uint8_t *tbuf, unsigned int length); 
+  uint16_t (*callback)(uint8_t *tbuf, uint16_t length); 
 
 };
 

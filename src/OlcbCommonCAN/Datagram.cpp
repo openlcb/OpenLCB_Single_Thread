@@ -12,7 +12,7 @@
 
 //#pragma message("!!! compiling Datagram.cpp")
 
-Datagram::Datagram(OlcbCanInterface* b, unsigned int (*cb)(uint8_t tbuf[DATAGRAM_LENGTH], unsigned int length,  unsigned int from), LinkControl* ln) {
+Datagram::Datagram(OlcbCanInterface* b, uint16_t (*cb)(uint8_t tbuf[DATAGRAM_LENGTH], uint16_t length,  uint16_t from), LinkControl* ln) {
       buffer = b;
       link = ln;
       callback = cb; 
@@ -29,7 +29,7 @@ uint8_t* Datagram::getTransmitBuffer() {
     return tbuf;
 }
 
-void Datagram::sendTransmitBuffer(int length, unsigned int destNIDa) {
+void Datagram::sendTransmitBuffer(int length, uint16_t destNIDa) {
     if (!reservedXmt) {
         //logstr("error: Datagram::sendTransmitBuffer when not reserved");
         return;
@@ -191,9 +191,9 @@ bool Datagram::receivedFrame(OlcbCanInterface* rcv) {
             || ( rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_LAST )
             ) {
             // 
-            unsigned int length = rptr-rbuf;
+             uint16_t length = rptr-rbuf;
             // callback; result is error code or zero
-            unsigned int result = (*callback)(rbuf, length, rcv->getSourceAlias());
+             uint16_t result = (*callback)(rbuf, length, rcv->getSourceAlias());
             rptr = rbuf;
             receiving = false;
             if (result == 0) {

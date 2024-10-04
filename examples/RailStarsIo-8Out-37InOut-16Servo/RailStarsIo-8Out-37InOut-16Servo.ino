@@ -331,7 +331,7 @@ void servoSet(uint8_t outputIndex, uint8_t outputState)
 
 
 // ===== Process Consumer-eventIDs =====
-void pceCallback(unsigned int index)
+void pceCallback(uint16_t index)
 {
   // Invoked when an event is consumed; drive pins as needed
   // from index of all events.
@@ -432,7 +432,7 @@ void userHardReset() {}
 // This may be useful to take immediate action on a change.
 //
 
-void userConfigWritten(unsigned int address, unsigned int length, unsigned int func)
+void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
 {
   dPS("\nuserConfigWritten: Addr: ", address);
   dPS("  Len: ", length);

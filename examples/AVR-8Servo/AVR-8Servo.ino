@@ -170,7 +170,7 @@ uint16_t servoPwmMin = SERVO_PWM_DEG_0;
 uint16_t servoPwmMax = SERVO_PWM_DEG_180;
 
 // ===== Process Consumer-eventIDs =====
-void pceCallback(unsigned int index) {
+void pceCallback(uint16_t index) {
 // Invoked when an event is consumed; drive pins as needed
 // from index of all events.
 // Sample code uses inverse of low bit of pattern to drive pin all on or all off.
@@ -209,7 +209,7 @@ void userHardReset() {}
 // This may be useful to take immediate action on a change.
 //
 
-void userConfigWritten(unsigned int address, unsigned int length, unsigned int func)
+void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
 {
   dPS("\nuserConfigWritten: Addr: ", (uint32_t)address);
   dPS(" Len: ", (uint16_t)length);

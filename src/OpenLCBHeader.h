@@ -104,8 +104,8 @@ extern void userSoftReset() __attribute__((weak));
 extern void userHardReset() __attribute__((weak));
 extern void userInitAll() __attribute__((weak));
 extern void userFactoryReset() __attribute__((weak));
-extern void userConfigWritten(unsigned int address, unsigned int length, unsigned int func) __attribute__((weak));
-extern void pceCallback(unsigned int index)  __attribute__((weak));
+extern void userConfigWritten(uint32_t address, uint16_t length, uint16_t func) __attribute__((weak));
+extern void pceCallback(uint16_t index)  __attribute__((weak));
 extern void produceFromInputs() __attribute__((weak));
 
 

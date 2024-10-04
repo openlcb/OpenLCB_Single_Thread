@@ -119,7 +119,7 @@ class EventID;
   bool isLastDatagramFrame();
     
   private: 
-  unsigned int nodeAlias;   // Initialization complete sets, all later use
+    uint16_t nodeAlias;   // Initialization complete sets, all later use
 
   // service routines
 

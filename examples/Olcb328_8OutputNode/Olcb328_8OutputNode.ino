@@ -176,7 +176,7 @@ uint8_t protocolIdentValue[6] = {     // 0xD7,0x58,0x00,0,0,0};
 int pins[] = { LED_BUILTIN,5,14,15,16,17,18,19 };  // 8 outputs
 // ===== Process Consumer-eventIDs =====
 // USER defined
-void pceCallback(unsigned int index) {
+void pceCallback(uint16_t index) {
   // Invoked when an event is consumed; drive pins as needed
   // from index of all events.
   int ch = index / 2;  // two events per channel
@@ -235,7 +235,7 @@ void userHardReset() {
 // NB: if address=0 and length==0xffff, then user indicated UPDATE_COMPLETE
 //
 // USER defined
-void userConfigWritten(unsigned int address, unsigned int length, unsigned int func) {
+void userConfigWritten(uint32_t address, uint16_t length, uint16_t func) {
   #ifdef DEBUG
       Serial.print("\nuserConfigWritten "); Serial.print(address,HEX);
       Serial.print(" length="); Serial.print(length,HEX);

@@ -22,7 +22,7 @@ extern void setEepromDirty();
                         uint8_t (*gr)(uint32_t address, int space),
                         void (*gw)(uint32_t address, int space, uint8_t value),
                         void (*res)(),
-                        void (*wCB)(unsigned int address, unsigned int length, unsigned int func)
+                        void (*wCB)(uint32_t address, uint16_t length, uint16_t func)
                  ){
     dg = d;
     str = s;
@@ -54,7 +54,7 @@ void Configuration::check() {
     }
 }
 
-int Configuration::receivedDatagram(uint8_t* data, int ln, unsigned int f) {
+int Configuration::receivedDatagram(uint8_t* data, uint16_t ln, uint16_t f) {
     //dP("\nIn Configuration::receivedDatagram");
     //dP("\ndata: ");
     //for(signed i=0;i<ln;i++) { dP2(data[i],HEX); dP(", "); }

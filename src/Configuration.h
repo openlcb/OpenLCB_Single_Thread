@@ -56,11 +56,11 @@ class Configuration {
                         uint8_t (*getRead)(uint32_t address, int space),
                         void (*getWrite)(uint32_t address, int space, uint8_t val),
                         void (*restart)(),
-                        void (*wCB)(unsigned int address, unsigned int length, unsigned int func)
+                        void (*wCB)(uint32_t address, uint16_t length, uint16_t func)
             );
             
   void check(); 
-  int receivedDatagram(uint8_t* data, int length, unsigned int from);
+  int receivedDatagram(uint8_t* data, uint16_t length, uint16_t from);
   
   private:
   void processRead(uint8_t* data, int length);
@@ -71,7 +71,7 @@ class Configuration {
   OlcbStream* str;
   uint8_t buffer[DATAGRAM_LENGTH];
   int length;
-  unsigned int from;
+    uint16_t from;
   bool request;
   
   uint32_t getAddress(uint8_t* data);
@@ -81,7 +81,7 @@ class Configuration {
   uint8_t (*getRead)(uint32_t address, int space);
   void (*getWrite)(uint32_t address, int space, uint8_t val);
   void (*restart)();
-  void (*writeCB)(unsigned int address, unsigned int length, unsigned int func);
+  void (*writeCB)(uint32_t address, uint16_t length, uint16_t func);
  
 };
 

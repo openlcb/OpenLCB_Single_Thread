@@ -65,11 +65,11 @@ extern "C" {
     //   offset = offset to each eventID in the MemStruct in EEPROM
     //   flags = the initial flags indicating whether the eventID showed be announced at startup
     
-    uint16_t getOffset(unsigned index) {
+    uint16_t getOffset(uint16_t index) {
         return pgm_read_word(&eidtab[index].offset);
         }
 
-    uint16_t getFlags(unsigned index) {
+    uint16_t getFlags(uint16_t index) {
         return pgm_read_word(&eidtab[index].flags);
     }
     
@@ -125,11 +125,11 @@ extern "C" {
     // Extras
 } // end of extern
 
-void configWritten(unsigned int address, unsigned int length, unsigned int func) {
+void configWritten(uint32_t address, uint16_t length, uint16_t func) {
     //dP("\nconfigWritten: Addr: "); dPH((uint32_t)address);
     //dPS(" length:", (uint16_t)length);
     //dPS(" func:", (uint16_t)func);
-    for(unsigned i=0; i<NUM_EVENT; i++) {
+    for(uint16_t i=0; i<NUM_EVENT; i++) {
         uint16_t off = getOffset(i);
         if((address == off) && (length >= 8)) {
             OpenLcb.initTables();
@@ -150,10 +150,10 @@ void configWritten(unsigned int address, unsigned int length, unsigned int func)
 LinkControl clink(&txBuffer, &nodeId);
 
 #ifndef OLCB_NO_STREAM
-    unsigned int streamRcvCallback(uint8_t *rbuf, unsigned int length);
+    uint16_t streamRcvCallback(uint8_t *rbuf, uint16_t length);
     OlcbStream str(&txBuffer, streamRcvCallback, &clink);
-    unsigned int resultcode = 1;  // dummy temp value
-    unsigned int streamRcvCallback(uint8_t *rbuf, unsigned int length){
+    uint16_t resultcode = 1;  // dummy temp value
+    uint16_t streamRcvCallback(uint8_t *rbuf, uint16_t length){
         return resultcode;  // return pre-ordained result
     }
 #else
@@ -161,11 +161,11 @@ LinkControl clink(&txBuffer, &nodeId);
 #endif
 
 #ifndef OLCB_NO_DATAGRAM
-    unsigned int datagramCallback(uint8_t *rbuf, unsigned int length, unsigned int from);
+    uint16_t datagramCallback(uint8_t *rbuf, uint16_t length, uint16_t from);
     Datagram dg(&txBuffer, datagramCallback, &clink);
     Configuration cfg(&dg, &str, getRead, getWrite, userSoftReset, configWritten);
 
-    unsigned int datagramCallback(uint8_t *rbuf, unsigned int length, unsigned int from) {
+    uint16_t datagramCallback(uint8_t *rbuf, uint16_t length, uint16_t from) {
         // invoked when a datagram arrives
         // pass to consumers
         //dP("consume datagram of length ");dP((uint32_t)length); dP("\n");

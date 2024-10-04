@@ -1,6 +1,6 @@
 // OpenLCB Adaptation of FlexCAN library
 // copyright DPH 2017
-#if 0
+#if 1
 //#pragma message("!!! In tivacan.cpp ")
 //#if defined(TARGET_IS_BLIZZARD_RB1)
 //#if defined(TARGET_IS_TM4C123_RA1) || defined(TARGET_IS_TM4C123_RA3) || defined(TARGET_IS_TM4C123_RB1)

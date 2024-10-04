@@ -125,7 +125,7 @@ virtual bool isLastDatagramFrame();
 
 
 protected:
-//unsigned int nodeAlias;   // Initialization complete sets, all later use
+//uint16_t nodeAlias;   // Initialization complete sets, all later use
 
 // service routines
 

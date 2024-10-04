@@ -63,7 +63,7 @@ class OlcbCanClass : public OlcbCan {
   
   uint8_t toGC(uint32_t id, bool ext, bool rtr, uint8_t len, uint8_t* data, char* buff)  {
       char* p = buff;
-      if(!ext) p += sprintf(p, ":X%04X", (unsigned int)id<<5);  // shift if GC specific for CBUS
+      if(!ext) p += sprintf(p, ":X%04X", (uint16_t)id<<5);  // shift if GC specific for CBUS
       //else p += sprintf(p, ":X%lX", id); // no shift for extended frames
       else p += sprintf(p, ":X%lX", id); // no shift for extended frames
       p += sprintf(p, "%c", (rtr ? 'R' : 'N') );

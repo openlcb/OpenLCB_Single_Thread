@@ -204,7 +204,7 @@ ButtonLed pP(7, HIGH);  // cons1
 
 // ===== Process Consumer-eventIDs =====
 // USER defined
-    void pceCallback(unsigned int index) {
+    void pceCallback(uint16_t index) {
       // Invoked when an event is consumed; drive pins as needed
       // from index of all events.
       // Sample code uses the low bit of index to drive pin all on or all off.
@@ -281,7 +281,7 @@ void userHardReset() {
 // NB: if address=0 and length==0xffff, then user indicated UPDATE_COMPLETE
 //
 // USER defined
-void userConfigWritten(unsigned int address, unsigned int length, unsigned int func) {
+void userConfigWritten(uint32_t address, uint16_t length, uint16_t func) {
   #ifdef DEBUG
     Serial.print("\nuserConfigWritten "); Serial.print(address,HEX);
     Serial.print(" length="); Serial.print(length,HEX);
@@ -292,8 +292,8 @@ void userConfigWritten(unsigned int address, unsigned int length, unsigned int f
   #endif
   // Another example: if a servo's position changed, then update it immediately
   // uint8_t posn;
-  // for(unsigned i=0; i<NCHANNEL; i++) {
-  //    unsigned int pposn = &pmem->channel[i].posn;
+  // for(uint16_t i=0; i<NCHANNEL; i++) {
+  //    uint16_t pposn = &pmem->channel[i].posn;
   //    if( (address<=pposn) && (pposn<(address+length) ) posn = NODECONFIG.read(pposn);
   //    servo[i].set(i,posn);
   // }

@@ -166,7 +166,7 @@ int pins[] = { 4,5,14,15,16,17,18,19 };  // 8 input-pins
 
 // ===== Process Consumer-eventIDs =====
 // USER defined
-  void pceCallback(unsigned int index) {
+  void pceCallback(uint16_t index) {
     // Invoked when an event is consumed; drive pins as needed
     // from index of all events.
   }
@@ -230,7 +230,7 @@ bool states[] = {false, false, false, false, false, false, false, false }; // cu
 // NB: if address=0 and length==0xffff, then user indicated UPDATE_COMPLETE
 //
 // USER defined
-  void userConfigWritten(unsigned int address, unsigned int length, unsigned int func) {
+  void userConfigWritten(uint32_t address, uint16_t length, uint16_t func) {
     #ifdef DEBUG
       Serial.print("\nuserConfigWritten "); Serial.print(address,HEX);
       Serial.print(" length="); Serial.print(length,HEX);

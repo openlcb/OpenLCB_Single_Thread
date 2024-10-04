@@ -125,7 +125,7 @@ uint8_t protocolIdentValue[6] = {   //0xD7,0x58,0x00,0,0,0};
 
 // ===== Process Consumer-eventIDs =====
 // USER defined
-    void pceCallback(unsigned int index) {
+    void pceCallback(uint16_t index) {
       // Invoked when an event is consumed; drive pins as needed
       // from index of all events.  
       // Sample code uses inverse of low bit of pattern to drive pin all on or all off.  
@@ -178,7 +178,7 @@ void produceFromInputs() {
 // NB: if address=0 and length==0xffff, then user indicated UPDATE_COMPLETE
 // 
 // USER defined
-  void userConfigWritten(unsigned int address, unsigned int length, unsigned int func) {
+  void userConfigWritten(uint32_t address, uint16_t length, uint16_t func) {
       dP("\nuserConfigWritten "); dPH(address);
       dP(" length="); dPH(length);
       dP(" func="); dPH(func);
