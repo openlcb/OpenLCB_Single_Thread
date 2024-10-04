@@ -1,12 +1,14 @@
 //#pragma message("!!! In MCP2515can.h ")
 
 
-#if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
-    defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || \
-    defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__) || \
-    defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) || \
-    defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || \
-    defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
+#if defined(ARDUINO_ARCH_AVR) || defined(__AVR_ATmega8__)      \
+ || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__)     \
+ || defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__)   \
+ || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__) \
+ || defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__)     \
+ || defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__)  \
+ || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega644__)  \
+ || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
 
 
 #ifndef MCP2515CAN_H
@@ -40,7 +42,8 @@
         #define	P_SCK	B,7
         #define	SUPPORT_FOR_MCP2515__
     #elif defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || \
-        defined(__AVR_ATmega88__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__)
+        defined(__AVR_ATmega88__) || defined(__AVR_ATmega168__) || \
+        defined(__AVR_ATmega328P__) //|| defined(ARDUINO_atmega328)
         //#pragma message("!!! 8,48,88,168,328P ")
         #define	P_MOSI	B,3
         #define	P_MISO	B,4

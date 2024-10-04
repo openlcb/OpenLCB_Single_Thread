@@ -196,7 +196,10 @@ void OpenLcbCore::printEventids()
 	{
         dP("\n[");
 		for(int i = 0; i < 8; i++)
-            dPH(events[e].eid.val[i]); dP(", ");
+        {
+            dPH(events[e].eid.val[i]);
+            dP(", ");
+        }
 	}
 }
 
@@ -233,7 +236,7 @@ int OpenLcbCore::cmpfunc (const void * a, const void * b)
 void OpenLcbCore::initTables()
 {
     //dP(F("\nOpenLcbCore::initTables()"));
-	for(unsigned int e = 0; e < numEvents; e++)
+	for(int e = 0; e < numEvents; e++)
 	{
 		eventsIndex[e] = e;
 		NODECONFIG.get(getOffset(e), events[e].eid);

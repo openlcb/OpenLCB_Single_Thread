@@ -7,8 +7,8 @@
 #define processor_h
 
 // Uncomment the next line to enable #pragma messages
+//#define ENABLE_MESSAGE_PRAGMAS
 
-// #define ENABLE_MESSAGE_PRAGMAS
 #ifdef ENABLE_MESSAGE_PRAGMAS
     #pragma message("!!! compiling processor_h")
 #endif
@@ -22,22 +22,22 @@
 
 // AVRs
 #ifdef ARDUINO_ARCH_AVR
- #ifdef ENABLE_MESSAGE_PRAGMAS
-    //#pragma message("AVR Selected")
- #endif
-	#define ESTRING(s) s          // default conversion - nil
-    #include <EEPROM.h>
-    #define EEPROMbegin
-    #define EEPROMupdate(a,x) EEPROM.update(a,x)
-    #define EEPROMcommit
-    #include <avr/wdt.h>
-    #define REBOOT                  \
+    #ifdef ENABLE_MESSAGE_PRAGMAS
+        #pragma message("Processor AVR Selected")
+    #endif
+        #define ESTRING(s) s          // default conversion - nil
+        #include <EEPROM.h>
+        #define EEPROMbegin
+        #define EEPROMupdate(a,x) EEPROM.update(a,x)
+        #define EEPROMcommit
+        #include <avr/wdt.h>
+        #define REBOOT                  \
             wdt_disable();			\
             wdt_enable(WDTO_15MS);  \
             while (1) {}
-    #endif
+
 // Tinys
-#if defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+#elif defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
     //#include <can.h>
 
 // **8 ... 168 and 328 Arduinos
@@ -65,7 +65,7 @@
 
 // Mega 128, 1280 & 2560
 #elif defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-    //#ifndef NO_CAN\
+    //#ifndef NO_CAN
     //    #include "MCP2515/MCPcan.h"
     //#endif // NO_CAN
 

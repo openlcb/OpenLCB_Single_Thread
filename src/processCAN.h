@@ -30,6 +30,16 @@
             #include <can.h>
         #endif // NO_CAN
 
+    #elif defined(ARDUINO_ARCH_AVR)
+        #ifdef ENABLE_MESSAGE_PRAGMAS
+            #pragma message("CAN ARDUINO_ARCH-AVR selected")
+        #endif
+        #define ATMEGA
+        #ifndef NO_CAN
+            #include "MCP2515/MCPcan.h"
+            #define OlcbCanClass McpCan
+        #endif // NO_CAN
+
     // **8 ... 168 and 328 Arduinos
     #elif defined(__AVR_ATmega8__)  || \
           defined(__AVR_ATmega48__) || \
@@ -55,7 +65,7 @@
         #endif
         #ifndef NO_CAN
             #include "MCP2515/MCPcan.h"
-            #define Can McpCan
+            #define OlcbCanClass McpCan
         #endif // NO_CAN
 
     // Mega 128, 1280 & 2560
@@ -63,9 +73,9 @@
         #ifdef ENABLE_MESSAGE_PRAGMAS
             #pragma message("ATMega 128/1280/2580 selected")
         #endif
-        #ifndef NO_CAN\
+        #ifndef NO_CAN
             #include "MCP2515/MCPcan.h"
-            #define Can McpCan
+            #define OlcbCanClass McpCan
         #endif // NO_CAN
 
     // Sanguino
@@ -75,7 +85,7 @@
         #endif
         #ifndef NO_CAN
             #include "MCP2515/MCPcan.h"
-            #define Can McpCan
+            #define OlcbCanClass McpCan
         #endif // NO_CAN
 
     // AT90CAN

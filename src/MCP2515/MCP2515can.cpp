@@ -2,12 +2,15 @@
 // copyright DPH 2017
 
 
-#if defined(__AVR_ATmega8__)  || defined(__AVR_ATmega48__) || defined(__AVR_ATmega88__) || \
-    defined(__AVR_ATmega168__) ||defined(__AVR_ATmega168P__) || \
-    defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__) || \
-    defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) || \
-    defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) || \
-    defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
+#if defined(ARDUINO_ARCH_AVR)   || defined(__AVR_ATmega8__)    \
+ || defined(__AVR_ATmega48__)   || defined(__AVR_ATmega88__)   \
+ || defined(__AVR_ATmega168__)  ||defined(__AVR_ATmega168P__)  \
+ || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328P__) \
+ || defined(__AVR_ATmega16__)   || defined(__AVR_ATmega32__)   \
+ || defined(__AVR_ATmega128__)  || defined(__AVR_ATmega1280__) \
+ || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega644__)  \
+ || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)\
+ //|| defined(ARDUINO_atmega328)
 
 
 //#pragma message "compiling MCP2515can.cpp"
@@ -16,8 +19,6 @@
 #include "MCP2515can.h"
 #include "spi.h"
 
-
-//tCAN CAN;              // Olcb buffer
 tCAN CAN;       // MCP2515 buffer
 
 #define	BITRATE_10_KBPS	0	// ungetestet
