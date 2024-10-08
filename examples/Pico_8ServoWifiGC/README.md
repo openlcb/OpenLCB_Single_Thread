@@ -1,4 +1,5 @@
-# This example demonstrates:
+# Pico-8ServoWifiGC Example
+This example demonstrates:
 - How to use the PicoCan software CAN class, which is based on can2040.
   This use the PIO processors.  
 - How to connect a PicoW usign Wifi to connect to an OpenLCB/LCC hub
