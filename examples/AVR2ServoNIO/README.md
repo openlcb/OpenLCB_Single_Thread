@@ -1,4 +1,4 @@
-# AVR 8Servo Example
+# AVR 2-Servo N-IO Example
 
 This sketch was written for a Nano or other ATMega328.  
 However, any AVR, with an appropriate  MCP2515 based CAN board, can be used.  
