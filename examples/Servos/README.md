@@ -10,9 +10,9 @@ These sketches show different implementations of servos on different processors.
 - Uses the Adafruit PCA8596 libarary
 - 
 
-## ESP32NativeServos
+## ESP32NativeServos with WifiGC
 - Uses the ESP32Servo library
-- 
+- Shows how to use Wifi
 
 ## ESP32_8ServoPCA9685WifiGC
 - USes the Adafruit PCA8596 library
