@@ -11,16 +11,16 @@
   #error "This sketch is primarily for the AVR series, like the Nano"
 #endif
 
-// The following few lines provide options for how this sketch functions. 
-// Normally the processor.h and processCAN.h select libraries for EEPROM 
+// The following few lines provide options for how this sketch functions.
+// Normally the processor.h and processCAN.h select libraries for EEPROM
 // and HW CAN.
 // However, it can also run as a standalone sketch for debugging purposes, or
-// connect directly to JMRI via USB, using GCSerial.h.  These options interact, 
+// connect directly to JMRI via USB, using GCSerial.h.  These options interact,
 // so for example DEBUG cannot be used with DEBUG as the DEBUG messages would
-// pollute the GC stream.  
+// pollute the GC stream.
 #define DEBUG Serial  // uncomment to allow debug info to Serial
 #include "GCSerial.h"   // uncomment to send CAN GC messages to Serial (allows interactive or cox to JMRI)
-#define NOCAN         // uncomment to prevent HW CAN 
+#define NOCAN         // uncomment to prevent HW CAN
 
 #include <Wire.h>
 #include <Servo.h>
@@ -39,11 +39,11 @@
 #define SWVERSION "0.1"   // Software version
 
 // To Reset the Node Number, Uncomment and edit the next line
-// Need to do this at least once.  
+// Need to do this at least once.
 #define NODE_ADDRESS  2,1,13,0,0,0x57
 
-// Set to 1 to Force Reset EEPROM to Factory Defaults 
-// Need to do this at least once.  
+// Set to 1 to Force Reset EEPROM to Factory Defaults
+// Need to do this at least once.
 #define RESET_TO_FACTORY_DEFAULTS 1
 
 // User defs
@@ -55,19 +55,6 @@
 #include "mdebugging.h"
 #include "OpenLCBHeader.h"
 
-#define SERVO_PWM_DEG_0    1000 
-#define SERVO_PWM_DEG_180  2000 
-uint16_t servoPwmMin = SERVO_PWM_DEG_0;
-uint16_t servoPwmMax = SERVO_PWM_DEG_180;
-
-//Servo servo[NUM_SERVOS];
-//ServoEasing servo[NUM_SERVOS](PCA9685_DEFAULT_ADDRESS);
-//ServoEasing servo1(PCA9685_DEFAULT_ADDRESS);
-//ServoEasing servo[NUM_SERVOS] = new ServoEasing(PCA9685_DEFAULT_ADDRESS);
-//ServoEasing servo[NUM_SERVOS](PCA9685_DEFAULT_ADDRESS);
-//ServoEasing servo[NUM_SERVOS];
-
-
 // CDI (Configuration Description Information) in xml, must match MemStruct
 // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
 extern "C" {
@@ -75,21 +62,6 @@ const char configDefInfo[] PROGMEM =
 // ===== Enter User definitions below =====
   CDIheader R"(
     <group>
-        <group>
-            <name>Turnout Servo PWM Calibration</name>
-            <int size='2'>
-                <name>Servo PWM Min</name>
-                <description>PWM Value for Servo 0 Degree Position</description>
-                <min>0</min><max>4095</max>
-                <default>400</default>
-            </int>
-            <int size='2'>
-                <name>Servo PWM Max</name>
-                <description>PWM Value for Servo 180 Degree Position</description>
-                <min>0</min><max>4095</max>
-                <default>2500</default>
-            </int>
-        </group>
         <group replication='8'>
             <name>Servos</name>
             <repname>#</repname>
@@ -111,14 +83,12 @@ const char configDefInfo[] PROGMEM =
 
 // ===== MemStruct =====
 //   Memory structure of EEPROM, must match CDI above
-    typedef struct { 
+    typedef struct {
           EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
           
           char nodeName[20];  // optional node-name, used by ACDI
           char nodeDesc[24];  // optional node-description, used by ACDI
       // ===== Enter User definitions below =====
-          uint16_t ServoPwmMin;
-          uint16_t ServoPwmMax;
           struct {
             char desc[8];        // description of this Servo Turnout Driver
             struct {
@@ -156,7 +126,7 @@ uint8_t protocolIdentValue[6] = {   //0xD7,0x58,0x00,0,0,0};
 
 uint8_t servoStates[NUM_SERVOS]  = {  0,  0,  0,  0,  0,  0,  0,  0, };
 
-#define OLCB_NO_BLUE_GOLD  // This disables blue/gold.  
+#define OLCB_NO_BLUE_GOLD  // This disables blue/gold.
 #ifndef OLCB_NO_BLUE_GOLD
     #define BLUE 40  // built-in blue LED
     #define GOLD 39  // built-in green LED
@@ -177,9 +147,6 @@ uint8_t servoStates[NUM_SERVOS]  = {  0,  0,  0,  0,  0,  0,  0,  0, };
 void userInitAll() {
   NODECONFIG.put(EEADDR(nodeName), ESTRING( "AVRnat") );
   NODECONFIG.put(EEADDR(nodeDesc), ESTRING( "123" ) );
-  
-  NODECONFIG.put(EEADDR(ServoPwmMin), servoPwmMin);
-  NODECONFIG.put(EEADDR(ServoPwmMax), servoPwmMax);
 
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     NODECONFIG.put(EEADDR(curpos[i]), 0);
@@ -204,13 +171,10 @@ void pceCallback(uint16_t index) {
     servoSet(outputIndex, outputState);
 }
 
-// Set servo i's position to pos 1,2, or 3. 
+// Set servo i's position to pos 1,2, or 3.
 void servoSet(uint8_t outputIndex, uint8_t outputState) {
-  uint8_t servoPosDegrees = NODECONFIG.read(EEADDR(servos[outputIndex].pos[outputState].pos)); 
-  servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
-  servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
-  uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
-  dP(F("\nWrite Servo: ")); dP((uint16_t)outputIndex+1); 
+  uint8_t servoPosDegrees = NODECONFIG.read(EEADDR(servos[outputIndex].pos[outputState].pos));
+  dP(F("\nWrite Servo: ")); dP((uint16_t)outputIndex+1);
   dP(F(" Pos: ")); dP((uint16_t)servoPosDegrees);  dP("\n");
   servo[outputIndex]->startEaseTo(servoPosDegrees);
 }
@@ -218,13 +182,13 @@ void servoSet(uint8_t outputIndex, uint8_t outputState) {
 void produceFromInputs() {
     // called from loop(), this should detect changes in input pins and
     // and decides which events to fire by calling pce.produce(i);
-    // Since this node only has outputs, this is null.   
+    // Since this node only has outputs, this is null.
 }
 
 void userSoftReset() {}  // Hook for specific actions on a soft reset.
 void userHardReset() {}  // Hook for specific actions an a hard reset.
 
-#include "OpenLCBMid.h"  // This mandated, do not remove. 
+#include "OpenLCBMid.h"  // This mandated, do not remove.
 
 // Callback from a Configuration write
 // Use this to detect changes in the ndde's configuration
@@ -232,9 +196,9 @@ void userHardReset() {}  // Hook for specific actions an a hard reset.
 void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
 {
   dP(F("\nuserConfigWritten: Addr: ")); dP((uint32_t)address);
-  dP("  Len: "); dP((uint16_t)length); 
+  dP("  Len: "); dP((uint16_t)length);
   dP("  Func: "); dP((uint8_t)func);
-  // The simplest way to make sure any changes are reflect in the servos 
+  // The simplest way to make sure any changes are reflect in the servos
   // is to just update all of them.
   for(int i=0; i<NUM_SERVOS; i++) {
     servoSet(i, NODECONFIG.read( EEADDR(curpos[i]) ) );
@@ -243,16 +207,16 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
 
 // Servo output drive pins
 // Choose appropriate pins for servo drive
-uint8_t servopin[NUM_SERVOS] = { 2, 3, 4, 5, 6, 7, 8, 9 };  
+uint8_t servopin[NUM_SERVOS] = { 2, 3, 4, 5, 6, 7, 8, 9 };
 
 // ==== Setup does initial configuration ======================
-void setup() {   
+void setup() {
   #ifdef DEBUG
     Serial.begin(115200);
     while(!Serial);
-  #endif  
+  #endif
 
-  dP(F("\n File: ")); dP(__FILENAME__); 
+  dP(F("\n File: ")); dP(__FILENAME__);
   #if 0
   dP(F("\n BType: ")); dP(BTYPE);
   dP(F("\n Manufacturer: ")); dP(MANU);
@@ -264,39 +228,16 @@ void setup() {
   NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
-  //servo.begin();
-  //servoPWM.setPWMFreq(60);
   Wire.begin();
-    //dP("\nD"); while(1);
+
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     ServoEasing* p = new ServoEasing(PCA9685_DEFAULT_ADDRESS);
-        //dP("\nE"); while(1);
     if( p->attach(i) == INVALID_SERVO ) dP("\nError failed to attach");
     dP("\nC"); while(1);
-    //servo[i].setPeriodHertz(50);
-    //servo[i].attach(servopin[i], 1000, 2000);
     servo[i]->setEasingType(72);    // easing
     servo[i]->setSpeed(50);
-    dP("\nB"); while(1);
     servoSet(i, NODECONFIG.read( EEADDR(curpos[i]) ) );
   }
-  dP("\nA"); while(1);
-
-  #if 0
-  dP(F("\n NUM_EVENT=")); dP(NUM_EVENT);
-  for(int i=0; i<sizeof(MemStruct); i+=16) {
-    dP("\n"); dPH(i); 
-    for(int j=0; j<16; j++) {
-      uint8_t x = EEPROM.read(i+j);
-      dP(" "); if(x<16)dP(0); dPH(x);
-    }
-    for(int j=0; j<16; j++) {
-      uint8_t x = EEPROM.read(i+j);
-      if(x>=32&&x<126) dP((char)x);
-      else dP(".");
-    }
-  }
-  #endif
 
 }
 
@@ -307,7 +248,7 @@ void loop() {
   static long nextdot = 0;
   if(millis()>nextdot) {
     nextdot = millis()+2000;
-    //dP("\n.");
+    dP("\n.");
   }
   
   #ifndef OLCB_NO_BLUE_GOLD
@@ -323,6 +264,6 @@ void loop() {
     blue.process();
   #endif // OLCB_NO_BLUE_GOLD
   
-  //produceFromInputs();
+  //produceFromInputs();  // This is not needed because there are no inputs
 
 }

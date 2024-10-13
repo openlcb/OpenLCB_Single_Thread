@@ -24,8 +24,6 @@
 
 #include <Wire.h>
 #include <Servo.h>
-//#include <Adafruit_PWMServoDriver.h>
-//#include <ESP32Servo.h>
 #include <ServoEasing.hpp>  // great library for gettin slow servo action, including bounces
 
 #include <string.h>
@@ -43,7 +41,7 @@
 
 // Set to 1 to Force Reset EEPROM to Factory Defaults
 // Need to do this at least once.
-#define RESET_TO_FACTORY_DEFAULTS 0
+#define RESET_TO_FACTORY_DEFAULTS 1
 
 // User defs
 #define NUM_SERVOS 8
@@ -54,15 +52,10 @@
 #include "mdebugging.h"
 #include "OpenLCBHeader.h"
 
-#define SERVO_PWM_DEG_0    1000
-#define SERVO_PWM_DEG_180  2000
-uint16_t servoPwmMin = SERVO_PWM_DEG_0;
-uint16_t servoPwmMax = SERVO_PWM_DEG_180;
-
-//Servo servo[NUM_SERVOS];
-//ServoEasing servo[NUM_SERVOS](PCA9685_DEFAULT_ADDRESS);
+// Declare the servos, ServoEasing uses the Servo lib
 ServoEasing servo[NUM_SERVOS];
-
+// Servo output drive pins, choose appropriate pins for servo drive
+uint8_t servopin[NUM_SERVOS] = { 2, 3, 4, 5, 6, 7, 8, 9 };
 
 // CDI (Configuration Description Information) in xml, must match MemStruct
 // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
@@ -71,21 +64,6 @@ const char configDefInfo[] PROGMEM =
 // ===== Enter User definitions below =====
   CDIheader R"(
     <group>
-        <group>
-            <name>Turnout Servo PWM Calibration</name>
-            <int size='2'>
-                <name>Servo PWM Min</name>
-                <description>PWM Value for Servo 0 Degree Position</description>
-                <min>0</min><max>4095</max>
-                <default>400</default>
-            </int>
-            <int size='2'>
-                <name>Servo PWM Max</name>
-                <description>PWM Value for Servo 180 Degree Position</description>
-                <min>0</min><max>4095</max>
-                <default>2500</default>
-            </int>
-        </group>
         <group replication='8'>
             <name>Servos</name>
             <repname>#</repname>
@@ -112,9 +90,6 @@ const char configDefInfo[] PROGMEM =
           
           char nodeName[20];  // optional node-name, used by ACDI
           char nodeDesc[24];  // optional node-description, used by ACDI
-      // ===== Enter User definitions below =====
-          uint16_t ServoPwmMin;
-          uint16_t ServoPwmMax;
           struct {
             char desc[8];        // description of this Servo Turnout Driver
             struct {
@@ -167,15 +142,9 @@ uint8_t servoStates[NUM_SERVOS]  = {  0,  0,  0,  0,  0,  0,  0,  0, };
     ButtonLed* buttons[8] = { &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD };
 #endif // OLCB_NO_BLUE_GOLD
 
-
-//Adafruit_PWMServoDriver servoPWM = Adafruit_PWMServoDriver();
-
 void userInitAll() {
   NODECONFIG.put(EEADDR(nodeName), ESTRING( "AVRnat") );
   NODECONFIG.put(EEADDR(nodeDesc), ESTRING( "123" ) );
-  
-  NODECONFIG.put(EEADDR(ServoPwmMin), servoPwmMin);
-  NODECONFIG.put(EEADDR(ServoPwmMax), servoPwmMax);
 
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     NODECONFIG.put(EEADDR(curpos[i]), 0);
@@ -203,9 +172,6 @@ void pceCallback(unsigned int index) {
 // Set servo i's position to pos 1,2, or 3.
 void servoSet(uint8_t outputIndex, uint8_t outputState) {
   uint8_t servoPosDegrees = NODECONFIG.read(EEADDR(servos[outputIndex].pos[outputState].pos));
-  servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
-  servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
-  uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
   dP(F("\nWrite Servo: ")); dP((uint16_t)outputIndex+1);
   dP(F(" Pos: ")); dP((uint16_t)servoPosDegrees);  dP("\n");
   servo[outputIndex].startEaseTo(servoPosDegrees);
@@ -237,10 +203,6 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
   }
 }
 
-// Servo output drive pins
-// Choose appropriate pins for servo drive
-uint8_t servopin[NUM_SERVOS] = { 2, 3, 4, 5, 6, 7, 8, 9 };
-
 // ==== Setup does initial configuration ======================
 void setup() {
   #ifdef DEBUG
@@ -260,9 +222,6 @@ void setup() {
   NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
-  //servo.begin();
-  //servoPWM.setPWMFreq(60);
-
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     //servo[i].setPeriodHertz(50);
     //servo[i].attach(servopin[i], 1000, 2000);
@@ -271,22 +230,6 @@ void setup() {
     servo[i].setSpeed(50);
     servoSet(i, NODECONFIG.read( EEADDR(curpos[i]) ) );
   }
-
-  #if 0
-  dP(F("\n NUM_EVENT=")); dP(NUM_EVENT);
-  for(int i=0; i<sizeof(MemStruct); i+=16) {
-    dP("\n"); dPH(i);
-    for(int j=0; j<16; j++) {
-      uint8_t x = EEPROM.read(i+j);
-      dP(" "); if(x<16)dP(0); dPH(x);
-    }
-    for(int j=0; j<16; j++) {
-      uint8_t x = EEPROM.read(i+j);
-      if(x>=32&&x<126) dP((char)x);
-      else dP(".");
-    }
-  }
-  #endif
 
 }
 
@@ -313,6 +256,6 @@ void loop() {
     blue.process();
   #endif // OLCB_NO_BLUE_GOLD
   
-  //produceFromInputs();
+  //produceFromInputs();   // Not needed in this sketch as there are no inputs
 
 }
