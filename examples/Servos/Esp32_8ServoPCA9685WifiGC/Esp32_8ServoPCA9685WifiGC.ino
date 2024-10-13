@@ -14,7 +14,7 @@
 //#define DEBUG Serial    // uncomment to allow debug info to Serial
 //#include "GCSerial.h"   // uncomment to send CAN GC messages to Serial (allows interactive or cox to JMRI)
 //#include "WifiGC.h"     // uncomment to send CAN GC messages via Wifi to LCC hub, eg JMRI
-//#define NOCAN           // uncomment to prevent HW CAN 
+//#define NOCAN           // uncomment to prevent HW CAN
 
 
 // Board definitions
@@ -24,11 +24,11 @@
 #define SWVERSION "0.1"   // Software version
 
 // To Reset the Node Number, Uncomment and edit the next line
-// Need to do this at least once.  
+// Need to do this at least once.
 #define NODE_ADDRESS  2,1,13,0,0,0x47
 
-// Set to 1 to Force Reset EEPROM to Factory Defaults 
-// Need to do this at least once.  
+// Set to 1 to Force Reset EEPROM to Factory Defaults
+// Need to do this at least once.
 #define RESET_TO_FACTORY_DEFAULTS 1
 
 // User defs
@@ -68,21 +68,6 @@ const char configDefInfo[] PROGMEM =
 // ===== Enter User definitions below =====
   CDIheader R"(
     <group>
-        <group>
-            <name>Turnout Servo PWM Calibration</name>
-            <int size='2'>
-                <name>Servo PWM Min</name>
-                <description>PWM Value for Servo 0 Degree Position (100-600)</description>
-                <min>100</min><max>600</max>
-                <default>120</default>
-            </int>
-            <int size='2'>
-                <name>Servo PWM Max</name>
-                <description>PWM Value for Servo 180 Degree Position (100-600)</description>
-                <min>400</min><max>600</max>
-                <default>590</default>
-            </int>
-        </group>
         <group replication='8'>
             <name>Servos</name>
             <repname>Servo</repname>
@@ -104,14 +89,12 @@ const char configDefInfo[] PROGMEM =
 
 // ===== MemStruct =====
 //   Memory structure of EEPROM, must match CDI above
-    typedef struct { 
+    typedef struct {
           EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
           
           char nodeName[20];  // optional node-name, used by ACDI
           char nodeDesc[24];  // optional node-description, used by ACDI
       // ===== Enter User definitions below =====
-          uint16_t ServoPwmMin;
-          uint16_t ServoPwmMax;
           struct {
             char desc[8];        // description of this Servo Turnout Driver
             struct {
@@ -164,16 +147,10 @@ uint8_t curpos[]  = {  0,  0,  0,  0,  0,  0,  0,  0,
     ButtonLed* buttons[8] = { &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD };
 #endif // OLCB_NO_BLUE_GOLD
 
-uint16_t servoPwmMin = SERVO_PWM_DEG_0;
-uint16_t servoPwmMax = SERVO_PWM_DEG_180;
-
 void userInitAll() {
   //dP("\nuserInitAll()");
   NODECONFIG.put(EEADDR(nodeName), ESTRING("ESP32"));
   NODECONFIG.put(EEADDR(nodeDesc), ESTRING("PCA9685 Servos"));
-  
-  NODECONFIG.update16(EEADDR(ServoPwmMin), SERVO_PWM_DEG_0);
-  NODECONFIG.update16(EEADDR(ServoPwmMax), SERVO_PWM_DEG_180);
 
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     NODECONFIG.put(EEADDR(servos[i].desc), ESTRING("abcdefg"));
@@ -187,14 +164,7 @@ void userInitAll() {
 
 // Set servo i's position to p= 1,2,3,4
 void servoSet(uint8_t outputIndex, uint8_t outputState) {
-  uint8_t servoPosDegrees = NODECONFIG.read(EEADDR(servos[outputIndex].pos[outputState].pos)); 
-  uint16_t servoPosPWM = map(servoPosDegrees, 0, 180, servoPwmMin, servoPwmMax);
-  //dP(F("\nWrite Servo: ")); dP((uint16_t)outputIndex+1); 
-  //dP(F(" Pos: ")); dP((uint16_t)outputState+1); 
-  //dP(F(" Degrees: ")); dP((uint8_t)servoPosDegrees); 
-  //dP(F(" PWM: ")); dP((uint16_t)servoPosPWM);
-  //dP("\n");
-  //servo[outputIndex]->startEaseTo(servoPosDegrees);
+  uint8_t servoPosDegrees = NODECONFIG.read(EEADDR(servos[outputIndex].pos[outputState].pos));
   servo[outputIndex]->easeTo(servoPosDegrees);
 }
 
@@ -227,12 +197,12 @@ void userHardReset() {}
 // Callback from a Configuration write
 // Use this to detect changes in the ndde's configuration
 // This may be useful to take immediate action on a change.
-// 
+//
 
 void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
 {
-  //dP(F("\nuserConfigWritten: Addr: ")); dP((uint32_t)address); 
-  //dP("  Len: "); dP((uint16_t)length); 
+  //dP(F("\nuserConfigWritten: Addr: ")); dP((uint32_t)address);
+  //dP("  Len: "); dP((uint16_t)length);
   //dP("  Func: "); dP((uint8_t)func);
   for(int s=0; s<NUM_SERVOS; s++) servoSet(s, NODECONFIG.read( EEADDR(curpos[s]) ) );
 }
@@ -240,28 +210,24 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
 uint8_t servopin[] = { 25, 21, 33, 23, 19, 22, 0, 0 }; // these do not matter for teh PCA9685
 // ==== Setup does initial configuration ======================
 void setup()
-{   
+{
   #ifdef DEBUG
-    delay(1000);
     Serial.begin(115200);
+    while(!Serial);
     delay(1000);
-    //setDebugStream(&Serial);
     dP(F("\n " __FILE__));
-  #endif  
+  #endif
 
   NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
-  Wire.setPins(26, 32);  // SDA, SCL Atom=26,32  
+  Wire.setPins(26, 32);  // SDA, SCL Atom=26,32
   Wire.begin();
-
-  servoPwmMin = NODECONFIG.read16(EEADDR(ServoPwmMin));
-  servoPwmMax = NODECONFIG.read16(EEADDR(ServoPwmMax));
 
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
       servo[i] = new ServoEasing(PCA9685_DEFAULT_ADDRESS);
       if (servo[i]->attach(i, 90) == INVALID_SERVO) { Serial.print("\nNo servo"); while(0); }
-      //servo[i]->setEasingType(0x82);
+      servo[i]->setEasingType(0x82);
       servo[i]->setSpeed(50);
       curpos[i] = NODECONFIG.read( ( EEADDR(curpos[i]) ) );
       servoSet(i, curpos[i]);
