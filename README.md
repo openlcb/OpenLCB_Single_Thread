@@ -20,7 +20,7 @@ This repositiory has been updated:
     This automatically will connect to a OpenLCB/LCC hub named openlcb-can, such as the JMRI one.
     For the ESP32, it will open an AP to obtain the local network.
 
-# Description  ****
+# Description
 
 This repository is an implementation of the OpenLCB protocols, which is used by model railroads as a local control bus (LCB).  OpenLCB uses the Consumer-Producer model which uses 'Events' to convey information from one node to another. OpenLCB has 'Datagrams' and 'Streams' for larger data transfer. In addition, it has messages for announcing nodes and their events, and other system messages.  See: https://openlcb.org  OpenLCB nodes are described by XML, called the CDI, which is held in the node and retrieved by tools, such as JMRI.  
 
