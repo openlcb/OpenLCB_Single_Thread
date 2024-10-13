@@ -4,14 +4,18 @@
 ## **** 2024.09 This repository has been updated.  ****
 
 This repositiory has been updated:
+
 (1) The debug system has been changed to functions:
     #define DEBUG Serial -- this will activate the debuggin statemtents, and direct them to the selected serial
     dP(x) will print uint8_t, uint16_t, uint32_t, char*. char, and F() strings, e.g. dP( (uint32_t)value );
     dPH(x) will print uint8_t, uint16_t, uint32_t in HEX, e.g. dPH( (uint32_t)value )
     dP(s,x) will print the string s and the value of x, e.g. dPS("The value of x is ", x);
+    
 (2) GCSerial: This will mock a CAN connection by converting OpenLCB messages to Gridconnect format and 
     sending them via the serial connection, usually USB. 
+    
 (3) Added PicoCan
+
 (4) Added mock CAN via Wifi for Esp32 and PicoW
     This automatically will connect to a OpenLCB/LCC hub named openlcb-can, such as the JMRI one.
     For the ESP32, it will open an AP to obtain the local network.
