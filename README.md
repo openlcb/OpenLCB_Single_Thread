@@ -20,9 +20,11 @@ This repositiory has been updated:
     This automatically will connect to a OpenLCB/LCC hub named openlcb-can, such as the JMRI one.
     For the ESP32, it will open an AP to obtain the local network.
 
-## Description  ****
+# Description  ****
 
-This is a refresh of the original Arduino code base, developed by Dr. Bob Jacobsen.  It uses a single-threaded model, with an initialization step and a endless loop to do the processing.  These are the familiar setup() and loop() of the Arduino IDE.  Much of the standard processing for OpenLCB protocols is handled by 'systems' code.  This includes obtaining and managing an node Alias, receiving and vetting eventids, scheduling and sending eventids, CDI, configuration, Datagram management, etc.  
+This repository is an implementation of the OpenLCB protocols, which is used by model railroads as a local control bus (LCB).  OpenLCB uses the Consumer-Producer model which uses 'Events' to convey information from one node to another. OpenLCB has 'Datagrams' and 'Streams' for larger data transfer. In addition, it has messages for announcing nodes and their events, and other system messages.  See: https://openlcb.org  OpenLCB nodes are described by XML, called the CDI, which is held in the node and retrieved by tools, such as JMRI.  
+
+It is refresh of the original Arduino code base, developed by Dr. Bob Jacobsen.  It uses a single-threaded model, with an initialization step and a endless loop to do the processing.  These are the familiar setup() and loop() of the Arduino IDE.  Much of the standard processing for OpenLCB protocols is handled by 'systems' code.  This includes obtaining and managing an node Alias, receiving and vetting eventids, scheduling and sending eventids, CDI, configuration, Datagram management, etc.  
 
 The original codebase has been modified to make it easier for the developer to match a project's CDI xml to its internal memory structure, by making the two have parallel structures.  In addition, eventid searching uses a sorted table index and a binary search.  (David Harris and Alex Shepherd)
 
