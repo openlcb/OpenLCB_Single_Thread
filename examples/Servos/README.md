@@ -15,7 +15,8 @@ These sketches show different implementations of servos on different processors.
 - Shows how to use Wifi
 
 ## ESP32_8ServoPCA9685WifiGC
-- USes the Adafruit PCA8596 library
+- Uses the ServoEasing library
+- Uses a PCA9685 board to connect to servos.  
 - Option to use Wifi connection
 - 
 
