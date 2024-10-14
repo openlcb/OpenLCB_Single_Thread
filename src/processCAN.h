@@ -26,19 +26,19 @@
     // AVRs
     // Tinys
     #if defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-        #ifndef NO_CAN
+        #ifndef NOCAN
             #include <can.h>
-        #endif // NO_CAN
+        #endif // NOCAN
 
     #elif defined(ARDUINO_ARCH_AVR)
         #ifdef ENABLE_MESSAGE_PRAGMAS
             #pragma message("CAN ARDUINO_ARCH-AVR selected")
         #endif
         #define ATMEGA
-        #ifndef NO_CAN
+        #ifndef NOCAN
             #include "MCP2515/MCPcan.h"
             #define OlcbCanClass McpCan
-        #endif // NO_CAN
+        #endif // NOCAN
 
     // **8 ... 168 and 328 Arduinos
     #elif defined(__AVR_ATmega8__)  || \
@@ -53,40 +53,40 @@
             #pragma message("ATMega *68 selected")
         #endif
         #define ATMEGA
-        #ifndef NO_CAN
+        #ifndef NOCAN
             #include "MCP2515/MCPcan.h"
             #define OlcbCanClass McpCan
-        #endif // NO_CAN
+        #endif // NOCAN
 
     // Mega 16, 32
     #elif defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__)
         #ifdef ENABLE_MESSAGE_PRAGMAS
             #pragma message("ATMega 16/32 selected")
         #endif
-        #ifndef NO_CAN
+        #ifndef NOCAN
             #include "MCP2515/MCPcan.h"
             #define OlcbCanClass McpCan
-        #endif // NO_CAN
+        #endif // NOCAN
 
     // Mega 128, 1280 & 2560
     #elif defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
         #ifdef ENABLE_MESSAGE_PRAGMAS
             #pragma message("ATMega 128/1280/2580 selected")
         #endif
-        #ifndef NO_CAN
+        #ifndef NOCAN
             #include "MCP2515/MCPcan.h"
             #define OlcbCanClass McpCan
-        #endif // NO_CAN
+        #endif // NOCAN
 
     // Sanguino
     #elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
         #ifdef ENABLE_MESSAGE_PRAGMAS
             #pragma message("ATMega 644/644P/1284P selected")
         #endif
-        #ifndef NO_CAN
+        #ifndef NOCAN
             #include "MCP2515/MCPcan.h"
             #define OlcbCanClass McpCan
-        #endif // NO_CAN
+        #endif // NOCAN
 
     // AT90CAN
     #elif defined(__AVR_AT90CAN32__) || defined(__AVR_AT90CAN64__) || defined(__AVR_AT90CAN128__)
