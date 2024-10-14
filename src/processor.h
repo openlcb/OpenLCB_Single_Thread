@@ -53,27 +53,27 @@
     //#pragma message("ATMega selected")
   #endif
     #define ATMEGA
-    //#ifndef NO_CAN
+    //#ifndef NOCAN
     //  #include "MCP2515/MCPcan.h"
-    //#endif // NO_CAN
+    //#endif // NOCAN
 
 // Mega 16, 32
 #elif defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) 
-    //#ifndef NO_CAN
+    //#ifndef NOCAN
     //    #include "MCP2515/MCPcan.h"
-    //#endif // NO_CAN
+    //#endif // NOCAN
 
 // Mega 128, 1280 & 2560
 #elif defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-    //#ifndef NO_CAN
+    //#ifndef NOCAN
     //    #include "MCP2515/MCPcan.h"
-    //#endif // NO_CAN
+    //#endif // NOCAN
 
 // Sanguino
 #elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
-    //#ifndef NO_CAN
+    //#ifndef NOCAN
     //    #include "MCP2515/MCPcan.h"
-    //#endif // NO_CAN
+    //#endif // NOCAN
 
 // AT90CAN
 #elif defined(__AVR_AT90CAN32__) || defined(__AVR_AT90CAN64__) || defined(__AVR_AT90CAN128__)
@@ -81,9 +81,9 @@
     //#pragma message("AT90CAN selected")
   #endif
     #define AT90CAN
-    //#ifndef NO_CAN
+    //#ifndef NOCAN
     //  #include <AT90/AT90can.h>
-    //#endif // NO_CAN
+    //#endif // NOCAN
 
 // Teensies    ///// THESE APPEAR WRONG
 #elif defined(__AVR_ATmega32U4__)
