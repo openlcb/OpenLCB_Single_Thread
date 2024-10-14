@@ -2,7 +2,7 @@
 #if defined TARGET_IS_BLIZZARD_RB1
 #pragma message("!!! in tivacan.h ")
 
-#ifndef NO_CAN
+#ifndef NOCAN
 #pragma message("compiling tivacan.h")
 #ifndef TIVACAN_H
 #define TIVACAN_H
