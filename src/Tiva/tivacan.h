@@ -26,7 +26,7 @@ class OlcbCanClass : public OlcbCan {
 
 #endif // TIVACAN_H
 
-#endif // NO_CAN
+#endif // NOCAN
 
 #endif // Blizzard
 
