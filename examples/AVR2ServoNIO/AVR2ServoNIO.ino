@@ -20,12 +20,10 @@
 //==============================================================
 
 // Debugging -- uncomment to activate debugging statements:
-    // dP(x) prints x, dPH(x) prints x in hex,
-    //  dPS(string,x) prints string and x
 //#define DEBUG Serial
 
 // Allow direct to JMRI via USB, without CAN controller, comment out for CAN
-//   Note: disable debugging if this is chosen
+//    ( Note: disable debugging if this is chosen. )
 //#include "GCSerial.h"
 
 #include <Wire.h>
@@ -195,7 +193,11 @@ uint8_t servodelay;
 uint8_t servopin[NUM_SERVOS] = {A4,A5};
 uint8_t servoActual[NUM_SERVOS] = { 90, 90 };
 uint8_t servoTarget[NUM_SERVOS] = { 90, 90 };
-uint8_t iopin[NUM_IO] = {13,5,6,9,A0,A1,A2,A3};
+#ifdef NOCAN
+  uint8_t iopin[NUM_IO] = {13,5,6,9,A0,A1,A2,A3}; // use pin 13 LED for demo purposes
+#else
+  uint8_t iopin[NUM_IO] = {3,5,6,9,A0,A1,A2,A3};  // use free pins on MERG CAN board
+#endif
 bool iostate[NUM_IO] = {0};
 long next[NUM_IO] = {0};
 
