@@ -26,7 +26,7 @@
 
 //#pragma message("!!! compiling WifiGC.h ")
 
-#define NO_CAN // disallow processor's CAN, this seems to fail on ESP32 compiler
+#define NOCAN // disallow processor's CAN, this seems to fail on ESP32 compiler
 #define BTYPE "WifiGC"
 
 #include "OlcbCan.h"
