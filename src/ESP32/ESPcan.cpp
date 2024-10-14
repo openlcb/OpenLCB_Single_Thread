@@ -1,5 +1,5 @@
 
-#if 0 // This file subsumed into ESPcan.h so we can prevent compilation with NO_CAN
+#if 0 // This file subsumed into ESPcan.h so we can prevent compilation with NOCAN
 
 // OpenLCB Adaptation of FlexCAN library
 // copyright DPH 2017
