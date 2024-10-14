@@ -1,7 +1,7 @@
 #ifndef MCPCAN_H
 #define MCPCAN_H
 
-#ifndef NO_CAN
+#ifndef NOCAN
 
 //#if SUPPORT_MCP2525 == 1
 
