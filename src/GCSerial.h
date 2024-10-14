@@ -8,16 +8,13 @@
 #ifndef GCSERIAL_H
 #define GCSERIAL_H
 
-#define NO_CAN  // disallow processor's CAN, may not work with ESP32 compiler
+#define NOCAN  // disallow processor's CAN, may not work with ESP32 compiler
 
 #pragma message "Direct to Serial selected (GCSerial)"
 #define BTYPE "GCSerial"
 
 #include "OlcbCan.h"
 #include "debugging.h"
-//#include <Arduino.h>
-//#include "Energia.h"
-//#include <Stream.h>
 #include <HardwareSerial.h>
 
 class OlcbCanClass : public OlcbCan {
