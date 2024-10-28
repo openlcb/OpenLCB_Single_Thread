@@ -103,8 +103,10 @@ const char configDefInfo[] PROGMEM =
                 <relation><property>4</property><value>Input with pull-up Inverted</value></relation>
                 <relation><property>5</property><value>Toggle</value></relation>
                 <relation><property>6</property><value>Toggle with pull-up</value></relation>
-                <relation><property>7</property><value>Output</value></relation>
-                <relation><property>8</property><value>Output Inverted</value></relation>
+                <relation><property>7</property><value>Output PA</value></relation>
+                <relation><property>8</property><value>Output PA Inverted</value></relation>
+                <relation><property>9</property><value>Output PB</value></relation>
+                <relation><property>10</property><value>Output PB Inverted</value></relation>
             </map>
         </int>
         <int size='1'>
@@ -202,9 +204,9 @@ uint8_t servopin[NUM_SERVOS] = {A4,A5};
 uint8_t servoActual[NUM_SERVOS] = { 90, 90 };
 uint8_t servoTarget[NUM_SERVOS] = { 90, 90 };
 #ifdef NOCAN
-  uint8_t iopin[NUM_IO] = {13,5,6,9,A0,A1,A2,A3}; // use pin 13 LED for demo purposes with direct cnx
+  uint8_t iopin[NUM_IO] = {13,4,5,6,9,A0,A1,A2}; // use pin 13 LED for demo purposes with direct cnx
 #else
-  uint8_t iopin[NUM_IO] = {3,5,6,9,A0,A1,A2,A3};  // use free pins on MERG CAN board
+  uint8_t iopin[NUM_IO] = {3,4,5,6,9,A0,A1,A2};  // use free pins on MERG CAN board
 #endif
 bool iostate[NUM_IO] = {0};  // state of the iopin
 bool logstate[NUM_IO] = {0}; // logic state for toggle
@@ -249,20 +251,25 @@ void pceCallback(uint16_t index) {
       //servoSet(outputIndex, outputState);
     } else {
       uint8_t n = index-NUM_SERVOS*NUM_POS;
-      PV(n);
-      uint8_t c= n&1;
-      PV(!c);
-      n = n/2;
-      uint8_t type = NODECONFIG.read(EEADDR(io[n].type));
-      PV(type);
-      if(type==7 || type==8) {
-        dP("\ndw!"); PV(iopin[n]); PV(!c);
-        digitalWrite( iopin[n], !c );
-        iostate[n] = !c;
-        uint8_t durn = NODECONFIG.read(EEADDR(io[n].duration));
-        if(!c && durn) next[n] = millis() + 100*durn; // note duration==0 means forever
-        else next[n]=0;
-          PV(millis()); PV(next[n]);
+      uint8_t type = NODECONFIG.read(EEADDR(io[n/2].type));
+      dP("\nevent"); PV(n); PV(type);
+      if(type>=7) {
+        // 7=PA 8=PAI 9=PB 10=PBI
+        bool inv = !(type&1);       // inverted
+        if(n%2) {
+          //dP("\noff"); PV(n); PV(iopin[n/2]); PV(type); PV(inv);
+          digitalWrite( iopin[n/2], inv);
+          next[n/2] = 0;
+        } else {
+          bool pha = type<9;       // phaseA
+          //dP("\ndw!"); PV(iopin[n/2]); PV(pha); PV(inv); 
+          digitalWrite( iopin[n/2], pha ^ inv);
+          iostate[n/2] = 1;
+          uint8_t durn = NODECONFIG.read(EEADDR(io[n/2].duration));
+          if(durn) next[n/2] = millis() + 100*durn; // note duration==0 means forever
+          else next[n/2]=0;
+            PV(millis()); PV(next[n/2]);
+        }
       }
     }
 }
@@ -278,25 +285,9 @@ void servoProcess() {
     if(servoTarget[i] > servoActual[i] ) {
       dP("\nservo>"); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
       servo[i].write(servoActual[i]++);
-      /*
-      if((servoTarget[i]-servoActual[i])<10) 
-        servo[i].write(servoActual[i]++);
-      else {
-        servoActual[i] += 5;
-        servo[i].write(servoActual[i]);
-      }
-      */
     } else if(servoTarget[i] < servoActual[i] ) {
       dP("\nservo<"); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
       servo[i].write(servoActual[i]--);
-      /*
-      if((servoActual[i]-servoTarget[i])<10) 
-        servo[i].write(servoActual[i]--);
-      else {
-        servoActual[i] -= 5;
-        servo[i].write(servoActual[i]);   
-      } 
-      */
     } 
   }
 }
@@ -311,32 +302,34 @@ void produceFromInputs() {
     static unsigned long last = 0;
     if((millis()-last)<(50/NUM_IO)) return;
     last = millis();
-    uint8_t t = NODECONFIG.read(EEADDR(io[c].type));
+    uint8_t type = NODECONFIG.read(EEADDR(io[c].type));
     uint8_t d;
-    if(t==5 || t==6) {
+    if(type==5 || type==6) {
       bool s = digitalRead(iopin[c]);
       if(s != iostate[c]) {
         iostate[c] = s;
         if(!s) {
           logstate[c] ^= 1;
           if(logstate[c]) d = NODECONFIG.read(EEADDR(io[c].duration));
-          else d = NODECONFIG.read(EEADDR(io[c].period));
+          else            d = NODECONFIG.read(EEADDR(io[c].period));
+          //dP("\ninput "); PV(c); PV(type); PV(s); PV(logstate[c]); PV(d);
           if(d==0) OpenLcb.produce( base+c*2 + logstate[c] ); // if no delay send the event
-          else {
-            next[c] = millis() + (uint16_t)d*100;                       // else register the delay
-          }
+          else next[c] = millis() + (uint16_t)d*100;                       // else register the delay
+          //PV(millis()); PV(next[c]);
         }
       }
     }
-    if(t>0 && t<5) {
+    if(type>0 && type<5) {
       bool s = digitalRead(iopin[c]);
       if(s != iostate[c]) {
         iostate[c] = s;
-        if(t&1) d = NODECONFIG.read(EEADDR(io[c].duration)); 
+        if(!iostate[c]) d = NODECONFIG.read(EEADDR(io[c].duration)); 
         else d = NODECONFIG.read(EEADDR(io[c].period));
-        if(d==0) OpenLcb.produce( base+c*2 + (!s^(t&1)) ); // if no delay send event immediately
+        //dP("\ninput "); PV(type); PV(s); PV(d);
+        if(d==0) OpenLcb.produce( base+c*2 + (!s^(type&1)) ); // if no delay send event immediately
         else {
           next[c] = millis() + (uint16_t)d*100;                   // else register the delay
+          //PV(millis()); PV(next[c]);
         }
       }
     }
@@ -352,11 +345,13 @@ void processProducer() {
   if( (now-last) < 50 ) return;
   for(int c=0; c<NUM_IO; c++) {
     if(next[c]==0) continue;
-    if(now<next[c]) continue;
-    uint8_t t = NODECONFIG.read(EEADDR(io[c].type));
+    if(now<next[c]) continue; PV(c);
+    uint8_t type = NODECONFIG.read(EEADDR(io[c].type));
+    if(type>6) return; // do not process outputs
     uint8_t s = iostate[c];
-    if(t<5)  OpenLcb.produce( base+c*2 + (!s^(t&1)) );
-    else OpenLcb.produce( base+c*2 + logstate[c] );
+    //dP("\nproducer"); PV(type); PV(s); PV((!s^(type&1)));
+    if(type<5)  OpenLcb.produce( base+c*2 + (!s^(type&1)) ); // reg inputs
+    else OpenLcb.produce( base+c*2 + logstate[c] );          // toggle inputs
     next[c] = 0;
   }
 }
@@ -407,13 +402,6 @@ void setup()
   servoSetup();
   setupPins();
   dP("\n NUM_EVENT="); dP(NUM_EVENT);
-
-  #if 0
-  // for testing
-  NODECONFIG.write( EEADDR(io[0].type), 5);      // output
-  NODECONFIG.write( EEADDR(io[0].duration), 5 ); // 500ms pulse
-  NODECONFIG.write( EEADDR(io[0].period), 10);   // every second
-  #endif // 0/1
   
 }
 
@@ -457,7 +445,7 @@ void setupPins() {
         pinMode(iopin[i], INPUT_PULLUP); 
         iostate[i] = type&1;
         break;
-      case 7: case 8:
+      case 7: case 8: case 9: case 10:
         pinMode(iopin[i], OUTPUT); 
         iostate[i] = type&1;
         digitalWrite(iopin[i], type&i);
@@ -471,27 +459,32 @@ void setupPins() {
 // called by loop to implement flashing on io pins
 void appProcess() {
   uint8_t base = NUM_SERVOS * NUM_POS;
-  long now = millis();
+  unsigned long now = millis();
   for(int i=0; i<NUM_IO; i++) {
     uint8_t type = NODECONFIG.read(EEADDR(io[i].type));
     if(type >= 7) {
-      if( next[i] && ((now-next[i]) >= 0) ) {
+      if( next[i] && now>next[i] ) {
+        //dP("\nappProcess "); PV(now);
+        bool inv = !(type&1);
+        bool phb = type>8;
         if(iostate[i]) {
-          PV(LOW);
-          digitalWrite(iopin[i], LOW);
+          // phaseB
+          dP("\nphaseB"); PV(phb); PV(inv); PV(iopin[i]); PV(phb ^ inv);
+          digitalWrite(iopin[i], phb ^ inv);
           iostate[i] = 0;
           if( NODECONFIG.read(EEADDR(io[i].period)) > 0 ) 
-            next[i] = now + 100*NODECONFIG.read(EEADDR(io[i].period));
+          next[i] = now + 100*NODECONFIG.read(EEADDR(io[i].period));
           else next[i] = 0;
             PV(next[i]);
         } else {
-          PV(HIGH);
-          digitalWrite(iopin[i], HIGH);
+          // phaseA
+          dP("\nphaseA"); PV(phb); PV(inv); PV(!phb ^ inv);
+          digitalWrite(iopin[i], !phb ^ inv);
           iostate[i] = 1;
           if( NODECONFIG.read(EEADDR(io[i].duration)) > 0 )
             next[i] = now + 100*NODECONFIG.read(EEADDR(io[i].duration));
           else next[i] = 0;
-            PV(next[i]);
+            //PV(next[i]);
         }
       }
     }
