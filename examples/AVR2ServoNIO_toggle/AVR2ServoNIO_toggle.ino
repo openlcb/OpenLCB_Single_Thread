@@ -30,7 +30,7 @@
 
 // Allow direct to JMRI via USB, without CAN controller, comment out for CAN
 //    ( Note: disable debugging if this is chosen. )
-//#include "GCSerial.h"
+#include "GCSerial.h"
 
 #include <Wire.h>
 
@@ -45,7 +45,7 @@
 
 // To Force Reset EEPROM to Factory Defaults set this value t0 1, else 0.
 // Need to do this at least once.
-#define RESET_TO_FACTORY_DEFAULTS 1
+#define RESET_TO_FACTORY_DEFAULTS 0
 
 // User defs
 #define NUM_SERVOS 2
@@ -440,6 +440,7 @@ void setupPins() {
       case 1: case 2: case 5:
         pinMode(iopin[i], INPUT); 
         iostate[i] = type&1;
+        if(type==5) iostate[i] = 0;
         break;
       case 3: case 4: case 6:
         pinMode(iopin[i], INPUT_PULLUP); 
@@ -447,10 +448,9 @@ void setupPins() {
         break;
       case 7: case 8: case 9: case 10:
         pinMode(iopin[i], OUTPUT); 
-        iostate[i] = type&1;
-        digitalWrite(iopin[i], type&i);
+        iostate[i] = !type&1;
+        digitalWrite(iopin[i], !type&1);
         break;
-
     }
   }
 }
