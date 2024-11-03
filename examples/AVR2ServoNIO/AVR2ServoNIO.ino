@@ -305,7 +305,7 @@ void produceFromInputs() {
       bool s = digitalRead(iopin[c]);
       if(s^iostate[c]) {
         iostate[c] = s;
-        OpenLcb.produce(base+c*2+s);
+        OpenLcb.produce(base+c*2 + (!s^(t&1)) );
       }
     }
     if(++c>NUM_IO) c = 0;

@@ -35,6 +35,6 @@
  * It is a good idea to use bits from the port that carries MOSI, MISO, SCK.
  */
 #define	MCP2515_CS				B,2   // B,2 for LEDuino; B,1 for Railroad Shield
-#define	MCP2515_INT				D,3
+#define	MCP2515_INT				D,2
 
 #endif	// CONFIG_H
