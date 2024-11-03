@@ -1,4 +1,4 @@
-# AVR 2-Servo N-IO Example, with toggle
+# AVR 2-Servo N-IO Example, with toggle and ACan class
 
 This sketch was written for a Nano or other ATMega328.  
 However, any AVR, with an appropriate  MCP2515 based CAN board, can be used.  
@@ -22,6 +22,9 @@ It demonstrates:
 * Initialization routine to initialize the EEPROM, see: **userInitAll()**
 * Eventid processing to set a servo's position, see: **pceCallback(unsigned int index)**
 * Sampling of inputs and producing events.
+
+This sketch is configured to use the ACAN2515 library and the ACan class.
+This lets one set teh clock frequency of the attached MCP2515, and also its CS and INT pins.  
 
 This sketch will run on the AVR Mega, ESP32, Pico, and Tiva processor boards.  These 
 all have more memory and the sketches capabilities could be extended.  
