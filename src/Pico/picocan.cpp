@@ -1,4 +1,4 @@
-
+#if 0
 // OpenLCB Adaptation of can2040 library
 // copyright DPH 2022
 
@@ -150,3 +150,5 @@ uint8_t OlcbCanClass::write() {
 }
 #endif // NOCAN
 #endif // TARGET_RP2040
+
+#endif // 0/1
