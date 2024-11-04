@@ -30,13 +30,13 @@
 
 // Allow direct to JMRI via USB, without CAN controller, comment out for CAN
 //    ( Note: disable debugging if this is chosen. )
-//#include "GCSerial.h"
+#include "GCSerial.h"
 
 // New ACan for MCP2515
 #define ACAN_FREQ 8000000UL  // set for crystal freq feeding the MCP2515 chip
 #define ACAN_CS_PIN 10       // set for the MCP2515 chip select pin, usually 10 on Nano
 #define ACAN_INT_PIN 2       // set for the MCP2515 interrupt pin, usually 2 or 3
-#include "ACan.h"            // uses local ACan class, comment out if using GCSerial
+//#include "ACan.h"            // uses local ACan class, comment out if using GCSerial
 
 #include <Wire.h>
 
@@ -251,6 +251,7 @@ void pceCallback(uint16_t index) {
       uint8_t outputIndex = index / 3;
       uint8_t outputState = index % 3;
       NODECONFIG.write( EEADDR(curpos[outputIndex]), outputState);
+      servo[outputIndex].attach(servopin[outputIndex]);
       servoTarget[outputIndex] = NODECONFIG.read( EEADDR(servos[outputIndex].pos[outputState].angle) );
     } else {
       uint8_t n = index-NUM_SERVOS*NUM_POS;
@@ -290,7 +291,7 @@ void servoProcess() {
     } else if(servoTarget[i] < servoActual[i] ) {
       dP("\nservo<"); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
       servo[i].write(servoActual[i]--);
-    } 
+    } else if(servo[i].attached()) servo[i].detach(); 
   }
 }
 
@@ -381,6 +382,7 @@ void servoSetup() {
   servodelay = NODECONFIG.read( EEADDR(servodelay));
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     uint8_t cpos = NODECONFIG.read( EEADDR(curpos[i]) );
+    servo[i].attach(servopin[i]);
     servoTarget[i] = NODECONFIG.read( EEADDR(servos[i].pos[cpos].angle) );
   }
 }
@@ -397,8 +399,8 @@ void setup()
   NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
   // attach and put servos to last known position
-  for(uint8_t i = 0; i < NUM_SERVOS; i++) 
-    servo[i].attach(servopin[i]);
+  //for(uint8_t i = 0; i < NUM_SERVOS; i++) 
+  //  servo[i].attach(servopin[i]);
   servoSetup();
   setupPins();
   dP("\n NUM_EVENT="); dP(NUM_EVENT);
