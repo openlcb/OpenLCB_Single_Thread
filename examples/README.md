@@ -2,7 +2,23 @@
 The provided examples will give some ideas of how to accomplish sample projects.  They can form the basis of, or  be adapted to, a new Application, or just used for inspiration.  <br>
 
 - **AVR-8Servo**<br>
-    Implements an eight servo node. This example uses the Adafruit_PWMServoDriver.h and demonstrates how one might implement a node using an external library.      
+    Implements an eight servo node. This example uses the Adafruit_PWMServoDriver.h and demonstrates how one might implement a node using an external library.
+
+- **AVR2ServoNIO**<br>
+    Implements 2 servos and 8 i/o
+
+- **AVR2ServoNIO-Toggle**<br>
+    Implements 2 servos and 8 i/o
+    Implements toggle functionality on inputs
+    Implements delays on producer events
+
+- **AVR2ServoNIOTACan**<br>
+    Implements MCP2515 connectivity with the ACNA2515 library, and allows setting of the
+      MCP2515 clock frequancy, chip select pin, and interrupt pin. 
+    Implements 2 servos and 8 i/o
+    Implemetns toggle inputs
+    Implements delays on producer events
+    Implements detach servo at teh end of a movement    
 
 - **OlcbBlankNode**<br>
     The example shows the minimal node code without any additional logic.  
