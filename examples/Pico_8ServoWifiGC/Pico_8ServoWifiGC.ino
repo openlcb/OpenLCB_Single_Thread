@@ -36,7 +36,7 @@
 //   (2) Insert your Wifi network credentials below.  
 //   (3) Comment out the GCSerial.h line
 //   (4) You can uncomment the DEBUG line if your want.  
-//   (5) Uncomment the following 4 lines  
+//   (5) Uncomment the following 5 lines  
 const char* ssid     = "YourNetwork";     // <-- fill in with your network name
 const char* password = "YourPassword";         // <-- fill in with youy network password
 const char* openLCB_can  = "openlcb-can";  // <-- change this if necessary
@@ -343,9 +343,9 @@ uint8_t servopin[] = { 2,3,4,5,6,7,8,10 }; // eight servo limit on Pico, pins 0&
 void setup()
 {   
   #ifdef DEBUG
+    uint32_t stimer = millis();
     Serial.begin(115200);
-    while(!Serial);
-    delay(1000);
+    while (!Serial && (millis() - stimer < 5000));   // wait for 5 secs for USB/serial connection to be established
     dP("\n Pico-8ServoWifiGC");
     delay(1000);
   #endif  
