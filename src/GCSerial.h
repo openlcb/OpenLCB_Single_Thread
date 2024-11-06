@@ -5,6 +5,41 @@
 //  Created by Dave Harris on 2024-09-13.
 //
 
+/*
+2.7.2 Normal CAN Message in GRIDCONNECT format
+  A normal CAN message consists of the type (11-bit or 29-bit), identifier, length, and data bytes and is
+  encoded as follows:
+  Normal CAN Message Syntax
+     : <S | X> <IDENTIFIER> <N> <DATA-0> <DATA-1> ... <DATA-7> ;
+  - The first character,‘:’, is for synchronization and allows the CAN USB-232 parser to detect the beginning of
+    a command string.
+  - The following character is either ‘S’ for standard 11-bit, or ‘X’ for extended 29-bit identifier type.
+  - The ‘IDENTIFIER’ field consists of from one to eight hexadecimal digits, indicating the value of the
+    identifier. Note that if a 29-bit value is entered and an 11-bit value was specified, the command will be
+    treated as invalid and ignored.
+  - The character ‘N’ indicates that the message is a normal (non-RTR) transmission.
+  - Each ‘DATA-n’ field is a pair of hexadecimal digits defining the data byte to be sent. If no data is to be sent
+    (length = zero), then the data bytes are omitted.
+  - Each data byte specified must be a hexadecimal pair in order to eliminate ambiguity.
+  - The terminating character ‘;’ signals the end of the message.
+RTR CAN Message
+  A RTR CAN message consists of the type (11-bit or 29-bit), identifier, length, does not have any data bytes,
+  and is encoded as follows:
+  RTR CAN Message Syntax
+     : <S | X> <IDENTIFIER> <R> <LENGTH> ;
+  - The first character ,‘:’, is for synchronization and allows the CAN USB-232 parser to detect the beginning
+    of a command string.
+  - The following character is either ‘S’ for standard 11-bit, or ‘X’ for extended 29-bit identifier type.
+  - The ‘IDENTIFIER’ field consists of from one to eight hexadecimal digits, indicating the value of the
+    identifier. Note that if a 29-bit value is entered and an 11-bit value was specified, the command will be
+    treated as invalid and ignored.
+  - The character ‘R’ indicates that the message is a RTR transmission.
+  - The ‘LENGTH’ field is a single ASCII decimal character from ‘0’ to ‘8’ that specifies the length of the
+    message.
+  - The terminating character ‘;’ signals the end of the message.
+*/
+
+
 #ifndef GCSERIAL_H
 #define GCSERIAL_H
 
