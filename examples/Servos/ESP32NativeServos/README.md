@@ -57,8 +57,7 @@ the "More/Trigger" button.  This sends the associated eventid to the bus, and sh
 
 Here is a servo connected to a M5 Atom, pin 25, 5V and ground: 
 
-
-![AtomwithServo](https://github.com/user-attachments/assets/9bd35ec8-53d9-4f45-a1cd-918e63c82d86)
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/9bd35ec8-53d9-4f45-a1cd-918e63c82d86">
 
 
 
