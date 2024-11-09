@@ -9,3 +9,6 @@ It also demonstrates:
 - Multiple easing function, selectable in the CDI
 - A user definited easing function
 - Servo endpoint adjustment in the CDI
+
+<img src="https://github.com/user-attachments/assets/a1c13062-c06e-4efd-82f5-0814fe9367bc" alt="M5Stack 8Servo Unit" width="300">
+
