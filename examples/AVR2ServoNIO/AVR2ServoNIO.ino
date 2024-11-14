@@ -1,33 +1,42 @@
-
 //==============================================================
-// AVR 2Servos NIO
+// AVR 2Servos NIO using ACAN
 //
 // Coprright 2024 David P Harris
 // derived from work by Alex Shepherd and David Harris
-// 
+// Updated 2024.11.14
 //==============================================================
 // - 2 Servo channels, each wirh 
 //     - three settable positions
 //     - three set position events 
 // - N input/output channels:
-//     - type: None, 
-//             Input, Input inverted, 
-//             Input with pull-up, Input with pull-up inverted, 
-//             Output, Output inverted.
-//     - duration: how long the ouput is set, from 10ms - 2550ms, 9 means forever
-//     - period: the period until a repeat pulse
-//     - an On-event and an Off-event, produced or consumed depending on the channel type.
+//     - type: 0=None, 
+//             1=Input, 2=Input inverted, 
+//             3=Input with pull-up, 4=Input with pull-up inverted, 
+//             5=Input toggle, 6=Toggle with pull-up
+//             7=Output, 8=Output inverted.
+//     - for Outputs: 
+//       - Events are consumed
+//       - On-duration: how long the output is set, from 10ms - 2550ms, 0 means forever
+//       - Off-period: the period until a repeat pulse, 0 means no repeat
+//     - for Inputs:
+//       - Events are produced
+//       - On-delay: delay before on-event is sent
+//       - Off-delay: the period before the off-event is sent
 //
 //==============================================================
 
 // Debugging -- uncomment to activate debugging statements:
-    // dP(x) prints x, dPH(x) prints x in hex,
-    //  dPS(string,x) prints string and x
-#define DEBUG Serial
+//#define DEBUG Serial
 
 // Allow direct to JMRI via USB, without CAN controller, comment out for CAN
-//   Note: disable debugging if this is chosen
+//    ( Note: disable debugging if this is chosen. )
 //#include "GCSerial.h"
+
+// New ACan for MCP2515
+#define ACAN_FREQ 8000000UL  // set for crystal freq feeding the MCP2515 chip
+#define ACAN_CS_PIN 10       // set for the MCP2515 chip select pin, usually 10 on Nano
+#define ACAN_INT_PIN 2       // set for the MCP2515 interrupt pin, usually 2 or 3
+#include "ACan.h"            // uses local ACan class, comment out if using GCSerial
 
 #include <Wire.h>
 
@@ -38,7 +47,7 @@
 #define SWVERSION "0.1"     // Software version
 
 // To set a new nodeid edit the next line
-#define NODE_ADDRESS  5,1,13,0,0,0x23
+#define NODE_ADDRESS  2,1,13,0,0,0x78
 
 // To Force Reset EEPROM to Factory Defaults set this value t0 1, else 0.
 // Need to do this at least once.
@@ -56,7 +65,6 @@
 #include "processor.h"            // auto-selects the processor type, EEPROM lib etc.
 #include "OpenLCBHeader.h"        // System house-keeping.
 
-
 // CDI (Configuration Description Information) in xml, must match MemStruct
 // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
 extern "C" {
@@ -69,8 +77,9 @@ const char configDefInfo[] PROGMEM =
     <group>
         <name>Turnout Servo Configuration</name>
         <int size='1'>
-          <name>Speed 1-255 (delay between steps)</name>
-          <hints><slider tickSpacing='50' immediate='yes'> </slider></hints>
+          <name>Speed 5-50 (delay between steps)</name>
+          <min>5</min><max>50</max>
+          <hints><slider tickSpacing='15' immediate='yes'> </slider></hints>
         </int>
     </group>
     <group replication=')" N(NUM_SERVOS) R"('>
@@ -99,19 +108,24 @@ const char configDefInfo[] PROGMEM =
                 <relation><property>2</property><value>Input Inverted</value></relation> 
                 <relation><property>3</property><value>Input with pull-up</value></relation>
                 <relation><property>4</property><value>Input with pull-up Inverted</value></relation>
-                <relation><property>5</property><value>Output</value></relation>
-                <relation><property>6</property><value>Output Inverted</value></relation>
+                <relation><property>5</property><value>Toggle</value></relation>
+                <relation><property>6</property><value>Toggle with pull-up</value></relation>
+                <relation><property>7</property><value>Output PA</value></relation>
+                <relation><property>8</property><value>Output PA Inverted</value></relation>
+                <relation><property>9</property><value>Output PB</value></relation>
+                <relation><property>10</property><value>Output PB Inverted</value></relation>
             </map>
         </int>
         <int size='1'>
-            <name>On-Duration 1-255 = 100ms-25.5s, 0=steady-state</name>
+            <name>On-Duration/On-delay 1-255 = 100ms-25.5s, 0=steady-state</name>
             <hints><slider tickSpacing='50' immediate='yes'> </slider></hints>
-
         </int>
+        <int offset="-1" default="0" size='1'><name>Value</name></int>
         <int size='1'>
-            <name>Off-Period 1-255 = 100ms-25.5s, 0=No repeat</name>
+            <name>Off-Period/Off-delay 1-255 = 100ms-25.5s, 0=No repeat</name>
             <hints><slider tickSpacing='50' immediate='yes'> </slider></hints>
         </int>
+        <int offset="-1" default="0" size='1'><name>Value</name></int>
         <eventid><name>On-Event</name></eventid>
         <eventid><name>Off-Event</name></eventid>
     </group>
@@ -123,7 +137,6 @@ const char configDefInfo[] PROGMEM =
 //   Memory structure of EEPROM, must match CDI above
     typedef struct {
           EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
-          
           char nodeName[20];  // optional node-name, used by ACDI
           char nodeDesc[24];  // optional node-description, used by ACDI
       // ===== Enter User definitions below =====
@@ -174,7 +187,7 @@ uint8_t protocolIdentValue[6] = {   //0xD7,0x58,0x00,0,0,0};
         0, 0, 0, 0                                                                                           // remaining 4 bytes
     };
 
-#define OLCB_NO_BLUE_GOLD
+#define OLCB_NO_BLUE_GOLD  // blue/gold not used in this sketch
 #ifndef OLCB_NO_BLUE_GOLD
     #define BLUE 40  // built-in blue LED
     #define GOLD 39  // built-in green LED
@@ -189,27 +202,31 @@ uint8_t protocolIdentValue[6] = {   //0xD7,0x58,0x00,0,0,0};
     ButtonLed* buttons[8] = { &pA,&pA,&pB,&pB,&pC,&pC,&pD,&pD };
 #endif // OLCB_NO_BLUE_GOLD
 
-//Adafruit_PWMServoDriver servoPWM = Adafruit_PWMServoDriver();
 #include <Servo.h>
 Servo servo[2];
 uint8_t servodelay;
 uint8_t servopin[NUM_SERVOS] = {A4,A5};
 uint8_t servoActual[NUM_SERVOS] = { 90, 90 };
 uint8_t servoTarget[NUM_SERVOS] = { 90, 90 };
-uint8_t iopin[NUM_IO] = {4,5,6,7,A0,A1,A2,A3};
-bool iostate[NUM_IO] = {0};
-long next[NUM_IO] = {0};
+#ifdef NOCAN
+  uint8_t iopin[NUM_IO] = {13,4,5,6,9,A0,A1,A2}; // use pin 13 LED for demo purposes with direct cnx
+#else
+  uint8_t iopin[NUM_IO] = {3,4,5,6,9,A0,A1,A2};  // use free pins on MERG CAN board
+#endif
+bool iostate[NUM_IO] = {0};  // state of the iopin
+bool logstate[NUM_IO] = {0}; // logic state for toggle
+unsigned long next[NUM_IO] = {0};
 
-// This is called to initialize the EEPROM on a new node
+// This is called to initialize the EEPROM to Factory Reset
 void userInitAll()
 { 
-  NODECONFIG.put(EEADDR(nodeName), ESTRING("AVR Nano"));
-  NODECONFIG.put(EEADDR(nodeDesc), ESTRING("2Servos8IO_NoCan"));
-  
+  NODECONFIG.put(EEADDR(nodeName), ESTRING("AVR"));
+  NODECONFIG.put(EEADDR(nodeDesc), ESTRING("2ServosNIO"));
   NODECONFIG.put(EEADDR(servodelay), 50);
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     NODECONFIG.put(EEADDR(servos[i].desc), ESTRING(""));
     for(int p=0; p<NUM_POS; p++) {
+      //NODECONFIG.put(EEADDR(servos[i].pos[p].angle), (uint8_t)((p*180)/(NUM_POS-1)));
       NODECONFIG.put(EEADDR(servos[i].pos[p].angle), 90);
     }
   }
@@ -223,7 +240,7 @@ void userInitAll()
 }
 
 // ===== Process Consumer-eventIDs =====
-void pceCallback(unsigned int index) {
+void pceCallback(uint16_t index) {
 // Invoked when an event is consumed; drive pins as needed
 // from index of all events.
 // Sample code uses inverse of low bit of pattern to drive pin all on or all off.
@@ -235,80 +252,114 @@ void pceCallback(unsigned int index) {
       uint8_t outputIndex = index / 3;
       uint8_t outputState = index % 3;
       NODECONFIG.write( EEADDR(curpos[outputIndex]), outputState);
+      servo[outputIndex].attach(servopin[outputIndex]);
       servoTarget[outputIndex] = NODECONFIG.read( EEADDR(servos[outputIndex].pos[outputState].angle) );
-      //servoSet(outputIndex, outputState);
     } else {
       uint8_t n = index-NUM_SERVOS*NUM_POS;
-      PV(n);
-      uint8_t c= n&1;
-      PV(!c);
-      n = n/2;
-      uint8_t type = NODECONFIG.read(EEADDR(io[n].type));
-      PV(type);
-      if(type==5 || type==6) {
-        dP("\ndw!"); PV(iopin[n]); PV(!c);
-        digitalWrite( iopin[n], !c );
-        iostate[n] = !c;
-        uint8_t durn = NODECONFIG.read(EEADDR(io[n].duration));
-        if(!c && durn) next[n] = millis() + 100*durn; // note duration==0 means forever
-        else next[n]=0;
-          PV(millis()); PV(next[n]);
+      uint8_t type = NODECONFIG.read(EEADDR(io[n/2].type));
+      dP("\nevent"); PV(n); PV(type);
+      if(type>=7) {
+        // 7=PA 8=PAI 9=PB 10=PBI
+        bool inv = !(type&1);       // inverted
+        if(n%2) {
+          //dP("\noff"); PV(n); PV(iopin[n/2]); PV(type); PV(inv);
+          digitalWrite( iopin[n/2], inv);
+          next[n/2] = 0;
+        } else {
+          bool pha = type<9;       // phaseA
+          //dP("\ndw!"); PV(iopin[n/2]); PV(pha); PV(inv); 
+          digitalWrite( iopin[n/2], pha ^ inv);
+          iostate[n/2] = 1;
+          uint8_t durn = NODECONFIG.read(EEADDR(io[n/2].duration));
+          if(durn) next[n/2] = millis() + 100*durn; // note duration==0 means forever
+          else next[n/2]=0;
+            PV(millis()); PV(next[n/2]);
+        }
       }
     }
 }
 
 // === Process servos ===
+// This is called from loop to service the servos
 void servoProcess() {
   static long last = 0;
-  //if( (millis()-last) < 200 ) return;
   if( (millis()-last) < servodelay ) return;
   last = millis();
   for(int i=0; i<NUM_SERVOS; i++) {
     if(servoTarget[i] > servoActual[i] ) {
       dP("\nservo>"); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
+      if(!servo[i].attached()) servo[i].attach(servopin[i]);
       servo[i].write(servoActual[i]++);
-      /*
-      if((servoTarget[i]-servoActual[i])<10) 
-        servo[i].write(servoActual[i]++);
-      else {
-        servoActual[i] += 5;
-        servo[i].write(servoActual[i]);
-      }
-      */
     } else if(servoTarget[i] < servoActual[i] ) {
-      dP("\nservo<"); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
+      dP("\nservo<"); PV(servodelay); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
+      if(!servo[i].attached()) servo[i].attach(servopin[i]); 
       servo[i].write(servoActual[i]--);
-      /*
-      if((servoActual[i]-servoTarget[i])<10) 
-        servo[i].write(servoActual[i]--);
-      else {
-        servoActual[i] -= 5;
-        servo[i].write(servoActual[i]);   
-      } 
-      */
-    } 
+    } else if(servo[i].attached()) servo[i].detach(); 
   }
 }
 
 // ==== Process Inputs ====
 void produceFromInputs() {
-// called from loop(), this looks at changes in input pins and
-// and decides which events to fire
-// with pce.produce(i);
-const uint8_t base = NUM_SERVOS*NUM_POS;
-static uint8_t c = 0;
-static unsigned long last = 0;
-if((millis()-last)<(50/NUM_IO)) return;
-last = millis();
-uint8_t t = NODECONFIG.read(EEADDR(io[c].type));
-if(t>0 && t<5) {
-bool s = digitalRead(iopin[c]);
-if(s != iostate[c]) {
-iostate[c] = s;
-OpenLcb.produce(base+c*2 + (!s^(t&1)) );
+    // called from loop(), this looks at changes in input pins and
+    // and decides which events to fire
+    // with pce.produce(i);
+    const uint8_t base = NUM_SERVOS*NUM_POS;
+    static uint8_t c = 0;
+    static unsigned long last = 0;
+    if((millis()-last)<(50/NUM_IO)) return;
+    last = millis();
+    uint8_t type = NODECONFIG.read(EEADDR(io[c].type));
+    uint8_t d;
+    if(type==5 || type==6) {
+      bool s = digitalRead(iopin[c]);
+      if(s != iostate[c]) {
+        iostate[c] = s;
+        if(!s) {
+          logstate[c] ^= 1;
+          if(logstate[c]) d = NODECONFIG.read(EEADDR(io[c].duration));
+          else            d = NODECONFIG.read(EEADDR(io[c].period));
+          //dP("\ninput "); PV(c); PV(type); PV(s); PV(logstate[c]); PV(d);
+          if(d==0) OpenLcb.produce( base+c*2 + logstate[c] ); // if no delay send the event
+          else next[c] = millis() + (uint16_t)d*100;          // else register the delay
+          //PV(millis()); PV(next[c]);
+        }
+      }
+    }
+    if(type>0 && type<5) {
+      bool s = digitalRead(iopin[c]);
+      if(s != iostate[c]) {
+        iostate[c] = s;
+        if(!iostate[c]) d = NODECONFIG.read(EEADDR(io[c].duration)); 
+        else d = NODECONFIG.read(EEADDR(io[c].period));
+        //dP("\ninput "); PV(type); PV(s); PV(d);
+        if(d==0) OpenLcb.produce( base+c*2 + (!s^(type&1)) ); // if no delay send event immediately
+        else {
+          next[c] = millis() + (uint16_t)d*100;                   // else register the delay
+          //PV(millis()); PV(next[c]);
+        }
+      }
+    }
+    if(++c>=NUM_IO) c = 0;
 }
-}
-if(++c>NUM_IO) c = 0;
+
+// Process pending producer events
+// Called from loop to service any pending event waiting on a delay
+void processProducer() {
+  const uint8_t base = NUM_SERVOS*NUM_POS;
+  static unsigned long last = 0;
+  unsigned long now = millis();
+  if( (now-last) < 50 ) return;
+  for(int c=0; c<NUM_IO; c++) {
+    if(next[c]==0) continue;
+    if(now<next[c]) continue; PV(c);
+    uint8_t type = NODECONFIG.read(EEADDR(io[c].type));
+    if(type>6) return; // do not process outputs
+    uint8_t s = iostate[c];
+    //dP("\nproducer"); PV(type); PV(s); PV((!s^(type&1)));
+    if(type<5)  OpenLcb.produce( base+c*2 + (!s^(type&1)) ); // reg inputs
+    else OpenLcb.produce( base+c*2 + logstate[c] );          // toggle inputs
+    next[c] = 0;
+  }
 }
 
 void userSoftReset() {}
@@ -328,12 +379,77 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
   servoSetup();
 }
 
-// reinitialize servos to their current positions
+// Reinitialize servos to their current positions
+// Called from setup() and after every configuration change
 void servoSetup() {
   servodelay = NODECONFIG.read( EEADDR(servodelay));
+  PV(servodelay);
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     uint8_t cpos = NODECONFIG.read( EEADDR(curpos[i]) );
+  //  servo[i].attach(servopin[i]);
     servoTarget[i] = NODECONFIG.read( EEADDR(servos[i].pos[cpos].angle) );
+  }
+}
+
+// Setup the io pins
+// called by setup() and after a configuration change
+void setupPins() {
+  dP("\nPins: ");
+  for(uint8_t i=0; i<NUM_IO; i++) {
+    uint8_t type = NODECONFIG.read( EEADDR(io[i].type));
+    dP(iopin[i]); dP(":"); dP(type); dP(", ");
+    switch (type) {
+      case 1: case 2: case 5:
+        pinMode(iopin[i], INPUT); 
+        iostate[i] = type&1;
+        if(type==5) iostate[i] = 0;
+        break;
+      case 3: case 4: case 6:
+        pinMode(iopin[i], INPUT_PULLUP); 
+        iostate[i] = type&1;
+        break;
+      case 7: case 8: case 9: case 10:
+        pinMode(iopin[i], OUTPUT); 
+        iostate[i] = !type&1;
+        digitalWrite(iopin[i], !type&1);
+        break;
+    }
+  }
+}
+
+// Process IO pins
+// called by loop to implement flashing on io pins
+void appProcess() {
+  uint8_t base = NUM_SERVOS * NUM_POS;
+  unsigned long now = millis();
+  for(int i=0; i<NUM_IO; i++) {
+    uint8_t type = NODECONFIG.read(EEADDR(io[i].type));
+    if(type >= 7) {
+      if( next[i] && now>next[i] ) {
+        //dP("\nappProcess "); PV(now);
+        bool inv = !(type&1);
+        bool phb = type>8;
+        if(iostate[i]) {
+          // phaseB
+          dP("\nphaseB"); PV(phb); PV(inv); PV(iopin[i]); PV(phb ^ inv);
+          digitalWrite(iopin[i], phb ^ inv);
+          iostate[i] = 0;
+          if( NODECONFIG.read(EEADDR(io[i].period)) > 0 ) 
+          next[i] = now + 100*NODECONFIG.read(EEADDR(io[i].period));
+          else next[i] = 0;
+            PV(next[i]);
+        } else {
+          // phaseA
+          dP("\nphaseA"); PV(phb); PV(inv); PV(!phb ^ inv);
+          digitalWrite(iopin[i], !phb ^ inv);
+          iostate[i] = 1;
+          if( NODECONFIG.read(EEADDR(io[i].duration)) > 0 )
+            next[i] = now + 100*NODECONFIG.read(EEADDR(io[i].duration));
+          else next[i] = 0;
+            //PV(next[i]);
+        }
+      }
+    }
   }
 }
 
@@ -341,34 +457,24 @@ void servoSetup() {
 void setup()
 {
   #ifdef DEBUG
-    delay(1000);
-    Serial.begin(115200);
-    delay(1000);
-    dP("\n AVR-2Servo8IO");
+    Serial.begin(115200); while(!Serial);
+    delay(500);
+    dP("\n AVR-2Servo14IO");
   #endif
 
   NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
-
   // attach and put servos to last known position
-  for(uint8_t i = 0; i < NUM_SERVOS; i++) 
-    servo[i].attach(servopin[i]);
+  //for(uint8_t i = 0; i < NUM_SERVOS; i++) 
+  //  servo[i].attach(servopin[i]);
   servoSetup();
   setupPins();
   dP("\n NUM_EVENT="); dP(NUM_EVENT);
-
-  // for testing
-  //NODECONFIG.write( EEADDR(io[0].type), 5);      // output
-  //NODECONFIG.write( EEADDR(io[0].duration), 5 ); // 500ms pulse
-  //NODECONFIG.write( EEADDR(io[0].period), 10);   // every second
-  
 }
 
 // ==== Loop ==========================
 void loop() {
-  
   bool activity = Olcb_process();
-  
   #ifndef OLCB_NO_BLUE_GOLD
     if (activity) {
       blue.blink(0x1); // blink blue to show that the frame was received
@@ -381,61 +487,9 @@ void loop() {
     gold.process();
     blue.process();
   #endif // OLCB_NO_BLUE_GOLD
-  
-  produceFromInputs();
-  appProcess();
-  servoProcess();
-
-}
-void setupPins() {
-  for(uint8_t i=0; i<NUM_IO; i++) {
-    uint8_t type = NODECONFIG.read( EEADDR(io[i].type));
-    switch (type) {
-      case 1: case 2: 
-        pinMode(iopin[i], INPUT); 
-        iostate[i] = type&1;
-        break;
-      case 3: case 4:
-        pinMode(iopin[i], INPUT_PULLUP); 
-        iostate[i] = type&1;
-        break;
-      case 5: case 6:
-        pinMode(iopin[i], OUTPUT); 
-        iostate[i] = type&1;
-        digitalWrite(iopin[i], type&i);
-        break;
-
-    }
-  }
+  produceFromInputs();  // scans inputs and generates events on change
+  appProcess();         // processes io pins, eg flashing
+  servoProcess();       // processes servos, moves them to their target
+  processProducer();    // processes delayed producer events from inputs
 }
 
-void appProcess() {
-  uint8_t base = NUM_SERVOS * NUM_POS;
-  long now = millis();
-  for(int i=0; i<NUM_IO; i++) {
-    uint8_t type = NODECONFIG.read(EEADDR(io[i].type));
-    if(type >= 5) {
-      if( next[i] && ((now-next[i]) >= 0) ) {
-        dP("\nprocess:"); PV(i); PV(type); PV(now); PV(next[i]); PV(now-next[i]);
-        dP(" dw "); PV(iostate[i]);
-        if(iostate[i]) {
-          PV(LOW);
-          digitalWrite(iopin[i], LOW);
-          iostate[i] = 0;
-          if( NODECONFIG.read(EEADDR(io[i].period)) > 0 ) 
-            next[i] = now + 100*NODECONFIG.read(EEADDR(io[i].period));
-          else next[i] = 0;
-            PV(next[i]);
-        } else {
-          PV(HIGH);
-          digitalWrite(iopin[i], HIGH);
-          iostate[i] = 1;
-          if( NODECONFIG.read(EEADDR(io[i].duration)) > 0 )
-            next[i] = now + 100*NODECONFIG.read(EEADDR(io[i].duration));
-          else next[i] = 0;
-            PV(next[i]);
-        }
-      }
-    }
-  }
-}
