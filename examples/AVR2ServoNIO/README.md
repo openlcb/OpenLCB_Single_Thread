@@ -1,4 +1,4 @@
-# AVR 2-Servo N-IO Example
+# AVR 2-Servo N-IO Example, with toggle and ACan class
 
 This sketch was written for a Nano or other ATMega328.  
 However, any AVR, with an appropriate  MCP2515 based CAN board, can be used.  
@@ -11,7 +11,9 @@ This sketch implements:
    Positions cabe set to angles 0-180
    The 0 and 180 end-points of the servos can be configured.
 * N i/o channels, each of which can be an input or an output,
-   If an output it may be solid, pulse or flashing. 
+   If an output it may be solid, pulse or flashing, and consumes an on- and 0ff-event. 
+   If an input it produces an on- and off-event, which may each be delayed.  The 
+     inputs can be with or with pullups, inverted or not, or can be toggle. 
 
 It demonstrates: 
 * CDI
@@ -21,7 +23,12 @@ It demonstrates:
 * Eventid processing to set a servo's position, see: **pceCallback(unsigned int index)**
 * Sampling of inputs and producing events.
 
+This sketch is configured to use the ACAN2515 library and the ACan class.
+This lets one set teh clock frequency of the attached MCP2515, and also its CS and INT pins.  
+
 This sketch will run on the AVR Mega, ESP32, Pico, and Tiva processor boards.  These 
 all have more memory and the sketches capabilities could be extended.  
+
+Pin usage will need to be adapted to the board. Sample pin usage is included for the Nano. 
 
 
