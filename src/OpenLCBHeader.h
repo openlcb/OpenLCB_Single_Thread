@@ -49,7 +49,7 @@ bool eepromDirty;
         <group>\
             <name>Node ID</name>\
             <description>User-provided description of the node</description>\
-            <hints><visibility hideable="yes" hidden="yes" /></hints>\
+            <hints><visibility hideable='yes' hidden='yes' /></hints>\
             <string size='20'><name>Node Name</name></string>\
             <string size='24'><name>Node Description</name></string>\
         </group>"
