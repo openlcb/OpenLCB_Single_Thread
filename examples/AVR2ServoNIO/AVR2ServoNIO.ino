@@ -5,7 +5,7 @@
 // derived from work by Alex Shepherd and David Harris
 // Updated 2024.11.14
 //==============================================================
-// - 2 Servo channels, each wirh 
+// - 2 Servo channels, each with 
 //     - three settable positions
 //     - three set position events 
 // - N input/output channels:
@@ -26,7 +26,7 @@
 //==============================================================
 
 // Debugging -- uncomment to activate debugging statements:
-//#define DEBUG Serial
+#define DEBUG Serial
 
 // Allow direct to JMRI via USB, without CAN controller, comment out for CAN
 //    ( Note: disable debugging if this is chosen. )
@@ -34,9 +34,9 @@
 
 // New ACan for MCP2515
 #define ACAN_FREQ 8000000UL  // set for crystal freq feeding the MCP2515 chip
-#define ACAN_CS_PIN 10       // set for the MCP2515 chip select pin, usually 10 on Nano
-#define ACAN_INT_PIN 2       // set for the MCP2515 interrupt pin, usually 2 or 3
-#include "ACan.h"            // uses local ACan class, comment out if using GCSerial
+#define ACAN_CS_PIN 10        // set for the MCP2515 chip select pin, usually 10 on Nano
+#define ACAN_INT_PIN 2        // set for the MCP2515 interrupt pin, usually 2 or 3
+#include "ACan.h"             // uses local ACan class, comment out if using GCSerial
 
 #include <Wire.h>
 
@@ -51,7 +51,7 @@
 
 // To Force Reset EEPROM to Factory Defaults set this value t0 1, else 0.
 // Need to do this at least once.
-#define RESET_TO_FACTORY_DEFAULTS 1
+#define RESET_TO_FACTORY_DEFAULTS 0
 
 // User defs
 #define NUM_SERVOS 2
@@ -87,9 +87,10 @@ const char configDefInfo[] PROGMEM =
         <repname>Servo</repname>
         <string size='8'><name>Description</name></string>
         <group replication=')" N(NUM_POS) R"('>
+        <name>  Closed     Midpoint   Thrown</name>
             <repname>Position</repname>
             <eventid><name>EventID</name></eventid>
-            <int size='1'>
+            <int size='2'>
                 <name>Servo Position in Degrees</name>
                 <min>0</min><max>180</max>
                 <hints><slider tickSpacing='45' immediate='yes'> </slider></hints>
@@ -145,7 +146,7 @@ const char configDefInfo[] PROGMEM =
             char desc[8];        // description of this Servo Turnout Driver
             struct {
               EventID eid;       // consumer eventID
-              uint8_t angle;       // position
+              uint16_t angle;       // position
             } pos[NUM_POS];
           } servos[NUM_SERVOS];
           struct {
@@ -226,8 +227,8 @@ void userInitAll()
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     NODECONFIG.put(EEADDR(servos[i].desc), ESTRING(""));
     for(int p=0; p<NUM_POS; p++) {
-      //NODECONFIG.put(EEADDR(servos[i].pos[p].angle), (uint8_t)((p*180)/(NUM_POS-1)));
-      NODECONFIG.put(EEADDR(servos[i].pos[p].angle), 90);
+      //NODECONFIG.write16(EEADDR(servos[i].pos[p].angle), (uint8_t)((p*180)/(NUM_POS-1)));
+      NODECONFIG.write16(EEADDR(servos[i].pos[p].angle), 90);
     }
   }
   for(uint8_t i = 0; i < NUM_IO; i++) {
@@ -253,7 +254,7 @@ void pceCallback(uint16_t index) {
       uint8_t outputState = index % 3;
       NODECONFIG.write( EEADDR(curpos[outputIndex]), outputState);
       servo[outputIndex].attach(servopin[outputIndex]);
-      servoTarget[outputIndex] = NODECONFIG.read( EEADDR(servos[outputIndex].pos[outputState].angle) );
+      servoTarget[outputIndex] = NODECONFIG.read16( EEADDR(servos[outputIndex].pos[outputState].angle) );
     } else {
       uint8_t n = index-NUM_SERVOS*NUM_POS;
       uint8_t type = NODECONFIG.read(EEADDR(io[n/2].type));
@@ -290,10 +291,12 @@ void servoProcess() {
       dP("\nservo>"); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
       if(!servo[i].attached()) servo[i].attach(servopin[i]);
       servo[i].write(servoActual[i]++);
+      delay(50);
     } else if(servoTarget[i] < servoActual[i] ) {
       dP("\nservo<"); PV(servodelay); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
       if(!servo[i].attached()) servo[i].attach(servopin[i]); 
       servo[i].write(servoActual[i]--);
+      delay(50);
     } else if(servo[i].attached()) servo[i].detach(); 
   }
 }
@@ -376,18 +379,24 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
   dPS(" Len: ", (uint16_t)length);
   dPS(" Func: ", (uint8_t)func);
   setupPins();
-  servoSetup();
+  servoSet();
 }
 
 // Reinitialize servos to their current positions
 // Called from setup() and after every configuration change
 void servoSetup() {
   servodelay = NODECONFIG.read( EEADDR(servodelay));
-  PV(servodelay);
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     uint8_t cpos = NODECONFIG.read( EEADDR(curpos[i]) );
-  //  servo[i].attach(servopin[i]);
-    servoTarget[i] = NODECONFIG.read( EEADDR(servos[i].pos[cpos].angle) );
+    servoTarget[i] = NODECONFIG.read16( EEADDR(servos[i].pos[cpos].angle) );
+    servoActual[i] = servoTarget[i];
+  }
+}
+// Allow Servo adjustments
+void servoSet() {
+  for(uint8_t i = 0; i < NUM_SERVOS; i++) {
+    uint8_t cpos = NODECONFIG.read( EEADDR(curpos[i]) );
+    servoTarget[i] = NODECONFIG.read16( EEADDR(servos[i].pos[cpos].angle) );
   }
 }
 
@@ -459,7 +468,7 @@ void setup()
   #ifdef DEBUG
     Serial.begin(115200); while(!Serial);
     delay(500);
-    dP("\n AVR-2Servo14IO");
+    dP("\n AVR-2ServoNIO");
   #endif
 
   NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
