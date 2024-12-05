@@ -5,7 +5,7 @@
 // derived from work by Alex Shepherd and David Harris
 // Updated 2024.11.14
 //==============================================================
-// - 2 Servo channels, each wirh 
+// - 2 Servo channels, each with 
 //     - three settable positions
 //     - three set position events 
 // - N input/output channels:
@@ -87,6 +87,7 @@ const char configDefInfo[] PROGMEM =
         <repname>Servo</repname>
         <string size='8'><name>Description</name></string>
         <group replication=')" N(NUM_POS) R"('>
+        <name>  Closed     Midpoint   Thrown</name>
             <repname>Position</repname>
             <eventid><name>EventID</name></eventid>
             <int size='2'>
@@ -467,7 +468,7 @@ void setup()
   #ifdef DEBUG
     Serial.begin(115200); while(!Serial);
     delay(500);
-    dP("\n AVR-2Servo14IO");
+    dP("\n AVR-2ServoNIO");
   #endif
 
   NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
