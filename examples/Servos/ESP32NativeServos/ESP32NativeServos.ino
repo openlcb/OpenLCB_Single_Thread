@@ -47,7 +47,7 @@
 //#define SERVO_PWM_DEG_180  590 // this is the 'maximum' pulse length count (out of 4096)
 
 uint8_t spos[3][NUM_SERVOS];   // 0=firstPos, 1=secondPos, 2=currentPos  This is saved to EEPROM
-ServoEasing servo[NUM_SERVOS];
+Servo servo[NUM_SERVOS];
 
 // CDI (Configuration Description Information) in xml, must match MemStruct
 // See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
