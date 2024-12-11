@@ -25,6 +25,13 @@
 #include "OlcbNet.h"
 #include "OlcbCan.h"
 
+#if !defined(PICO_2040_RX_PIN) 
+  #define PICO_2040_RX_PIN 4
+#endif
+#if !defined(PICO_2040_TX_PIN) 
+  #define PICO_2040_TX_PIN 5
+#endif
+
 // can2040 header
 extern "C" {
   #include "can2040.h"
@@ -41,8 +48,10 @@ class OlcbCanClass : public OlcbCan {
     void setL(uint16_t l);
     void setpins(uint32_t rx, uint32_t tx); // set pins
 private:
-    uint32_t gpio_rx = 4;
-    uint32_t gpio_tx = 5;
+    //uint32_t gpio_rx = 4;
+    //uint32_t gpio_tx = 5;
+    uint32_t gpio_rx = PICO_2040_RX_PIN;
+    uint32_t gpio_tx = PICO_2040_TX_PIN;
     //struct can2040 _pbus;
     void (*_callback)(struct can2040 * cd, uint32_t notify, struct can2040_msg * msg);
 };
