@@ -104,8 +104,8 @@ void OlcbCanClass::init() {
     uint32_t pio_num = 0;
     uint32_t sys_clock = 125000000UL;
     uint32_t bitrate = 125000UL;
-    gpio_rx = 27; // rxpin
-    gpio_tx = 28; // txpin
+    gpio_rx = PICO_2040_RX_PIN; // rxpin
+    gpio_tx = PICO_2040_TX_PIN; // txpin
     // Setup canbus
     can2040_setup(pcan, pio_num);
     can2040_callback_config(pcan, can2040_callback);
