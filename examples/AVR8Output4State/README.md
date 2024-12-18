@@ -8,7 +8,7 @@ This sketch demonstrates a basic output node with eight output channels.
 * It shows the corresponding EEPROM structure
 * It shows how eventids are porcessed to effect changes in the outputs.
 
-Although this is labelled 328, references the Nano/Uno microprocessor boards, 
+Although this is labelled AVR, references the Nano/Uno microprocessor boards, 
 it may also compile on the ESP32, Pico, and Tivs boards.  
 
 Obviously it has minimal usefulness, and more functionalty can easily be added
