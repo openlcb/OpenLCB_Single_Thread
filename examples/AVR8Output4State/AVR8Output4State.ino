@@ -11,18 +11,18 @@
 //==============================================================
 
 // Allow direct to JMRI via USB, without CAN controller, comment out for CAN
-//   Note: disable debugging if this is chosen
+// Note: disable debugging if this is chosen
 //#include "GCSerial.h"
 
 // New ACan for MCP2515
-#define ACAN_FREQ 8000000UL  // set for crystal freq feeding the MCP2515 chip
+#define ACAN_FREQ 8000000UL   // set for crystal freq feeding the MCP2515 chip
 #define ACAN_CS_PIN 10        // set for the MCP2515 chip select pin, usually 10 on Nano
 #define ACAN_INT_PIN 2        // set for the MCP2515 interrupt pin, usually 2 or 3
 #include "ACan.h"             // uses local ACan class, comment out if using GCSerial
 
 #include <Wire.h>
 
-#define OLCB_NO_BLUE_GOLD  // don't want Blue/Gold
+#define OLCB_NO_BLUE_GOLD     // don't want Blue/Gold
 
 //************ USER DEFINITIONS ************************************
 
@@ -37,16 +37,16 @@
 
 // Board definitions
 #define MANU "OpenLCB"           // The manufacturer of node
-#define MODEL "8Consumer"    // The model of the board
+#define MODEL "8Consumer"        // The model of the board
 #define HWVERSION "0.1"          // Hardware version
 #define SWVERSION "0.1"          // Software version
 
 // Application definitions:
 // For this example, set the number of channels implemented.
-// Each corresponds to an input or output pin.
+// Each corresponds to an output pin.
 #define NUM_CHANNEL 8
-// Total number of eventids, in this case there are two per channel,
-//  a set and unset.
+// Total number of eventids, in this case there are four per channel,
+// a Off, On, Blink, and fastBlink.
 #define NUM_EVENT 4*NUM_CHANNEL
 
 //************** End of USER DEFINTIONS *****************************
@@ -58,8 +58,8 @@
 #include "OpenLCBHeader.h"        // System house-keeping.
 
 extern "C" {                      // the following are defined as external
-  #define N(x) xN(x)     // allows the insertion of value (x)
-  #define xN(x) #x       // .. into the CDI string.
+  #define N(x) xN(x)              // allows the insertion of value (x)
+  #define xN(x) #x                // .. into the CDI string.
 // ===== CDI =====
 //   Configuration Description Information in xml, **must match MemStruct below**
 //   See: http://openlcb.com/wp-content/uploads/2016/02/S-9.7.4.1-ConfigurationDescriptionInformation-2016-02-06.pdf
@@ -90,13 +90,13 @@ extern "C" {                      // the following are defined as external
 //     -- nodeVar has system-info, and includes the node name and description fields
     typedef struct {
           EVENT_SPACE_HEADER eventSpaceHeader; // MUST BE AT THE TOP OF STRUCT - DO NOT REMOVE!!!
-          char nodeName[20];  // optional node-name, used by ACDI
-          char nodeDesc[24];  // optional node-description, used by ACDI
+          char nodeName[20];      // optional node-name, used by ACDI
+          char nodeDesc[24];      // optional node-description, used by ACDI
       // vvvvv Enter User definitions below vvvvv
           struct {
             char desc[16];        // description of this output
             EventID setOff;       // Consumed eventID which sets this output-pin
-            EventID setOn;      // Consumed eventID which resets this output-pin
+            EventID setOn;        // Consumed eventID which resets this output-pin
             EventID setblink;
             EventID setfastblink;
           } outputs[NUM_CHANNEL];
@@ -166,8 +166,8 @@ int pins[] = { 4,5,6,7,8,A0,A1,A2 };  // 8 outputs
 // USER defined
 
 // === Blink State Variables ===
-bool blinking[NUM_CHANNEL] = {false};               // Tracks which channels are blinking
-unsigned long blinkStartTimes[NUM_CHANNEL] = {0};   // Start times for blinking channels
+bool blinking[NUM_CHANNEL] = {false};                // Tracks which channels are blinking
+unsigned long blinkStartTimes[NUM_CHANNEL] = {0};    // Start times for blinking channels
 const unsigned long blinkInterval = 500;    
 
 // === fastBlink State Variables ===
@@ -180,21 +180,21 @@ void pceCallback(uint16_t index) {
   int ev = index % 4;
 
   if (ev == 0) {
-    digitalWrite(pins[ch], LOW); // Set Output Low
-    blinking[ch] = false;        // Stop blinking
+    digitalWrite(pins[ch], LOW);     // Set Output Low
+    blinking[ch] = false;            // Stop blinking
     blinking1[ch] = false;
   } else if (ev == 1) {
-    digitalWrite(pins[ch], HIGH); // Set Output High
-    blinking[ch] = false;         // Stop blinking
+    digitalWrite(pins[ch], HIGH);    // Set Output High
+    blinking[ch] = false;            // Stop blinking
     blinking1[ch] = false;
   } else if (ev == 2) {
-    blinking[ch] = true;                     // Start blinking
+    blinking[ch] = true;             // Start blinking
     blinking1[ch] = false;
-    blinkStartTimes[ch] = millis();          // Record the start time
+    blinkStartTimes[ch] = millis();  // Record the start time
   } else if (ev == 3) {
-    blinking1[ch] = true;                     // Start blinking
+    blinking1[ch] = true;            // Start blinking
     blinking[ch] = false;
-    blinkStartTimes1[ch] = millis();          // Record the start time
+    blinkStartTimes1[ch] = millis(); // Record the start time
   }
 }
 
@@ -271,7 +271,7 @@ void handleFastBlink() {
       if (currentTime - blinkStartTimes1[i] >= blinkInterval1) {
         int currentState = digitalRead(pins[i]);    // Get the current state
         digitalWrite(pins[i], !currentState);       // Toggle the state
-        blinkStartTimes1[i] = currentTime;           // Reset the blink timer
+        blinkStartTimes1[i] = currentTime;          // Reset the blink timer
       }
     }
   }
