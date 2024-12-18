@@ -48,32 +48,32 @@
     void dPS(String x, int y) { DEBUG.print(x); DEBUG.print(y); DEBUG.flush();}
 #else
   //#pragma message "mdebugging.h debugging excluded"
-    void dP(const __FlashStringHelper* x) { }
-    void dP(char x) {  }
-    void dP(const char* x) { }
-    void dP(String x) {  }
-    void dP(bool x) {  }
-    void dP(uint8_t x) {  }
-    void dP(uint16_t x) {  }
-    void dP(uint32_t x) {  }
-    void dP(int x) {  }
-    void dP(long x) { }
-    void dP(float x) { }
+    void dP(const __FlashStringHelper* /*x*/) { }
+    void dP(char /*x*/) {  }
+    void dP(const char* /*x*/) { }
+    void dP(String /*x*/) {  }
+    void dP(bool /*x*/) {  }
+    void dP(uint8_t /*x*/) {  }
+    void dP(uint16_t /*x*/) {  }
+    void dP(uint32_t /*x*/) {  }
+    void dP(int /*x*/) {  }
+    void dP(long /*x*/) { }
+    void dP(float /*x*/) { }
 
-    void dPH(uint8_t x) {  }
-    void dPH(uint16_t x) {  }
-    void dPH(uint32_t x) {  }
-    void dPH(int x) {  }
+    void dPH(uint8_t /*x*/) {  }
+    void dPH(uint16_t /*x*/) {  }
+    void dPH(uint32_t /*x*/) {  }
+    void dPH(int /*x*/) {  }
 
-    void dPS(const char* x, uint8_t y) {   }
-    void dPS(const char* x, uint16_t y) {   }
-    void dPS(const char* x, uint32_t y) {   }
+    void dPS(const char* /*x*/, uint8_t /*y*/) {   }
+    void dPS(const char* /*x*/, uint16_t /*y*/) {   }
+    void dPS(const char* /*x*/, uint32_t /*y*/) {   }
     //void dPS(const char* x, unsigned int y) {   } //nano did not like
-    void dPS(const char* x, int y) {   }
-    void dPS(String x, uint8_t y) {   }
-    void dPS(String x, uint16_t y) {   }
-    void dPS(String x, uint32_t y) {   }
-    void dPS(String x, int y) {   }
+    void dPS(const char* /*x*/, int /*y*/) {   }
+    void dPS(String /*x*/, uint8_t /*y*/) {   }
+    void dPS(String /*x*/, uint16_t /*y*/) {   }
+    void dPS(String /*x*/, uint32_t /*y*/) {   }
+    void dPS(String /*x*/, int /*y*/) {   }
 #endif
 
 #endif /* mdebugging_h */
