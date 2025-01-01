@@ -7,18 +7,18 @@
 //   Bob Jacobsen 2010, 2012
 //      based on examples by Alex Shepherd and David Harris
 //   Updated 2024.09 DPH
-//   Updated 2024.12 John Holmes
+//   Updated 2024.12 John Holmes see README for pin allocations
 //==============================================================
 
 // Allow direct to JMRI via USB, without CAN controller, comment out for CAN
 // Note: disable debugging if this is chosen
-//#include "GCSerial.h"
+#include "GCSerial.h"
 
 // New ACan for MCP2515
 #define ACAN_FREQ 8000000UL   // set for crystal freq feeding the MCP2515 chip
 #define ACAN_CS_PIN 10        // set for the MCP2515 chip select pin, usually 10 on Nano
 #define ACAN_INT_PIN 2        // set for the MCP2515 interrupt pin, usually 2 or 3
-#include "ACan.h"             // uses local ACan class, comment out if using GCSerial
+//#include "ACan.h"             // uses local ACan class, comment out if using GCSerial
 
 #include <Wire.h>
 
@@ -161,7 +161,7 @@ uint8_t protocolIdentValue[6] = {     // 0xD7,0x58,0x00,0,0,0};
 #endif // OLCB_NO_BLUE_GOLD   // this app uses ButtonLed lib for its i/o.
 
 
-int pins[] = { 4,5,6,7,8,A0,A1,A2 };  // 8 outputs
+int pins[] = { 4,5,6,7,A0,A1,A2,A3 };  // 8 outputs
 // ===== Process Consumer-eventIDs =====
 // USER defined
 
