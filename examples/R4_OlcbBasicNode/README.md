@@ -16,9 +16,14 @@ This adaptation uses:
  - 2 consumer/output channels: 2 and 3
  - It uses uint8_t pin[4] = { 2,3, 13,12} to define the board pins used, pins 2 and 3 are inputs, and pins 13 and 12 are outputs. Pin 13 is the LED, and is useful to demonstrate an output. 
 
-In **userInitAll**: 
+In **setup()**: 
  - Channels 0 and 1 are initialized as INPUT_PULLUP 
  - Channels 2 and 3 are initialized as OUTPUTS.
+
+in **userInitAll()**:
+ - CDI fields can be set to defauly values
+ - In this case the nodeName is set: NODECONFIG.put(EEADDR(nodeName), ESTRING( "OlcbBasicNode" ) );
+ - And nodeDesc is set: NODECONFIG.put(EEADDR(nodeDesc), ESTRING( "Testing" ) );
 
 In **produceFromInputs()**:
  - Inputs are scanned avery 50 ms
