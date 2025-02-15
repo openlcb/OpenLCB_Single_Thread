@@ -13,6 +13,7 @@
 
 #include "Arduino.h"
 #include "ESP32can.h"
+#include "debugging.h"
 
 #define REG_BASE                   0x3ff6b000
 
@@ -55,7 +56,9 @@ int ESP32can::begin(long baudRate)
                 //Serial.print("\n ESP32can::begin");
                 //Serial.print("\n _rxPin="); Serial.print(_rxPin);
                 //Serial.print("\n _txPin="); Serial.print(_txPin);
-
+    dPS("\n_rxPin=", (int)_rxPin);
+    dPS("\n_txPin=", (int)_txPin);
+    
   _loopback = false;
     
   DPORT_CLEAR_PERI_REG_MASK(DPORT_PERIP_RST_EN_REG, DPORT_CAN_RST);
@@ -65,11 +68,12 @@ int ESP32can::begin(long baudRate)
   gpio_set_direction(_rxPin, GPIO_MODE_INPUT);
   gpio_matrix_in(_rxPin, CAN_RX_IDX, 0);
   gpio_pad_select_gpio(_rxPin);
-
+    dP("\nrxpin ok");
   // TX pin
   gpio_set_direction(_txPin, GPIO_MODE_OUTPUT);
   gpio_matrix_out(_txPin, CAN_TX_IDX, 0, 0);
   gpio_pad_select_gpio(_txPin);
+    dP("\ntxpin ok");
 
   modifyRegister(REG_CDR, 0x80, 0x80); // pelican mode
   modifyRegister(REG_BTR0, 0xc0, 0x40); // SJW = 1
@@ -182,7 +186,8 @@ int ESP32can::txReady() {
 }
 
 int ESP32can::write(uint32_t _txId, uint8_t _txLength, uint8_t* _txData, bool _txExtended) {
-                    //Serial.print("\n ESP32can::write");
+    dP("\nESP32can::write ");dPH((uint32_t) _txId);
+    //Serial.print("\n ESP32can::write");
     
   // wait for TX buffer to free
   //while ((readRegister(REG_SR) & 0x04) != 0x04) {
@@ -231,10 +236,12 @@ int ESP32can::write(uint32_t _txId, uint8_t _txLength, uint8_t* _txData, bool _t
   return 1;
 }
 int ESP32can::write(uint32_t _txId, uint8_t _txLength, uint8_t* _txData) {
+    dP("\nESP32can::write2 ");dPH((uint32_t) _txId);
     return ESP32can::write(_txId, _txLength, _txData, true);
 }
 
 int ESP32can::avail() {
+    dP("\nESP32can::avail");
   if ((readRegister(REG_SR) & 0x01) != 0x01) {
     // no packet
     return 0;
@@ -242,6 +249,7 @@ int ESP32can::avail() {
 }
 
 int ESP32can::read(uint32_t &_rxId, uint8_t &_rxLength, uint8_t* _rxData, bool &_rxExtended) {
+    dP("\nESP32can::read");
   if ((readRegister(REG_SR) & 0x01) != 0x01) {
     // no packet
     return 0;
@@ -284,7 +292,7 @@ int ESP32can::read(uint32_t &_rxId, uint8_t &_rxLength, uint8_t* _rxData, bool &
 
 void ESP32can::onReceive(void(*callback)(int))
 {
-
+    dP("\nESP32can::onReceive");
   if (_intrHandle) {
     esp_intr_free(_intrHandle);
     _intrHandle = NULL;

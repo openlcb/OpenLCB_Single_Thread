@@ -242,8 +242,16 @@ bool OlcbCanInterface::isIdentifyConsumers() {
     return isOpenLcbMTI(MTI_IDENTIFY_CONSUMERS);
 }
 
-void OlcbCanInterface::setConsumerIdentified(EventID* eid) {
-    setOpenLcbMTI(MTI_CONSUMER_IDENTIFIED);
+//extern uint8_t __attribute__((weak)) userState(uint16_t); //__attribute__((weak));
+
+uint16_t identified_state(uint16_t ident, uint8_t state) { // modify MTI for state
+  if(state==4 || state==5) return (ident & ~7) + state;
+  return ident;
+}
+
+void OlcbCanInterface::setConsumerIdentified(EventID* eid, uint8_t state) {
+    //dP("\nOlcbCanInterface::setConsumerIdentified");
+    setOpenLcbMTI( identified_state(MTI_CONSUMER_IDENTIFIED, state) );
     net->length=8;
     loadFromEid(eid);
 }
@@ -259,8 +267,9 @@ bool OlcbCanInterface::isIdentifyProducers() {
     return isOpenLcbMTI(MTI_IDENTIFY_PRODUCERS);
 }
 
-void OlcbCanInterface::setProducerIdentified(EventID* eid) {
-    setOpenLcbMTI(MTI_PRODUCER_IDENTIFIED);
+void OlcbCanInterface::setProducerIdentified(EventID* eid, uint8_t state) {
+    //dP("\nOpenLcbCanBuffer::setProducerIdentified");
+    setOpenLcbMTI( identified_state(MTI_PRODUCER_IDENTIFIED, state) );
     net->length=8;
     loadFromEid(eid);
 }

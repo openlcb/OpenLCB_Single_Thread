@@ -229,6 +229,42 @@ struct NMCPROMClass{
 			update(idx + 1, (val >> 8) & 0x00FF );
 #endif
 		}
+    // 32-bit operations
+    uint32_t read32( int idx ){
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        return (read(idx)<<24) | (read(idx+1)<<16) | (read(idx+2)<<8) | read(idx+3);
+#else
+        return (read(idx+3)<<24) | (read(idx+2)<<16) | (read(idx+1)<<8) | read(idx);
+#endif
+        }
+        
+    void write32( int idx, uint32_t val ){
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        write(idx+3,       val & 0xFF );
+        write(idx+2,  (val>>8) & 0xFF );
+        write(idx+1, (val>>16) & 0xFF );
+        write(idx,   (val>>24) & 0xFF);
+#else
+        write(idx,         val & 0xFF );
+        write(idx+1,  (val>>8) & 0xFF );
+        write(idx+2, (val>>16) & 0xFF );
+        write(idx+3, (val>>24) & 0xFF );
+#endif
+    
+        }
+    void update32( int idx, uint32_t val ){
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        update(idx+3,       val & 0xFF );
+        update(idx+2,  (val>>8) & 0xFF );
+        update(idx+1, (val>>16) & 0xFF );
+        update(idx,   (val>>24) & 0xFF);
+#else
+        update(idx,         val & 0xFF );
+        update(idx+1,  (val>>8) & 0xFF );
+        update(idx+2, (val>>16) & 0xFF );
+        update(idx+3, (val>>24) & 0xFF );
+#endif#endif
+        }
 
     //STL and C++11 iteration capability.
     NMCPtr begin()                        { return 0x00; }

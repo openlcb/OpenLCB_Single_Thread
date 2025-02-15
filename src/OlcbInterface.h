@@ -91,14 +91,14 @@ class OlcbInterface { // }: public OlcbNet {
         
         virtual bool isIdentifyConsumers();
         
-        virtual void setConsumerIdentified(EventID* eid);
+        virtual void setConsumerIdentified(EventID* eid, uint8_t state);
         
         // Mask uses an EventID data structure; 1 bit means mask out when routing
         virtual void setConsumerIdentifyRange(EventID* eid, EventID* mask);
         
         virtual bool isIdentifyProducers();
         
-        virtual void setProducerIdentified(EventID* eid);
+        virtual void setProducerIdentified(EventID* eid, uint8_t state);
         
         // Mask uses an EventID data structure; 1 bit means mask out when routing
         virtual void setProducerIdentifyRange(EventID* eid, EventID* mask);

@@ -45,12 +45,16 @@
 
 // modifier is "unknown"
 #define MTI_CONSUMER_IDENTIFIED             0x4C7
+#define MTI_CONSUMER_IDENTIFIED_VALID       0x4C4
+#define MTI_CONSUMER_IDENTIFIED_INVALID     0x4C5
 
 #define MTI_IDENTIFY_PRODUCERS              0x914
 #define MTI_IDENTIFY_PRODUCERS_RANGE        0x524
 
 // modifier is "unknown"
 #define MTI_PRODUCER_IDENTIFIED             0x547
+#define MTI_PRODUCER_IDENTIFIED_VALID       0x544
+#define MTI_PRODUCER_IDENTIFIED_INVALID     0x545
 
 #define MTI_IDENTIFY_EVENTS_GLOBAL          0x970
 #define MTI_IDENTIFY_EVENTS_ADDRESSED       0x968

@@ -230,7 +230,7 @@ void Olcb_init(NodeID nid, uint8_t forceFactoryReset) {
 
     PIP_setup(&txBuffer, &clink);
     SNII_setup((uint8_t)sizeof(SNII_const_data), SNII_var_offset, &txBuffer, &clink);
-    delay(500);
+    delay(50);
     olcbcanTx.init();
     clink.reset();
     EEPROMcommit;
@@ -255,12 +255,15 @@ void setEepromDirty() {
 // Main processing loop
 //
 bool Olcb_process() {   // was loop()
+    //dP("\nprocess");
+   #if 0
     if( eepromDirty && (millis()-eepromupdatedue)>10000 ) {
         EEPROMcommit;
         eepromDirty = false;
         dP(F("\nOlcb_process() eeprom saved "));
     }
-    
+   #endif
+
     bool rcvFramePresent = rxBuffer.net->read();
 
     clink.check();

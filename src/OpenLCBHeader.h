@@ -105,9 +105,9 @@ extern void userHardReset() __attribute__((weak));
 extern void userInitAll() __attribute__((weak));
 extern void userFactoryReset() __attribute__((weak));
 extern void userConfigWritten(uint32_t address, uint16_t length, uint16_t func) __attribute__((weak));
-extern void pceCallback(uint16_t index)  __attribute__((weak));
+extern void pceCallback(uint16_t index) __attribute__((weak));
 extern void produceFromInputs() __attribute__((weak));
-
+extern uint8_t userState(uint16_t) __attribute__((weak));
 
 Event event[NUM_EVENT];             // operating flags
 uint16_t eventIndex[NUM_EVENT];     // Sorted index to eventids

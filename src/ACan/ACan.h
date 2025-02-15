@@ -7,10 +7,10 @@
 //
 //
 
+#pragma message("!!! compiling ACan.h ")
+
 #ifndef ACan_H
 #define ACan_H
-
-#pragma message("Compiling ACan.h")
 
 #include <stdio.h>
 #include "OlcbCan.h"

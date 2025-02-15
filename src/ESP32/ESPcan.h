@@ -8,6 +8,14 @@
 
 #include "OlcbCan.h"
 #include "ESP32can.h"
+#include "debugging.h"
+
+#ifndef ESPcan_RXPIN
+  #define ESPcan_RXPIN 4
+#endif
+#ifndef ESPcan_TXPIN
+  #define ESPcan_TXPIN 5
+#endif
 
 class OlcbCanClass : public OlcbCan {
 public:
@@ -27,6 +35,9 @@ ESP32can esp32can;
 
 void OlcbCanClass::init() {
     //Serial.print("\nIn ESP EspOlcbCanClass::init");
+    dPS("\nESPcan_RXPIN=", (int)ESPcan_RXPIN);
+    dPS("\nESPcan_TXPIN=", (int)ESPcan_TXPIN);
+    esp32can.setPins(ESPcan_RXPIN, ESPcan_TXPIN);
     if (!esp32can.begin(125E3)) {
         Serial.println("Starting EspOlcbCanClass:: failed!");
         while (1);

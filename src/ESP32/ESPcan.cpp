@@ -49,7 +49,7 @@ uint8_t EspCan::avail() {
 }
 
 uint8_t EspCan::read() {
-    //Serial.print("\nIn ESPcan::read()");
+    dP("\nIn ESPcan::read()");
     if(!esp32can.avail()) return 0;
     bool extended;
     esp32can.read(id, length, data, extended);

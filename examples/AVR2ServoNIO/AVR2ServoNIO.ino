@@ -51,7 +51,7 @@
 
 // To Force Reset EEPROM to Factory Defaults set this value t0 1, else 0.
 // Need to do this at least once.
-#define RESET_TO_FACTORY_DEFAULTS 0
+#define RESET_TO_FACTORY_DEFAULTS 1
 
 // User defs
 #define NUM_SERVOS 2
@@ -79,7 +79,7 @@ const char configDefInfo[] PROGMEM =
         <int size='1'>
           <name>Speed 5-50 (delay between steps)</name>
           <min>5</min><max>50</max>
-          <hints><slider tickSpacing='15' immediate='yes'> </slider></hints>
+          <hints><slider tickSpacing='15' immediate='yes' showValue='yes'> </slider></hints>
         </int>
     </group>
     <group replication=')" N(NUM_SERVOS) R"('>
@@ -93,7 +93,7 @@ const char configDefInfo[] PROGMEM =
             <int size='2'>
                 <name>Servo Position in Degrees</name>
                 <min>0</min><max>180</max>
-                <hints><slider tickSpacing='45' immediate='yes'> </slider></hints>
+                <hints><slider tickSpacing='45' immediate='yes' showValue='yes'> </slider></hints>
             </int>
         </group>
     </group>
@@ -119,12 +119,12 @@ const char configDefInfo[] PROGMEM =
         </int>
         <int size='1'>
             <name>On-Duration/On-delay 1-255 = 100ms-25.5s, 0=steady-state</name>
-            <hints><slider tickSpacing='50' immediate='yes'> </slider></hints>
+            <hints><slider tickSpacing='50' immediate='yes' showValue='yes'> </slider></hints>
         </int>
         <int offset="-1" default="0" size='1'><name>Value</name></int>
         <int size='1'>
             <name>Off-Period/Off-delay 1-255 = 100ms-25.5s, 0=No repeat</name>
-            <hints><slider tickSpacing='50' immediate='yes'> </slider></hints>
+            <hints><slider tickSpacing='50' immediate='yes' showValue='yes'> </slider></hints>
         </int>
         <int offset="-1" default="0" size='1'><name>Value</name></int>
         <eventid><name>On-Event</name></eventid>
@@ -291,12 +291,10 @@ void servoProcess() {
       dP("\nservo>"); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
       if(!servo[i].attached()) servo[i].attach(servopin[i]);
       servo[i].write(servoActual[i]++);
-      delay(50);
     } else if(servoTarget[i] < servoActual[i] ) {
       dP("\nservo<"); PV(servodelay); PV(i); PV(servoTarget[i]); PV(servoActual[i]);
       if(!servo[i].attached()) servo[i].attach(servopin[i]); 
       servo[i].write(servoActual[i]--);
-      delay(50);
     } else if(servo[i].attached()) servo[i].detach(); 
   }
 }
@@ -385,7 +383,6 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func)
 // Reinitialize servos to their current positions
 // Called from setup() and after every configuration change
 void servoSetup() {
-  servodelay = NODECONFIG.read( EEADDR(servodelay));
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     uint8_t cpos = NODECONFIG.read( EEADDR(curpos[i]) );
     servoTarget[i] = NODECONFIG.read16( EEADDR(servos[i].pos[cpos].angle) );
@@ -394,6 +391,7 @@ void servoSetup() {
 }
 // Allow Servo adjustments
 void servoSet() {
+  servodelay = NODECONFIG.read( EEADDR(servodelay));
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     uint8_t cpos = NODECONFIG.read( EEADDR(curpos[i]) );
     servoTarget[i] = NODECONFIG.read16( EEADDR(servos[i].pos[cpos].angle) );
