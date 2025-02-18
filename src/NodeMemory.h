@@ -263,7 +263,7 @@ struct NMCPROMClass{
         update(idx+1,  (val>>8) & 0xFF );
         update(idx+2, (val>>16) & 0xFF );
         update(idx+3, (val>>24) & 0xFF );
-#endif#endif
+#endif
         }
 
     //STL and C++11 iteration capability.
