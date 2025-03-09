@@ -241,7 +241,7 @@ int ESP32can::write(uint32_t _txId, uint8_t _txLength, uint8_t* _txData) {
 }
 
 int ESP32can::avail() {
-    dP("\nESP32can::avail");
+    //dP("\nESP32can::avail");
   if ((readRegister(REG_SR) & 0x01) != 0x01) {
     // no packet
     return 0;
