@@ -1,6 +1,6 @@
 { 
     "name": "OpenLCB_Single_Thread",
-    "version": "0.1.9",
+    "version": "0.1.10",
     "description":"OpenLCB_Single_Thread a library to implement openLCB/LCC nodes in the Arduino IDE.  ",
     "keywords": [
       "framework",
