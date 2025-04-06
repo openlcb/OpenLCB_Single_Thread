@@ -52,6 +52,8 @@ RTR CAN Message
 #include "debugging.h"
 #include <HardwareSerial.h>
 
+extern void userUI(char) __attribute__((weak));
+
 class OlcbCanClass : public OlcbCan {
   int charToHex(char c){
     if(c>='0' && c<='9') return c - '0';
@@ -130,6 +132,7 @@ class OlcbCanClass : public OlcbCan {
             //while( (c=inf->read()) >0 ) {
             while( (c=Serial.read()) >0 ) {
                 if(c==':') { state = 1; break; }
+                if( userUI ) userUI(c);
             }
             if(state!=1) return false;
             buff[0] =':';

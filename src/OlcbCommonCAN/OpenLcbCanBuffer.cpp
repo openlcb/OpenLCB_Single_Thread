@@ -289,8 +289,14 @@
       return isOpenLcbMTI(MTI_IDENTIFY_CONSUMERS);
   }
 
-  void OpenLcbCanBuffer::setConsumerIdentified(EventID* eid) {
-    setOpenLcbMTI(MTI_CONSUMER_IDENTIFIED);
+  uint16_t identified_state(uint16_t ident, uint8_t state) {
+    if(state==4 || state==5) return (ident & ~7) + state;
+    return ident;
+  }
+  void OpenLcbCanBuffer::setConsumerIdentified(EventID* eid, uint8_t state) {
+      //dP("\nOpenLcbCanBuffer::setConsumerIdentified ");
+      //dP( event_identified(uint8_t state) );
+    setOpenLcbMTI( identified_state(MTI_CONSUMER_IDENTIFIED, state) );
     length=8;
     loadFromEid(eid);
   }
@@ -306,8 +312,10 @@
       return isOpenLcbMTI(MTI_IDENTIFY_PRODUCERS);
   }
 
-  void OpenLcbCanBuffer::setProducerIdentified(EventID* eid) {
-    setOpenLcbMTI(MTI_PRODUCER_IDENTIFIED);
+  void OpenLcbCanBuffer::setProducerIdentified(EventID* eid, uint8_t state) {
+      //dP("\nOpenLcbCanBuffer::setProducerIdentified ");
+      //dP( event_identified(state) );
+    setOpenLcbMTI( identified_state(MTI_PRODUCER_IDENTIFIED, state)  );
     length=8;
     loadFromEid(eid);
   }

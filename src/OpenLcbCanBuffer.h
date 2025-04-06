@@ -101,14 +101,14 @@ class EventID;
   
   bool isIdentifyConsumers();
   
-  void setConsumerIdentified(EventID* eid);
+  void setConsumerIdentified(EventID* eid, uint8_t state);
   
   // Mask uses an EventID data structure; 1 bit means mask out when routing
   void setConsumerIdentifyRange(EventID* eid, EventID* mask);
 
   bool isIdentifyProducers();
 
-  void setProducerIdentified(EventID* eid);
+  void setProducerIdentified(EventID* eid, uint8_t state);
 
   // Mask uses an EventID data structure; 1 bit means mask out when routing
   void setProducerIdentifyRange(EventID* eid, EventID* mask);

@@ -21,10 +21,10 @@
 #include <ESP32Servo.h>
 
 // Board definitions
-#define MANU "OpenLCB"    // The manufacturer of node
-#define MODEL "ESP32SNativeServos" BTYPE       // The model of the board
-#define HWVERSION "0.1"   // Hardware version
-#define SWVERSION "0.1"   // Software version
+#define MANU "OpenLCB"               // The manufacturer of node
+#define MODEL "ESP32SNativeServos"   // The model of the board
+#define HWVERSION "0.1"              // Hardware version
+#define SWVERSION "0.1"              // Software version
 
 // To Reset the Node Number, Uncomment and edit the next line
 // Need to do this at least once.

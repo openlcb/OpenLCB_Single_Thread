@@ -95,24 +95,26 @@ bool LinkControl::sendRIM() {
 }
 
 bool LinkControl::sendInitializationComplete() {
+    //dP("\n LinkControl::sendAMD()");
   txBuffer->setSourceAlias(getAlias());
   txBuffer->setInitializationComplete(nid);
   return sendFrame();
 }
 
 bool LinkControl::sendAMD() {
+    //dP("\n LinkControl::sendAMD()");
   txBuffer->setAMD(getAlias(), nid);
   return sendFrame();
 }
 
 bool LinkControl::sendAMR() {
+    //dP(" LinkControl::sendAMR()");
   txBuffer->setAMR(getAlias(), nid);
   return sendFrame();
 }
 
 bool LinkControl::sendFrame() {
-    //dP("\nIn LinkControl::sendFrame");
-    //dP("\n LinkControl::sendframe()#A");
+    //dP("\n LinkControl::sendFrame()");
 
     if (!txBuffer->net->txReady()) return false; // couldn't send just now
     //dP("\n LinkControl::sendframe()#B");
@@ -120,10 +122,9 @@ bool LinkControl::sendFrame() {
     txBuffer->net->write(200); // wait for queue, but earlier check says will succeed
   return true;
 }
-
+#define P(x) {dP(" " #x "="); Serial.print(x);}
 void LinkControl::check() {
     //dP("\nIn LinkControl::check");
-    //dP("\n LinkControl::check()#A");
   // find current state and act
   if (state == STATE_INITIALIZED) return;
   switch (state) {
@@ -132,10 +133,8 @@ void LinkControl::check() {
   case STATE_INITIAL+2:
   case STATE_INITIAL+3:
     // send next CIM message if possible
-          //dP("\n LinkControl::check()#B");
     if (sendCIM(state-STATE_INITIAL))
       state++;
-          //dP("\n LinkControl::check()#C");
     return;
   case STATE_INITIAL+4:
     // last CIM, sent, wait for delay
@@ -144,16 +143,22 @@ void LinkControl::check() {
 
     return;
   case STATE_WAIT_CONFIRM:
+          //dP("\n STATE_WAIT_CONFIRM");
+          //P(millis());
+          //P(timer+CONFIRM_WAIT_TIME);
+          //delay(1);
     if ( (millis() > timer+CONFIRM_WAIT_TIME) && sendRIM()) {
       state = STATE_ALIAS_ASSIGNED;
     }
     return;
   case STATE_ALIAS_ASSIGNED:
+          //dP("\n STATE_ALIAS_ASSIGNED");
     // send AMD to go to Permitted
     if (sendAMD()) {
         state = STATE_PERMITTED;
     }
   case STATE_PERMITTED:
+          //dP("\n STATE_PERMITTED");
     // send init
     if (sendInitializationComplete()) {
       state = STATE_INITIALIZED;
@@ -188,10 +193,12 @@ bool LinkControl::receivedFrame(OlcbCanInterface* rcv) {
      // somebody else trying to use this one, see to what extent
      if (rcv->isCIM()) {
        // somebody else trying to allocate, tell them
+         //dP("\nreceivedFrame C");
        while (!sendRIM()) {}  // insist on sending it now.
      } else {
        // RIM frame or not RIM Frame, do same thing: Send AMR & restart
        sendAMR();
+         //dP("\nreceivedFrame oops");
        restart();
      }
    }
@@ -200,6 +207,7 @@ bool LinkControl::receivedFrame(OlcbCanInterface* rcv) {
       // check node ID matches or no node ID present
       if (rcv->net->length != 0 && (!rcv->matchesNid(nid))) return false;
       // reply
+       //dP("\nreceivedFrame D");
       txBuffer->setAMD(alias, nid);
       txBuffer->net->write(200);
    }
@@ -209,7 +217,8 @@ bool LinkControl::receivedFrame(OlcbCanInterface* rcv) {
    // see if this is a Verify request to us; first check type
    else if (rcv->isVerifyNID()) {
      // reply; should be threaded, but isn't
-     //dP("\nisVerifyNID");
+       //dP("\nisVerifyNID");
+       //dP("\nreceivedFrame E");
      txBuffer->setVerifiedNID(nid);
      txBuffer->net->write(200);
      return true;

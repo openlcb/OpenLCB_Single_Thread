@@ -241,6 +241,20 @@
     //}
 	  #define REBOOT due_restart()
 */
+#elif defined(ARDUINO_UNOR4_MINIMA)
+    #ifdef ENABLE_MESSAGE_PRAGMAS
+      #pragma message("ARDUINO_UNOR4_MINIMA selected ")
+    #endif
+    #define UNOR4_MINIMA
+    #define E2END 8192 // 8K byte for UNO-R4
+    //#include "DUE/DUEcan.h"
+    #define ESTRING(s) s     // default conversion - nil
+    #define RAMEND 0x7FFF    // 32k RAM
+    #define REBOOT
+    #include "EEPROM.h"
+    #define EEPROMbegin
+    #define EEPROMupdate(a,x) EEPROM.update(a,x)
+    #define EEPROMcommit
 #else
     #define reboot
     #define EEPROMbegin

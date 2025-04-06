@@ -233,7 +233,6 @@ void setup() {
   for(uint8_t i = 0; i < NUM_SERVOS; i++) {
     ServoEasing* p = new ServoEasing(PCA9685_DEFAULT_ADDRESS);
     if( p->attach(i) == INVALID_SERVO ) dP("\nError failed to attach");
-    dP("\nC"); while(1);
     servo[i]->setEasingType(72);    // easing
     servo[i]->setSpeed(50);
     servoSet(i, NODECONFIG.read( EEADDR(curpos[i]) ) );

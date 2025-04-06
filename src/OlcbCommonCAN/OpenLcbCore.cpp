@@ -15,9 +15,10 @@ extern "C" {
 	uint16_t getFlags(uint16_t index);
 	extern void writeEID(int index, EventID eid);
 }
+
 extern void setEepromDirty();
 extern void userInitAll();
-extern void pceCallback(uint16_t index)  __attribute__((weak));
+extern void pceCallback(uint16_t i);
 
 OpenLcbCore::OpenLcbCore(Event* events, uint16_t numEvents, uint16_t* eIndex, const EIDTab* eidTab, OlcbCanInterface* b, LinkControl* li)
 {
@@ -169,7 +170,7 @@ void OpenLcbCore::processEvent(uint16_t eventIndex)
 
 void OpenLcbCore::printEventIndexes()
 {
-    dP(F("\nprintEventIndex\n"));
+    //dP(F("\nprintEventIndex\n"));
 	for(int i = 0; i < numEvents; i++)
 	{
         dPH(eventsIndex[i]); dP(", \n");
@@ -319,8 +320,6 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
                         eventIndex = eventsIndex[p - 1];
                         uint8_t equal = events[eventIndex].eid.equals(key);
                         //P(F("\nEqual: p - 1: ")); dP(p - 1); dP(F(" Key: ")); key->print();
-                          dP(F(" Event: ")); events[eventIndex].eid.print();
-                          dP(F(" cmp: ")); dP(equal);
 
                         // if not equal then we already had the first match to return p
                         if(!equal)
@@ -364,11 +363,21 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
     events[i].flags |= Event::PRODUCE_FLAG;
     sendEvent = sendEvent<i ? sendEvent : i;
   }
-
+  // get the state of an event from the user program
+  extern uint8_t userState(uint16_t) __attribute__((weak));
+  uint8_t getState(uint16_t index) {
+      if(userState) {
+          uint8_t us = userState(index);
+          dP("\nUserState="); dP(us);
+          return us;
+      }
+      return 7; // UNKNOWN
+  }
   void OpenLcbCore::check() {
      // see in any replies are waiting to send
      while (sendEvent < numEvents) {
-         
+         uint8_t state;
+
          // Throttling
          static long nextcheck = 0;
          if( (millis()-nextcheck) <0 ) return;
@@ -386,7 +395,7 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
          if ( (events[sendEvent].flags & (Event::IDENT_FLAG | Event::CAN_PRODUCE_FLAG)) == (Event::IDENT_FLAG | Event::CAN_PRODUCE_FLAG)) {
                 //dP(F("\nOpenLcbCore::check() produceIdent"));
            events[sendEvent].flags &= ~Event::IDENT_FLAG;    // reset flag
-           buffer->setProducerIdentified(&ev);
+           buffer->setProducerIdentified(&ev, getState(sendEvent) );
            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
            buffer->net->write(200);  // wait until buffer queued, but OK due to earlier check
              //dP(F("\nOpenLcbCore::check() produceident2"));
@@ -394,7 +403,8 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
          } else if ( (events[sendEvent].flags & (Event::IDENT_FLAG | Event::CAN_CONSUME_FLAG)) == (Event::IDENT_FLAG | Event::CAN_CONSUME_FLAG)) {
              //dP(F("\nOpenLcbCore::check() consumeident"));
            events[sendEvent].flags &= ~Event::IDENT_FLAG;    // reset flag
-           buffer->setConsumerIdentified(&ev);
+           
+           buffer->setConsumerIdentified(&ev, getState(sendEvent) );
            //OpenLcb_can_queue_xmt_wait(buffer);  // wait until buffer queued, but OK due to earlier check
            buffer->net->write(200);  // wait until buffer queued, but OK due to earlier check
            break; // only send one from this loop
@@ -454,7 +464,7 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
     sendEvent = sendEvent < index ? sendEvent : index;
   }
   
-  bool OpenLcbCore::receivedFrame(OlcbCanInterface* rcv) {
+bool OpenLcbCore::receivedFrame(OlcbCanInterface* rcv) {
       //dP("\nIn receivedFrame");
       //dP("\nIn OpenLcbCore::receivedFrame()");
     EventID eventid;
@@ -467,9 +477,10 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
         while((index = findIndexOfEventID(&eventid, index)) != -1)
         {
           // yes, we have to reply with ConsumerIdentified
-          if (events[index].flags & Event::CAN_CONSUME_FLAG) {
-             events[index].flags |= Event::IDENT_FLAG;
-             sendEvent = sendEvent < index ? sendEvent : index;
+          uint16_t eindex = this->eventsIndex[index];
+          if (events[eindex].flags & Event::CAN_CONSUME_FLAG) {
+             events[eindex].flags |= Event::IDENT_FLAG;
+             sendEvent = sendEvent < eindex ? sendEvent : eindex;
           }
           index++;
           if(index>=numEvents) break;
@@ -483,9 +494,10 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
         while((index = findIndexOfEventID(&eventid, index)) != -1)
         {
           // yes, we have to reply with ProducerIdentified
-          if (events[index].flags & Event::CAN_PRODUCE_FLAG) {
-             events[index].flags |= Event::IDENT_FLAG;
-             sendEvent = sendEvent < index ? sendEvent : index;
+          uint16_t eindex = this->eventsIndex[index];
+          if (events[eindex].flags & Event::CAN_PRODUCE_FLAG) {
+             events[eindex].flags |= Event::IDENT_FLAG;
+             sendEvent = sendEvent < eindex ? sendEvent : eindex;
           }
           index++;
           if(index>=numEvents) break;
@@ -498,7 +510,7 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
         for (int i = 0; i < numEvents; i++) {
           events[i].flags |= Event::IDENT_FLAG;
         }
-        sendEvent = 0;  
+        sendEvent = 0;
     } else if (rcv->isPCEventReport()) {
         // found a PC Event Report, see if we consume it
         handlePCEventReport(rcv);
@@ -508,7 +520,6 @@ void OpenLcbCore::sendTeach(EventID e) {   /// DPH added for Clock
     } else return false;
     return true;
   }
-
   void OpenLcbCore::handlePCEventReport(OlcbCanInterface* rcv) {
 //                 dP("\nIn handlePCEventReport");
       EventID eventid;
