@@ -1,6 +1,16 @@
 # Example Applications
 The provided examples will give some ideas of how to accomplish sample projects.  They can form the basis of, or  be adapted to, a new Application, or just used for inspiration.  <br>
 
+## External Examples
+In addition to these examples, there are some excellent examples provided by: 
+ - **https://github.com/johnmholmes/Arduino_ESP32_LCC_Journey**
+   This is an extensive narrative of exploration with includes an excellent set of specific sketches from which one can choose. 
+
+ - **https://github.com/JohnCallingham/Pico_4Servo_4Frog_Wifi**
+   This repository has a sketch taht implements four servos with frog polarity on a Pico. This is a good example of a rp\\practical solution to a common MRR requirement. It has a robust Wifi implementation, and uses the Pico's PIO processors to implement servos.  
+
+## Examples
+
 - **AVR-8Servo**<br>
     Implements an eight servo node. This example uses the Adafruit_PWMServoDriver.h and demonstrates how one might implement a node using an external library.
 
