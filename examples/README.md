@@ -7,7 +7,8 @@ In addition to these examples, there are some excellent examples provided by:
    This is an extensive narrative of exploration with includes an excellent set of specific sketches from which one can choose. 
 
  - **https://github.com/JohnCallingham/Pico_4Servo_4Frog_Wifi**
-   This repository has a sketch taht implements four servos with frog polarity on a Pico. This is a good example of a rp\\practical solution to a common MRR requirement. It has a robust Wifi implementation, and uses the Pico's PIO processors to implement servos.  
+ - **https://github.com/JohnCallingham/Pico_4ToF_WiFi**
+   These two repositories have sketches that implement four servos on a Pico. One with frog polarity, and the other interfaces with Time of Flight sensors. These are good examples of a practical solutions to common MRR requirements. They have a robust Wifi implementation, and use the Pico's PIO processors to implement servos.  
 
 ## Examples
 
