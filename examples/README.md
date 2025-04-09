@@ -3,11 +3,11 @@ The provided examples will give some ideas of how to accomplish sample projects.
 
 ## External Examples
 In addition to these examples, there are some excellent examples provided by: 
- - **https://github.com/johnmholmes/Arduino_ESP32_LCC_Journey**
+ - **https://github.com/johnmholmes/Arduino_ESP32_LCC_Journey**<br>
    This is an extensive narrative of exploration with includes an excellent set of specific sketches from which one can choose. 
 
  - **https://github.com/JohnCallingham/Pico_4Servo_4Frog_Wifi**
- - **https://github.com/JohnCallingham/Pico_4ToF_WiFi**
+   **https://github.com/JohnCallingham/Pico_4ToF_WiFi**<br>
    These two repositories have sketches that implement four servos on a Pico. One with frog polarity, and the other interfaces with Time of Flight sensors. These are good examples of a practical solutions to common MRR requirements. They have a robust Wifi implementation, and use the Pico's PIO processors to implement servos.  
 
 ## Examples
