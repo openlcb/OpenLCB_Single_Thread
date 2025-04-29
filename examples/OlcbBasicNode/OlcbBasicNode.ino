@@ -200,6 +200,16 @@ void produceFromInputs() {
     }
     if ((++scanIndex) >= NUM_CHANNEL) scanIndex = 0;
 }
+#else
+    // routine without reference to blue/gold
+    void pceCallback(uint16_t index) {
+      // Invoked when an event is consumed; drive pins as needed
+      // from index of all events.
+      // Sample code uses inverse of low bit of pattern to drive pin all on or all off.
+      // The pattern is mostly one way, blinking the other, hence inverse.
+      //
+      dP("\n In pceCallback index="); dP((uint16_t)index);
+    }
 #endif // OLCB_NO_BLUE_GOLD   // this app uses ButtonLed lib for its i/o.
 
 /* Config tool:
@@ -278,7 +288,7 @@ void setup() {
   
   #ifdef DEBUG
     // set up serial comm; may not be space for this!
-    while(!Serial); delay(250);Serial.begin(115200);
+    Serial.begin(115200); while(!Serial); delay(250);
     dP("\nOlcbBasicNode\n");
     delay(1000);
   #endif
