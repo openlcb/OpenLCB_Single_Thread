@@ -1,3 +1,4 @@
+#if 0 // folded into ESP32can.h
 // Copyright (c) Sandeep Mistry. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
@@ -442,5 +443,7 @@ void ESP32can::onInterrupt(void* arg)
 }
 
 ESP32can CAN;
+
+#endif
 
 #endif
