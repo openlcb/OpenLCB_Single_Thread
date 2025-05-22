@@ -139,7 +139,7 @@ void OpenLcbCore::init()
 
 
 // write to EEPROM new set of eventIDs and then magic, nextEID and nodeID
-void OpenLcbCore::writeNewEventIDs(Event* events, uint8_t numEvents)
+void OpenLcbCore::writeNewEventIDs(Event* events, uint16_t numEvents)
 {
     //dP(F("\nOpenLcbCore::init::writeNewEventIDs())"));
 	EventID newEventId;
