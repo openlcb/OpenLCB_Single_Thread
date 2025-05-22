@@ -147,7 +147,7 @@ public:
 
 // private:
 	int static cmpfunc (const void * a, const void * b);
-	void writeNewEventIDs(Event* events, uint8_t numEvents);
+	void writeNewEventIDs(Event* events, uint16_t numEvents);
 
 	uint8_t	eventConfigState;
 	const EIDTab* eidOffsetsTable;
