@@ -8,9 +8,20 @@
 #if defined(ARDUINO_ARCH_RP2040)
 #pragma message "compiling can2040.c"
 
+// Determine if the target is an rp2350
+#ifdef PICO_RP2350
+  #define IS_RP2350 1
+#else
+  #define IS_RP2350 0
+#endif
+
 #include <stdint.h> // uint32_t
 #include <string.h> // memset
+#if IS_RP2350
+    #include "RP2350.h" // hw_set_bits
+#else
 #include "RP2040.h" // hw_set_bits
+#endif
 #include "can2040.h" // can2040_setup
 #include "hardware/regs/dreq.h" // DREQ_PIO0_RX1
 #include "hardware/structs/dma.h" // dma_hw
