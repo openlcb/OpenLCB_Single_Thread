@@ -32,6 +32,7 @@
 #include "Configuration.h"
 #endif
 
+////#include "GCSerial.h"
 #include "NodeMemory.h"
 #include "PIP.h"
 #include "SNII.h"
@@ -200,7 +201,7 @@ extern "C" {
 // ===== System Interface
 //void Olcb_init(uint8_t forceFactoryReset) {       // was setup()
 void Olcb_init(NodeID nid, uint8_t forceFactoryReset) {
-    //dP(F("\nOpenLCBMid.h/Olcb_init()"));
+    dP(F("\nOpenLCBMid.h/Olcb_init()"));
     //dP(F(" nid=")); nid.print();
     //dP(F(" forceFactoryReset=")); dP((bool)forceFactoryReset);
     EEPROMbegin;
@@ -265,7 +266,6 @@ bool Olcb_process() {   // was loop()
    #endif
 
     bool rcvFramePresent = rxBuffer.net->read();
-
     clink.check();
 
     bool handled = false;  // start accumulating whether it was processed or skipped

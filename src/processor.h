@@ -76,7 +76,12 @@
     //#endif // NOCAN
 
 // AT90CAN
-#elif defined(__AVR_AT90CAN32__) || defined(__AVR_AT90CAN64__) || defined(__AVR_AT90CAN128__)
+#elif defined(__AVR_AT90CAN32__) \
+  || defined(__AVR_AT90CAN64__)  \
+  || defined(__AVR_AT90CAN128__) \
+  || defined(ARDUINO_AVR_TCH_CONSUMER) \
+  || defined(ARDUINO_AVR_TCH_PRODUCER) \
+  || defined(ARDUINO_AVR_TCH_PRODUCER_CONSUMER) 
   #ifdef ENABLE_MESSAGE_PRAGMAS
     //#pragma message("AT90CAN selected")
   #endif

@@ -113,6 +113,7 @@ class OlcbCanClass : public OlcbCan {
   public:
     OlcbCanClass(HardwareSerial* _inf=&Serial) : inf(_inf) {}
     void init() {                   // initialization
+        dP("\nGC::init1");
         //inf->begin(115200);while(!inf); delay(1000);
         Serial.begin(115200);while(!Serial); delay(1000);
     }

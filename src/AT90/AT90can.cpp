@@ -1,3 +1,5 @@
+// NOTE: included in AT90can.h so we can suppress this
+#if 0
 // OpenLCB Adaptation of FlexCAN library
 // copyright DPH 2017
 
@@ -24,7 +26,8 @@ CanBus* canbus;
 */
 
 void OlcbCanClass::init()  {
-//             Serial.print("\nIn AT90Can::init()");
+            // Serial.print("\nIn AT90Can::init()");
+    dP("\nIn AT90Can::init()");
     canbus->init();
 }
 uint8_t OlcbCanClass::avail()  {
@@ -82,3 +85,5 @@ uint8_t OlcbCanClass::write() { return this->write(0); }
 void OlcbCanClass::setL(uint16_t l) { length = l; }
 
 #endif // AT90
+
+#endif // 0 -- exclude this file

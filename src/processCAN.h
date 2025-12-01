@@ -13,7 +13,7 @@
 #define processCAN_h
 
     // Uncomment the next line to enable #pragma messages
-    //#define ENABLE_MESSAGE_PRAGMAS
+    #define ENABLE_MESSAGE_PRAGMAS
 
     #ifdef ENABLE_MESSAGE_PRAGMAS
         #pragma message("!!! compiling processorCAN_h")
@@ -30,15 +30,33 @@
             #include <can.h>
         #endif // NOCAN
 
+
     #elif defined(ARDUINO_ARCH_AVR)
-        #ifdef ENABLE_MESSAGE_PRAGMAS
-            #pragma message("CAN ARDUINO_ARCH-AVR selected")
-        #endif
-        #define ATMEGA
-        #ifndef NOCAN
+       #ifdef ENABLE_MESSAGE_PRAGMAS
+          //#pragma message("CAN ARDUINO_ARCH-AVR selected")
+       #endif
+       // AT90CAN -- TCH
+       #if defined(ARDUINO_AVR_TCH_CONSUMER) \
+        || defined(ARDUINO_AVR_TCH_PRODUCER) \
+        || defined(ARDUINO_AVR_TCH_PRODUCER_CONSUMER)
+          #define AT90CAN
+          #ifndef NOCAN
+            #ifdef ENABLE_MESSAGE_PRAGMAS
+                #pragma message("AT90CAN selected for TCH board")
+            #endif
+            #include <AT90/AT90can.h>
+          #endif // NOCAN
+
+       #else
+          #define ATMEGA
+          #ifndef NOCAN
+            #ifdef ENABLE_MESSAGE_PRAGMAS
+              #pragma message("CAN ARDUINO_ARCH-AVR MCP2515 selected")
+            #endif
             #include "MCP2515/MCPcan.h"
             #define OlcbCanClass McpCan
-        #endif // NOCAN
+          #endif // NOCAN
+       #endif
 
     // **8 ... 168 and 328 Arduinos
     #elif defined(__AVR_ATmega8__)  || \
@@ -90,11 +108,11 @@
 
     // AT90CAN
     #elif defined(__AVR_AT90CAN32__) || defined(__AVR_AT90CAN64__) || defined(__AVR_AT90CAN128__)
-        #ifdef ENABLE_MESSAGE_PRAGMAS
-            #pragma message("AT90CAN selected")
-        #endif
         #define AT90CAN
         #ifndef NOCAN
+            #ifdef ENABLE_MESSAGE_PRAGMAS
+                #pragma message("AT90CAN selected")
+            #endif
             #include <AT90/AT90can.h>
         #endif // NOCAN
 
