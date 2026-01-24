@@ -181,7 +181,10 @@
     #define REBOOT esp_restart()
     //#include "ESPeeprom.h"
     #include "EEPROM.h"
-    #define EEPROMbegin while (!EEPROM.begin(1000)) { \
+    #ifndef  EEPROMSIZE
+      #define EEPROMSIZE 1000
+    #endif
+    #define EEPROMbegin while (!EEPROM.begin(EEPROMSIZE)) { \
             Serial.println("    failed to initialize EEPROM"); \
             delay(1000); \
             }
@@ -204,6 +207,9 @@
     #define REBOOT //reset_usb_boot(1<<PICO_DEFAULT_LED_PIN,0); //invokes reset into bootloader mode
     #define ESTRING(s) s
     #include "EEPROM.h"
+    #ifndef  EEPROMSIZE
+      #define EEPROMSIZE 4096
+    #endif
     #define EEPROMbegin EEPROM.begin(4096)
     #define EEPROMupdate(a,x) EEPROM.update(a,x)
     #define EEPROMcommit EEPROM.commit()
