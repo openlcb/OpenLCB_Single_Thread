@@ -332,6 +332,7 @@ void produceFromInputs() {
 void userSoftReset() {}
 void userHardReset() {}
 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"
 
 // Callback from a Configuration write
@@ -392,7 +393,6 @@ void setup() {
   #endif  
     dPS("\n Size of MemStruct=", (uint16_t)sizeof(MemStruct));
   
-    NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
     dP((String)"\nnew nodeid="); nodeid.print();
     dPS("\nRESET_TO_FACTORY_DEFAULTS=", RESET_TO_FACTORY_DEFAULTS);
     Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
