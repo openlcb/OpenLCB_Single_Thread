@@ -188,6 +188,7 @@ void produceFromInputs() {
 void userSoftReset() {}  // Hook for specific actions on a soft reset.
 void userHardReset() {}  // Hook for specific actions an a hard reset.
 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"  // This mandated, do not remove.
 
 // Callback from a Configuration write
@@ -225,7 +226,6 @@ void setup() {
   dP(F("\n SW: ")); dP(SWVERSION);
   #endif
 
-  NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   Wire.begin();
