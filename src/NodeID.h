@@ -35,7 +35,7 @@ class NodeID {
         dPH((uint8_t)val[i]);
         dP((char)'.');
     }
-    dP(val[5]);
+    dPH(val[5]);
   }
 };
 

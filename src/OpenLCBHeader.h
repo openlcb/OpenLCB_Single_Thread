@@ -9,6 +9,8 @@
 #ifndef OpenLCBHeader_h
 #define OpenLCBHeader_h
 
+//#pragma message "Compiling OpenLCBHeader.h"
+
 bool eepromDirty;
 
 #include "processor.h"
@@ -19,7 +21,7 @@ bool eepromDirty;
 #include "OpenLcbCore.h"
 
 // specific OpenLCB implementations
-#include "LinkControl.h"
+//#include "LinkControl.h"
 
 //#ifndef OLCB_NO_DATAGRAM
 #include "Datagram.h"

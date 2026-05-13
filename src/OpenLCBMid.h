@@ -9,8 +9,6 @@
 #ifndef OpenLCBMid_h
 #define OpenLCBMid_h
 
-//#pragma message "OpenLCBMid.h"
-
 #include "processCAN.h"
 #include "processor.h"
 #include "NodeID.h"
@@ -43,7 +41,7 @@
 
 #include "OpenLcbCore.h"
 
-NodeID nodeId;
+extern NodeID nodeid;
 void setEepromDirty();
 
 //class Can;
@@ -147,8 +145,7 @@ void configWritten(uint32_t address, uint16_t length, uint16_t func) {
         userConfigWritten(address, length, func);
 }
 
-
-LinkControl clink(&txBuffer, &nodeId);
+LinkControl clink(&txBuffer, &nodeid);
 
 #ifndef OLCB_NO_STREAM
     uint16_t streamRcvCallback(uint8_t *rbuf, uint16_t length);
@@ -200,8 +197,9 @@ extern "C" {
 
 // ===== System Interface
 //void Olcb_init(uint8_t forceFactoryReset) {       // was setup()
-void Olcb_init(NodeID nid, uint8_t forceFactoryReset) {
-    dP(F("\nOpenLCBMid.h/Olcb_init()"));
+void Olcb_init(NodeID &nid, uint8_t forceFactoryReset) {
+    NodeID oldNodeId; //
+    //dP(F("\nOpenLCBMid.h/Olcb_init()"));
     //dP(F(" nid=")); nid.print();
     //dP(F(" forceFactoryReset=")); dP((bool)forceFactoryReset);
     EEPROMbegin;
@@ -212,13 +210,14 @@ void Olcb_init(NodeID nid, uint8_t forceFactoryReset) {
         
     	// Read the NodeID from EEPROM
     nm.loadAndValidate();  // moved from nm constructor
-    nm.getNodeID(&nodeId);
+    nm.getNodeID(&oldNodeId);
     
-    //dP((String)"\n    Stored nid="); nodeId.print();
+    //dP("\n    Stored nodeId="); oldNodeId.print();
 	//nm.print(sizeof(MemStruct));
-    //dP((String)"\n    New nid=")); nid.print();
+    //dP("\n    New nid="); nid.print();
     
-    if( !nodeId.equals(&nid) ) {
+    if( !oldNodeId.equals(&nid) ) {
+        //dP("\n unequal new and old");
         nm.changeNodeID(nid);
         setEepromDirty();
     }
