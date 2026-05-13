@@ -233,6 +233,7 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func) {
     }
 }
 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"           // System house-keeping Leave it here
 
 // ==== Setup does initial configuration =============================
@@ -244,7 +245,6 @@ void setup() {
     dP("\nOlcbBasicNode\n");
   #endif
 
-  NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   // init pins
