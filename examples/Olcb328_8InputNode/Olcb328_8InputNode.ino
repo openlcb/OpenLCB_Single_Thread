@@ -251,6 +251,7 @@ bool states[] = {false, false, false, false, false, false, false, false }; // cu
     #endif
   }
 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"           // System house-keeping
 
 // ==== Setup does initial configuration =============================
@@ -263,7 +264,6 @@ bool states[] = {false, false, false, false, false, false, false, false }; // cu
       delay(100);
     #endif
 
-    NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
     Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
   
     #ifdef DEBUG
