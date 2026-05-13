@@ -281,6 +281,7 @@ uint8_t protocolIdentValue[6] = {0xD7,0x58,0x00,0,0,0};
 
 #define OLCB_NO_BLUE_GOLD
 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"
 
 const uint8_t outputPinNums[NUM_OUTPUTS] = { 0, 1, 2, 3, 4, 5, 6, 7};
@@ -517,7 +518,6 @@ void setup()
     }
     digitalWrite(SERVO_ENABLE_PIN, LOW);
 
-    NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
     Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
 }
