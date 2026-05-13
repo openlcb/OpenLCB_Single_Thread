@@ -256,7 +256,7 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func) {
   #endif
 }
 
- 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"           // System house-keeping
 
 // ==== Setup does initial configuration =============================
@@ -271,8 +271,7 @@ void setup() {
   #endif
 
   dP(F("This is a test of flash strings"));
-
-  NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
+    
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   // set pins to outputs
