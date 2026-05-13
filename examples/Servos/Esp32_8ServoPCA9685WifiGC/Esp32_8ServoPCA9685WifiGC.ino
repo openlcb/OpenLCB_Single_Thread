@@ -192,6 +192,7 @@ void produceFromInputs() {
 void userSoftReset() {}
 void userHardReset() {}
 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"
 
 // Callback from a Configuration write
@@ -218,7 +219,6 @@ void setup()
     dP(F("\n " __FILE__));
   #endif
 
-  NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   Wire.setPins(26, 32);  // SDA, SCL Atom=26,32
