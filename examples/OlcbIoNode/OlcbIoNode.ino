@@ -299,6 +299,7 @@ void userConfigWritten(uint32_t address, uint16_t length, uint16_t func) {
   // }
 }
 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"           // System house-keeping --- **must be here**
 
 #ifndef OLCB_NO_BLUE_GOLD
@@ -339,8 +340,7 @@ void setup() {
     delay(250);Serial.begin(115200);dP(F("\nOlcbIoNode\n"));
     delay(1000);
   #endif
-
-  NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
+  
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   //while(0==0){}
