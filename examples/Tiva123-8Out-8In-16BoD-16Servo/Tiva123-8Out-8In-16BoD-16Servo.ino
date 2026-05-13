@@ -356,6 +356,7 @@ static uint8_t bodScanIndex = 0;
 void userSoftReset() {}
 void userHardReset() {}
 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"
 
 // Callback from a Configuration write
@@ -409,7 +410,6 @@ void setup()
   for(uint8_t i = 0; i < NUM_BOD_INPUTS; i++)
     pinMode(bodPinNums[i], INPUT_PULLUP);
 
-  NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
   Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   servoPWM.begin();
