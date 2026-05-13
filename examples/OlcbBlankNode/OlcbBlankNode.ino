@@ -187,6 +187,7 @@ void produceFromInputs() {
       }
   }
 
+NodeID nodeid(NODE_ADDRESS);       // this node's nodeid, must be before next line
 #include "OpenLCBMid.h"           // System house-keeping, do not delete!
 
 // ==== Setup does initial configuration =============================
@@ -201,7 +202,6 @@ void produceFromInputs() {
       delay(1000);
     #endif
 
-    NodeID nodeid(NODE_ADDRESS);       // this node's nodeid
     Olcb_init(nodeid, RESET_TO_FACTORY_DEFAULTS);
 
   }
