@@ -109,9 +109,11 @@ class OlcbCanClass : public OlcbCan {
   }
     uint8_t state = 0;
     uint8_t p = 0;
-    HardwareSerial* inf;
+    ///HardwareSerial* inf;
+    Stream* inf;
   public:
-    OlcbCanClass(HardwareSerial* _inf=&Serial) : inf(_inf) {}
+    ///OlcbCanClass(HardwareSerial* _inf=&Serial) : inf(_inf) {}
+    OlcbCanClass(Stream* _inf=&Serial) : inf(_inf) {}
     void init() {                   // initialization
         dP("\nGC::init1");
         //inf->begin(115200);while(!inf); delay(1000);
