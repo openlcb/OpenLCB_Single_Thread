@@ -14,6 +14,12 @@
 
 #define DATAGRAM_LENGTH 70
 
+// A multi-frame datagram that stops part-way is abandoned after this long, so a
+// single lost fragment doesn't block datagram reception until the next reboot.
+#ifndef DATAGRAM_REASSEMBLY_TIMEOUT_MS
+#define DATAGRAM_REASSEMBLY_TIMEOUT_MS 500
+#endif
+
 // some error messages for datagram rejected response messages
 // These top 16 bits after the datagram-rejected MTI
 // The bottom are reserved, send as zero, ignore on receipt
@@ -74,7 +80,8 @@ class Datagram {
   uint8_t* tptr;
   bool first;
   bool reservedXmt;  // buffer reserved for transmission
-  bool receiving; 
+  bool receiving;
+  unsigned long startTime;  // millis() when reassembly began (see check())
   
   uint16_t fromAlias;
   
