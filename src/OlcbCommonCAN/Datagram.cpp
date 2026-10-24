@@ -42,6 +42,13 @@ void Datagram::sendTransmitBuffer(int length, uint16_t destNIDa) {
 }
 
 void Datagram::check() {
+  // Reassembly timeout: if a multi-frame datagram stalls part-way (a lost
+  // fragment), reset the receiver so it is one retriable miss instead of a
+  // permanent wedge that rejects every later datagram with BUFFER_FULL.
+  if (receiving && (millis() - startTime) > DATAGRAM_REASSEMBLY_TIMEOUT_MS) {
+    rptr = rbuf;
+    receiving = false;
+  }
   // see if any datagram segments are waiting to send
   if (sendcount >= 0) { // 0 is valid length
     // check if can send now
@@ -154,6 +161,7 @@ bool Datagram::receivedFrame(OlcbCanInterface* rcv) {
                 // not receiving, start reception and continue processing
                 fromAlias = rcv->getSourceAlias();
                 receiving = true;
+                startTime = millis();  // arm the reassembly timeout (see check())
             }
          } else {
             // not a start segment, make sure we're receiving
@@ -184,6 +192,8 @@ bool Datagram::receivedFrame(OlcbCanInterface* rcv) {
          }
          // this is a datagram fragment, store into the buffer
          for (int i=0; i<rcv->net->length; i++) {
+            // bounds guard: a malformed or over-long datagram must not overflow rbuf
+            if (rptr >= rbuf + DATAGRAM_LENGTH) break;
             *(rptr++) = rcv->net->data[i];
          }
          // is the end of the datagram?
