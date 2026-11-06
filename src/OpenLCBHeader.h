@@ -45,7 +45,7 @@ bool eepromDirty;
         <manufacturer>" MANU "</manufacturer>\
         <model>" MODEL "</model>\
         <hardwareVersion>" HWVERSION "</hardwareVersion>\
-        <softwareVersion>" SWVERSION "</softwareVersion>\
+        <softwareVersion>" SWVERSION " Lib:" OlcbCommonVersion "</softwareVersion>\
         </identification>\
     <segment origin='4' space='253'> <!-- bypasses magic, nextEID, nodeID -->\
         <group>\

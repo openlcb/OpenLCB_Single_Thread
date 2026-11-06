@@ -43,7 +43,7 @@ class OlcbInterface { // }: public OlcbNet {
         virtual uint8_t getOpenLcbFormat() = 0;  // 0-7 value
         virtual void setOpenLcbFormat(uint8_t i) = 0;   // 0-7 value
         
-        //virtual void setDest(uint32_t a) = 0;  // needs format already set = 0; sets length >= 2 if needed
+        //virtual void setDest(uint32_t a) = 0;  // needs format already set; sets length >= 2 if needed
         virtual void setDest(NodeID* nid) = 0;  // needs format already
         virtual NodeID getDest() = 0;
         
@@ -92,7 +92,7 @@ class OlcbInterface { // }: public OlcbNet {
         
         virtual void setConsumerIdentified(EventID* eid, uint8_t state) = 0;
         
-        // Mask uses an EventID data structure = 0; 1 bit means mask out when routing
+        // Mask uses an EventID data structure; 1 bit means mask out when routing
         virtual void setConsumerIdentifyRange(EventID* eid, EventID* mask) = 0;
         
         virtual bool isIdentifyProducers() = 0;

@@ -264,16 +264,15 @@ bool Olcb_process() {   // was loop()
     }
    #endif
 
-    bool rcvFramePresent = rxBuffer.net->read();
     clink.check();
 
-    bool handled = false;  // start accumulating whether it was processed or skipped
-    if (rcvFramePresent) {
-        handled = clink.receivedFrame(&rxBuffer);
-    }
-
-    if (clink.linkInitialized()) {
-        if (rcvFramePresent && rxBuffer.isForHere(clink.getAlias()) ) {
+    // Drain every frame already waiting. One frame per call lets a datagram
+    // burst overflow the CAN receive ring when loop() is slow.
+    bool rcvFramePresent = false;
+    while (rxBuffer.net->read()) {
+        rcvFramePresent = true;
+        bool handled = clink.receivedFrame(&rxBuffer);
+        if (clink.linkInitialized() && rxBuffer.isForHere(clink.getAlias()) ) {
 #ifndef OLCB_NO_DATAGRAM
             handled |= dg.receivedFrame(&rxBuffer);  // has to process frame level
 #endif
@@ -287,6 +286,9 @@ bool Olcb_process() {   // was loop()
                 if (!handled && rxBuffer.isAddressedMessage()) clink.rejectMessage(&rxBuffer, 0x2000);
             }
         }
+    }
+
+    if (clink.linkInitialized()) {
         OpenLcb.check();
 #ifndef OLCB_NO_DATAGRAM
         dg.check();

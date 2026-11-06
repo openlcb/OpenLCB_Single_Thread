@@ -1,11 +1,14 @@
 #include "Configuration.h"
 #include "Datagram.h"
 #include "OlcbStream.h"
+#include "OpenLcbCore.h"
 #include "processor.h"
 
 #include "debugging.h"
 
 extern void setEepromDirty();
+extern void userHardReset() __attribute__((weak));
+extern OpenLcbCore OpenLcb;
 
 /**
  * Structure: Requests come in via 
@@ -123,6 +126,7 @@ void Configuration::processRead(uint8_t* data, int length) {
     d[1] = CFG_CMD_READ_REPLY | (d[1]&0x0F);
     // get length, space
     int len = decodeLen(data);
+    if (len > DATAGRAM_LENGTH - 6) len = DATAGRAM_LENGTH - 6;
     uint32_t address = getAddress(data);
     int space = decodeSpace(data);
     for (int i=0; i<len; i++)
@@ -193,26 +197,35 @@ void Configuration::processCmd(uint8_t* data, int length) {
             request = false;  // mark as done.
             break;
         case CFG_CMD_RESETS:
-            // will handle, mark as done.
+            // Reboot. Call the sketch hook first; it may reboot itself.
+            // Sketches that leave userSoftReset() empty still need the reboot.
             request = false;
-            dP(F("\n Request to reboot"));
-            // force restart (may not reply?)
-            if(restart) REBOOT;
-            dP(F("\n Oops REBOOT returned?!"));
-            while(0==0){}
+            dP(F("\n CFG_CMD_RESETS"));
+            if (restart) restart();
+            REBOOT;
+            break;
+        case CFG_CMD_REINIT_FACTORYRESET:
+            // Same path as the blue/gold factory reset: flag EEPROM, then reboot.
+            // OpenLcbCore::init() erases and calls userInitAll() on the next boot.
+            request = false;
+            dP(F("\n CFG_CMD_REINIT_FACTORYRESET"));
+            OpenLcb.forceFactoryReset();
+            EEPROMcommit;
+            if (userHardReset) userHardReset();
+            REBOOT;
             break;
         // TODO: Handle other cases:
-        //case CFG_CMD_CFG_CMD_GET_CONFIG_REPLY :
-        //case CFG_CMD_CFG_CMD_GET_ADD_SPACE_INFO_REPLY:
+        //case CFG_CMD_GET_CONFIG_REPLY:
+        //case CFG_CMD_GET_ADD_SPACE_INFO_REPLY:
         //case CFG_CMD_LOCK:
         //case CFG_CMD_LOCK_REPLY:
         //case CFG_CMD_GET_UNIQUEID:
         //case CFG_CMD_GET_UNIQUEID_REPLY:
         //case CFG_CMD_FREEZE:
         //case CFG_CMD_INDICATE:
-        //case CFG_CMD_REINIT_FACTORYRESET:
         default:
-            // these do nothing in this implementation
+            // not implemented here; drop it so check() does not spin
+            request = false;
             break;
     }
 }

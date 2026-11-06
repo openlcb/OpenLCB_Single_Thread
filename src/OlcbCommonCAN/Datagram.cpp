@@ -20,6 +20,8 @@ Datagram::Datagram(OlcbCanInterface* b, uint16_t (*cb)(uint8_t tbuf[DATAGRAM_LEN
       sendcount = -1;
       rptr = rbuf;
       receiving = false;
+      overlong = false;
+      startTime = 0;
 }
 
 
@@ -41,7 +43,23 @@ void Datagram::sendTransmitBuffer(int length, uint16_t destNIDa) {
     dest = destNIDa;
 }
 
+void Datagram::abortReceive() {
+    rptr = rbuf;
+    receiving = false;
+    overlong = false;
+}
+
 void Datagram::check() {
+  // Lost fragment: tell the sender (0x2011) and accept the next datagram.
+  // An over-long datagram that never got its last frame is a permanent reject.
+  if (receiving && (millis() - startTime) > DATAGRAM_REASSEMBLY_TIMEOUT_MS) {
+    uint16_t src = fromAlias;
+    uint16_t code = overlong ? DATAGRAM_REJECTED_INVALID_ARGUMENTS
+                             : DATAGRAM_REJECTED_REASSEMBLY_TIMEOUT;
+    abortReceive();
+    setDatagramNak(link->getAlias(), src, code);
+    buffer->net->write(200);
+  }
   // see if any datagram segments are waiting to send
   if (sendcount >= 0) { // 0 is valid length
     // check if can send now
@@ -96,8 +114,7 @@ bool Datagram::receivedFrame(OlcbCanInterface* rcv) {
     if (receiving) {
         if (rcv->isAMR(fromAlias) || rcv->isAMD(fromAlias)) {
             // yes, abort reception
-            rptr = rbuf;
-            receiving = false;
+            abortReceive();
             return false;
         }
     }
@@ -141,27 +158,23 @@ bool Datagram::receivedFrame(OlcbCanInterface* rcv) {
             ) {
             //dP("\n Datagram::receivedFrame DG start");
 
-            if (receiving) {
-                // already receiving, this is an error, reply if last
-                if (rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_ALL ) {
-                    // TODO: Need a more robust scheduling method here
-                    setDatagramNak(link->getAlias(), rcv->getSourceAlias(), DATAGRAM_REJECTED_BUFFER_FULL);
-                    buffer->net->write(200);  // wait until buffer queued _WITHOUT_ prior check
-                }
+            if (receiving && fromAlias != rcv->getSourceAlias()) {
+                // another node started a datagram while this one is in progress
+                setDatagramNak(link->getAlias(), rcv->getSourceAlias(), DATAGRAM_REJECTED_BUFFER_UNAVAILABLE);
+                buffer->net->write(200);  // wait until buffer queued _WITHOUT_ prior check
                 return true;
-                // TODO send error response some how; will return false be enough?
-            } else {
-                // not receiving, start reception and continue processing
-                fromAlias = rcv->getSourceAlias();
-                receiving = true;
             }
+            // not receiving, or the same sender started again: take this datagram
+            if (receiving) abortReceive();
+            fromAlias = rcv->getSourceAlias();
+            receiving = true;
+            overlong = false;
+            startTime = millis();
          } else {
             // not a start segment, make sure we're receiving
             if (!receiving) {
                 // missed the start frame? if last, tell
-                if ( (rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_ALL)
-                    || (rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_LAST)
-                    ) {
+                if (rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_LAST) {
                     // TODO: Need a more robust scheduling method here
                     setDatagramNak(link->getAlias(), rcv->getSourceAlias(), DATAGRAM_REJECTED_OUT_OF_ORDER);
                     buffer->net->write(200);  // wait until buffer queued _WITHOUT_ prior check
@@ -177,35 +190,43 @@ bool Datagram::receivedFrame(OlcbCanInterface* rcv) {
                 || (rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_LAST)
                 ) {
                 // TODO: Need a more robust scheduling method here
-                setDatagramNak(link->getAlias(), rcv->getSourceAlias(), DATAGRAM_REJECTED_BUFFER_FULL);
+                setDatagramNak(link->getAlias(), rcv->getSourceAlias(), DATAGRAM_REJECTED_BUFFER_UNAVAILABLE);
                 buffer->net->write(200);  // wait until buffer queued _WITHOUT_ prior check
             }
             return true;
          }
          // this is a datagram fragment, store into the buffer
          for (int i=0; i<rcv->net->length; i++) {
+            if (rptr >= rbuf + DATAGRAM_LENGTH) {
+                overlong = true;
+                break;
+            }
             *(rptr++) = rcv->net->data[i];
          }
          // is the end of the datagram?
          if ( ( rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_ALL) 
             || ( rcv->getOpenLcbFormat() == FRAME_FORMAT_ADDRESSED_DATAGRAM_LAST )
             ) {
-            // 
              uint16_t length = rptr-rbuf;
-            // callback; result is error code or zero
-             uint16_t result = (*callback)(rbuf, length, rcv->getSourceAlias());
-            rptr = rbuf;
-            receiving = false;
-            if (result == 0) {
-                // send OK; done immediately with wait
-                // TODO: Need a more robust method here
-                // load buffer
-                setDatagramAck(link->getAlias(), rcv->getSourceAlias());
-            } else {
-                // not OK, send reject; done immediately with wait
-                // TODO: Need a more robust method here
-                setDatagramNak(link->getAlias(), rcv->getSourceAlias(), DATAGRAM_REJECTED_DATAGRAM_TYPE_NOT_ACCEPTED);
-            }
+             bool tooLong = overlong;
+             uint16_t src = rcv->getSourceAlias();
+             abortReceive();
+             if (tooLong) {
+                // do not hand a short buffer to the callback
+                setDatagramNak(link->getAlias(), src, DATAGRAM_REJECTED_INVALID_ARGUMENTS);
+             } else {
+                // callback; result is error code or zero
+                uint16_t result = (*callback)(rbuf, length, src);
+                if (result == 0) {
+                    // send OK; done immediately with wait
+                    // TODO: Need a more robust method here
+                    setDatagramAck(link->getAlias(), src);
+                } else {
+                    // not OK, send reject; done immediately with wait
+                    // TODO: Need a more robust method here
+                    setDatagramNak(link->getAlias(), src, DATAGRAM_REJECTED_DATAGRAM_TYPE_NOT_ACCEPTED);
+                }
+             }
             buffer->net->write(200);  // wait until buffer queued _WITHOUT_ prior check
          }
          return true;
