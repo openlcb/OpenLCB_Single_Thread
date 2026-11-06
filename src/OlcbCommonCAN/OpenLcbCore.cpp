@@ -8,6 +8,7 @@
 #include "LinkControl.h"
 
 #include "debugging.h"
+#include "OlcbUserHooks.h"
 
 
 extern "C" {
@@ -17,8 +18,6 @@ extern "C" {
 }
 
 extern void setEepromDirty();
-extern void userInitAll();
-extern void pceCallback(uint16_t i);
 
 OpenLcbCore::OpenLcbCore(Event* events, uint16_t numEvents, uint16_t* eIndex, const EIDTab* eidTab, OlcbCanInterface* b, LinkControl* li)
 {
@@ -109,7 +108,7 @@ void OpenLcbCore::init()
         writeNewEventIDs(events, numEvents);
         dP(F("\nuserInitAll()"));
 
-        userInitAll();
+        if (userInitAll) userInitAll();
 
 		header.resetControl = RESET_NORMAL_VAL;
         //dP(F("\nNODECONFIG.put(0, header)"));
@@ -128,7 +127,7 @@ void OpenLcbCore::init()
         //dP(F("\nwriteNewEventIDs(events, numEvents)"));
         writeNewEventIDs(events, numEvents);
         dP(F("\nuserInitAll()"));
-        userInitAll();
+        if (userInitAll) userInitAll();
 
         header.resetControl = RESET_NORMAL_VAL;
         //dP(F("\nNODECONFIG.put(0, header)"));
@@ -364,7 +363,6 @@ int16_t OpenLcbCore::findIndexOfEventID(EventID *key, int16_t startIndex)
     sendEvent = sendEvent<i ? sendEvent : i;
   }
   // get the state of an event from the user program
-  extern uint8_t userState(uint16_t) __attribute__((weak));
   uint8_t getState(uint16_t index) {
       if(userState) {
           uint8_t us = userState(index);

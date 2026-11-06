@@ -5,9 +5,9 @@
 #include "processor.h"
 
 #include "debugging.h"
+#include "OlcbUserHooks.h"
 
 extern void setEepromDirty();
-extern void userHardReset() __attribute__((weak));
 extern OpenLcbCore OpenLcb;
 
 /**
