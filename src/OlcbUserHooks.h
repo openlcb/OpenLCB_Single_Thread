@@ -35,6 +35,11 @@ extern uint8_t userState(uint16_t index) __attribute__((weak));
 // also receives frames will ACK or NAK the same transfer as the library,
 // and CDI reads and writes then fail.
 //
+// NodeDatagram.h is an optional client of this same `dg`. Include that
+// header once, after OpenLCBMid.h. It defines userDatagramReceived and
+// userAliasChanged, so a sketch that includes it does not define those
+// hooks itself. A sketch that does not include it keeps the weak hooks.
+//
 // Return 0 to accept the datagram. The transport then sends Datagram
 // Received OK. Any non-zero return is sent as Datagram Rejected 0x1040.
 // The returned number is not put on the wire, so this hook cannot ask for
@@ -72,5 +77,18 @@ extern uint8_t userState(uint16_t index) __attribute__((weak));
 // `from` is the source node's current CAN alias. Aliases are reused, so
 // send a reply while that alias still belongs to the node you heard.
 extern uint16_t userDatagramReceived(uint8_t *data, uint16_t length, uint16_t from) __attribute__((weak));
+
+// Optional sketch hook for CAN alias map changes.
+//
+// LinkControl::receivedFrame calls this after its Alias Map Enquiry reply
+// when the frame is an Alias Map Definition or Alias Map Reset with at
+// least six data bytes. `nid` is those six bytes, in the order JMRI shows.
+// For an AMD, `alias` is the source alias. For an AMR, `alias` is 0 and
+// that Node ID no longer owns an alias. Aliases are temporary.
+// LinkControl::getAlias() is this node only; the library keeps no map of
+// other nodes. The pointer is null when the sketch does not define this,
+// and the call site does not call it then. NodeDatagram.h defines it.
+class NodeID;
+extern void userAliasChanged(NodeID *nid, uint16_t alias) __attribute__((weak));
 
 #endif
