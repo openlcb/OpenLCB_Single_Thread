@@ -163,13 +163,18 @@ LinkControl clink(&txBuffer, &nodeid);
     Datagram dg(&txBuffer, datagramCallback, &clink);
     Configuration cfg(&dg, &str, getRead, getWrite, userSoftReset, configWritten);
 
+    // See userDatagramReceived() in  OlcbUserHooks.h for how a sketch
+    // receives and replies. 0x20 stays with Configuration, so CDI,
+    // configuration memory, and SNII are unchanged when the hook is absent.
     uint16_t datagramCallback(uint8_t *rbuf, uint16_t length, uint16_t from) {
-        // invoked when a datagram arrives
-        // pass to consumers
         //dP("consume datagram of length ");dP((uint32_t)length); dP("\n");
         //for (int i = 0; i<length; i++) { dPH(rbuf[i]); dP(" "); }
         //dP("\n");
-        return cfg.receivedDatagram(rbuf, length, from);
+        if (length > 0 && rbuf[0] == CONFIGURATION_DATAGRAM_CODE)
+            return cfg.receivedDatagram(rbuf, length, from);
+        if (userDatagramReceived)
+            return userDatagramReceived(rbuf, length, from);
+        return 1; // Datagram Rejected 0x1040, type not accepted
     }
 #else
     #define cfg 0
