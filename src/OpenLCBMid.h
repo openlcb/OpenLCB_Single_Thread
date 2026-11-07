@@ -163,7 +163,7 @@ LinkControl clink(&txBuffer, &nodeid);
     Datagram dg(&txBuffer, datagramCallback, &clink);
     Configuration cfg(&dg, &str, getRead, getWrite, userSoftReset, configWritten);
 
-    // See userDatagramReceived() in OpenLCBHeader.h for how a sketch
+    // See userDatagramReceived() in  OlcbUserHooks.h for how a sketch
     // receives and replies. 0x20 stays with Configuration, so CDI,
     // configuration memory, and SNII are unchanged when the hook is absent.
     uint16_t datagramCallback(uint8_t *rbuf, uint16_t length, uint16_t from) {
