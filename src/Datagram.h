@@ -60,6 +60,12 @@ class Datagram {
    * Go through this in loop() to e.g. send pending messages
    */
   void check();
+
+  /**
+   * True when no transmit is reserved and no fragment is waiting.
+   * getTransmitBuffer() sets reservedXmt, so do not call it only to probe.
+   */
+  bool transmitIdle() { return !reservedXmt && sendcount < 0; }
   
   /**
    * When a CAN frame is received, it should

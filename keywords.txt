@@ -3,6 +3,7 @@
 #######################################
 
 NodeID									KEYWORD1
+NodeDatagram								KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)

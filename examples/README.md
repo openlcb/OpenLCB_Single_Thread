@@ -27,6 +27,9 @@ In addition to these examples, there are some excellent examples provided by:
 - **OlcbBlankNode**<br>
     The example shows the minimal node code without any additional logic.  
 
+- **OlcbDatagramNode**<br>
+    Two boards run this sketch with different Node IDs and exchange datagrams through `NodeDatagram`. Memory Configuration still uses the same Datagram transport. The peer is an event id that is not produced or consumed; its first six bytes are the other node's Node ID.
+
 - **OlcbBasicNode**<br>
     Implements a simple node which exercises most of the protocols.  It has **two inputs** and **two outputs**.  Each input has two Producer-eventIDs and each output has two Consumer-eventIDs, so **8 eventIDs in total**.  This Application makes use of the ButtonLed library to control **two buttons** and **two LEDs**.  In addition, it implements the BG (Blue-Gold) protocol to allow the **teaching** of eventIDs between this node and others.  
         The example connects the BUILTIN_LED to the first output, so triggering the two associated events will turn that LED on and off.  

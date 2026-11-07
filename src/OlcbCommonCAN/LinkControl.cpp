@@ -9,6 +9,7 @@
 #include "OlcbCan.h"
 
 #include "NodeID.h"
+#include "OlcbUserHooks.h"
 
 #include "debugging.h"
 
@@ -211,8 +212,21 @@ bool LinkControl::receivedFrame(OlcbCanInterface* rcv) {
       txBuffer->setAMD(alias, nid);
       txBuffer->net->write(200);
    }
-   // check for aliasMapDefinition
-   // check for aliasMapReset
+   // Alias Map Definition / Reset. AMD carries the source alias; AMR
+   // means that Node ID no longer owns one. Call only when a sketch
+   // (or NodeDatagram.h) defined the hook.
+   else if (rcv->isFrameTypeCAN() && rcv->net->length >= 6 &&
+            (rcv->getVariableField() == AMD_VAR_FIELD ||
+             rcv->getVariableField() == AMR_VAR_FIELD)) {
+     if (userAliasChanged) {
+       NodeID reported;
+       rcv->getNodeID(&reported);
+       uint16_t reportedAlias = 0;
+       if (rcv->getVariableField() == AMD_VAR_FIELD)
+         reportedAlias = rcv->getSourceAlias();
+       userAliasChanged(&reported, reportedAlias);
+     }
+   }
 
    // see if this is a Verify request to us; first check type
    else if (rcv->isVerifyNID()) {

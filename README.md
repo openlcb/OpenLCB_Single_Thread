@@ -167,6 +167,7 @@ These protocols consist of:
     These libraries implement useful functionality.  
    - BG - Blue/Green -- node health indicators and system buttons.
    - ButtonLed -- implements controlling a button and LED from a single processor pin.
+   - NodeDatagram -- optional client of the node's one Datagram transport, for datagrams other than Memory Configuration. See below.
 
 ## How the Above Translates to the Codebase
 The 'codebase' is a set of libraries and functions that implement the basic protocols of OpenLCB/LCC. <br> 
@@ -197,6 +198,14 @@ The programmer of the Application must:
  - Write **produceFromInputs()** which scans the node's inputs and, if appropriate, flags an evenItD to be sent.  
  - Write **userConfigWrite()** which is called whenever a UI Tool writes to the node's memory.  This code can then compare the memory address range of the change to the node's variables, and take whatever action is appropriate, e.g. update a servo position.
  - Write additional support and glue code for the Application.  
+
+## NodeDatagram
+
+`src/NodeDatagram.h` lets a sketch exchange datagrams on the same transport Memory Configuration uses. Do not construct a second `Datagram`. Include the header once, after `#include "OpenLCBMid.h"`. That include defines `userDatagramReceived` and `userAliasChanged`. A sketch that does not include the header keeps the weak hooks and still builds.
+
+Each `NodeDatagram` is constructed with an EEPROM address and a receive handler. The address is an event id that is not listed in `eidtab`, so the node does not produce or consume it. The first six bytes are the other node's Node ID, in the order JMRI shows. `send()` reads them from EEPROM when it is called, so a CDI edit is used on the next send. Call `NodeDatagram::check()` from `loop()` after `Olcb_process()`.
+
+`examples/OlcbDatagramNode` runs the same sketch on two boards and exchanges a ping and a reply. Content id `0x20` stays with Memory Configuration.
 
 
    
