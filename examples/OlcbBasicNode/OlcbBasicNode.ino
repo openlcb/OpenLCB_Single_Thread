@@ -299,7 +299,7 @@ void setup() {
   dP("\neeprom:\n");
   for(int i=0; i<(sizeof(MemStruct)+8); i++) {
     if( i!=0 && (i%16==0) ) { dP("\n"); dP(i); dP(": "); }
-    uint8_t x = EEPROM.read(i);
+    uint8_t x = OLCB_EEPROM.read(i);
     if(x<16)dP(0); dPH(x); dP(" ");
   }
 

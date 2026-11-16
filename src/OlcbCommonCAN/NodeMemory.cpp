@@ -25,12 +25,12 @@ void NodeMemory::init()
 
 uint8_t NodeMemory::read( int idx )
 {
-	return EEPROM.read(idx + userConfigBase);
+	return OLCB_EEPROM.read(idx + userConfigBase);
 }
 
 void NodeMemory::write( int idx, uint8_t val )
 {
-	EEPROM.write(idx + userConfigBase, val);
+	OLCB_EEPROM.write(idx + userConfigBase, val);
 }
 
 uint16_t NodeMemory::length(void)
@@ -52,7 +52,7 @@ void NodeMemory::eraseAll(void)
 uint8_t NodeMemory::loadAndValidate()
 {
     //dP(F("\n >>>>nm::loadAndValidate()"));
-	EEPROM.get(eepromBase, nodeIdCache);
+	OLCB_EEPROM.get(eepromBase, nodeIdCache);
     //dP(F("\n     nodeIdCache.Marker= ")); dPH(nodeIdCache.Marker);
 
 	nodeIdState = 0;
@@ -96,7 +96,7 @@ void NodeMemory::changeNodeID(NodeID newNodeId)
 
     //dP(F("nodeIdCache.CheckSum = ")); dP(checkSum);
 
-	EEPROM.put(eepromBase, nodeIdCache);
+	OLCB_EEPROM.put(eepromBase, nodeIdCache);
     setEepromDirty();
     //dP(F("\nNM changeNodeID()"));
 }
@@ -116,14 +116,14 @@ void NodeMemory::print(int n)
 
 		for(int i = rb; i < (rb + 16); i++)
 		{
-			uint8_t v = EEPROM.read(i);
+			uint8_t v = OLCB_EEPROM.read(i);
             if(v < 16) dP((uint8_t)0);
             dPH(v); dP(" ");
 		}
 		
 		for(int i = rb; i < (rb + 16); i++)
 		{
-			char c = EEPROM.read(i);
+			char c = OLCB_EEPROM.read(i);
             if( c<' ' || c==0x8F ) dP('.');
             else dP(c);
 		}

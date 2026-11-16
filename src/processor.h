@@ -15,6 +15,8 @@
 
 #undef EEPROMbegin
 #undef EEPROMcommit
+// NodeMemory and sketches use this name. ESP32 points it at LittleFS.
+#define OLCB_EEPROM EEPROM
 // #define ESTRING(s) s        // default conversion - nil
 // #define ESTRING(s) F(s)     // alternate def
 // #define ESTRING(s) PSTR(s)  // alternate def
@@ -179,18 +181,33 @@
     #endif
     #define RAMEND 0x7FFFF
     #define REBOOT esp_restart()
-    //#include "ESPeeprom.h"
-    #include "EEPROM.h"
-    #ifndef  EEPROMSIZE
+    // Define EEPROMSIZE before this header. Do not set it in setup(), and
+    // do not redefine EEPROMbegin or EEPROMcommit in a board header.
+    //   #define EEPROMSIZE 8192
+    // Define OLCB_USE_NATIVE_EEPROM to keep the core NVS EEPROM (4096 max).
+    #ifndef EEPROMSIZE
       #define EEPROMSIZE 1000
     #endif
-    #define EEPROMbegin while (!EEPROM.begin(EEPROMSIZE)) { \
-            Serial.println("    failed to initialize EEPROM"); \
-            delay(1000); \
-            }
-    #define EEPROMupdate(a,x) EEPROM.write(a,x)
-    #define EEPROMcommit EEPROM.commit()
     #define ESTRING(s) PSTR(s)
+    #if defined(OLCB_USE_NATIVE_EEPROM)
+        #include "EEPROM.h"
+        #define EEPROMbegin while (!EEPROM.begin(EEPROMSIZE)) { \
+                Serial.println("    failed to initialize EEPROM"); \
+                delay(1000); \
+                }
+        #define EEPROMupdate(a,x) EEPROM.write(a,x)
+        #define EEPROMcommit EEPROM.commit()
+    #else
+        #include "ESP32/LittleFS_EEPROM.h"
+        #undef OLCB_EEPROM
+        #define OLCB_EEPROM OpenLCB_EEPROM
+        #define EEPROMbegin while (!OLCB_EEPROM.begin(EEPROMSIZE)) { \
+                Serial.println("    failed to initialize LittleFS EEPROM"); \
+                delay(1000); \
+                }
+        #define EEPROMupdate(a,x) OLCB_EEPROM.write(a,x)
+        #define EEPROMcommit OLCB_EEPROM.commit()
+    #endif
 
 // PICO
 #elif defined(TARGET_RP2040) || defined(ARDUINO_ARCH_RP2040)
