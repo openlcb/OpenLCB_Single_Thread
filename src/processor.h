@@ -181,9 +181,10 @@
     #endif
     #define RAMEND 0x7FFFF
     #define REBOOT esp_restart()
-    // Define EEPROMSIZE before this header. Do not set it in setup(), and
-    // do not redefine EEPROMbegin or EEPROMcommit in a board header.
+    // One image. Sketches and board headers call it EEPROM.
+    // Set the size before this header. A later #define EEPROMSIZE replaces it.
     //   #define EEPROMSIZE 8192
+    // Remove a sketch src/EEPROM.h; it would hide this one.
     // Define OLCB_USE_NATIVE_EEPROM to keep the core NVS EEPROM (4096 max).
     #ifndef EEPROMSIZE
       #define EEPROMSIZE 1000
@@ -198,9 +199,12 @@
         #define EEPROMupdate(a,x) EEPROM.write(a,x)
         #define EEPROMcommit EEPROM.commit()
     #else
+        #include <EEPROM.h>
         #include "ESP32/LittleFS_EEPROM.h"
         #undef OLCB_EEPROM
         #define OLCB_EEPROM OpenLCB_EEPROM
+        #undef EEPROM
+        #define EEPROM OLCB_EEPROM
         #define EEPROMbegin while (!OLCB_EEPROM.begin(EEPROMSIZE)) { \
                 Serial.println("    failed to initialize LittleFS EEPROM"); \
                 delay(1000); \
